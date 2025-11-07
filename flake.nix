@@ -91,12 +91,13 @@
           let temp, p, rad, sg, meltdown;
 
           function l(msg){
-            const t = new Date().toISOString().slice(11,19);
-            const line = `[${t}] ${msg}`;
-            const el = document.createElement('div');
-            el.textContent = line;
-            logEl.prepend(el);
-          }
+  const t = new Date().toISOString().slice(11,19);
+  const line = "[" + t + "] " + msg;
+  const el = document.createElement('div');
+  el.textContent = line;
+  logEl.prepend(el);
+}
+
 
           function render(){
             tempEl.textContent = Math.round(temp) + "°C";
