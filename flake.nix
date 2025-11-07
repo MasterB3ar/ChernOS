@@ -1,5 +1,5 @@
 {
-  description = "ChernOS — NixOS-based nuclear-styled kiosk ISO (fictional reactor UI)";
+  description = "ChernOS — stable NixOS-based nuclear-styled kiosk ISO (fictional reactor UI)";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
 
@@ -17,25 +17,25 @@
         <meta name="viewport" content="width=device-width,initial-scale=1">
         <script src="https://cdn.tailwindcss.com"></script>
         <style>
-          body { background:#07110a; color:#cfeecb; font-family:system-ui,sans-serif; }
+          body { background:#020806; color:#cfeecb; font-family:system-ui,sans-serif; }
           .wrap { min-height:100vh; padding:32px; display:flex; flex-direction:column; gap:16px; }
-          .card { border-radius:16px; border:1px solid rgba(191,249,168,.16); background:rgba(0,0,0,.35); padding:16px 20px; }
+          .card { border-radius:16px; border:1px solid rgba(191,249,168,.16); background:rgba(0,0,0,.38); padding:16px 20px; }
           .label { font-size:10px; text-transform:uppercase; letter-spacing:1px; color:#9ca3af; }
           .big { font-size:24px; font-weight:600; color:#bff9a8; }
           .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
           .pill { font-size:9px; padding:3px 8px; border-radius:999px; border:1px solid rgba(191,249,168,.22); color:#9ca3af; }
           .btn { padding:5px 9px; border-radius:6px; border:1px solid rgba(191,249,168,.25); font-size:10px; color:#bff9a8; background:transparent; cursor:pointer; }
-          .btn:hover { background:rgba(191,249,168,.06); }
-          #log { max-height:170px; overflow:auto; }
+          .btn:hover { background:rgba(191,249,168,.10); }
+          #log { max-height:190px; overflow:auto; font-size:10px; }
         </style>
       </head>
       <body>
         <div class="wrap">
           <div class="card">
-            <div class="label">SYSTEM ONLINE</div>
-            <div class="big">ChernOS Ultra — Reactor Simulation Console</div>
+            <div class="label">CHERNOS ULTRA</div>
+            <div class="big">Reactor Operations Simulation Deck</div>
             <div style="font-size:11px;color:#9ca3af;margin-top:4px;">
-              Fictional nuclear control OS. Visual & logic simulation only. No real reactor control.
+              All behavior is simulated. This system does not control real hardware.
             </div>
           </div>
 
@@ -46,12 +46,12 @@
               <div id="temp-status" style="font-size:10px;margin-top:2px;">Nominal thermal profile</div>
             </div>
             <div class="card">
-              <div class="label">PRESSURE</div>
+              <div class="label">PRESSURE COUPLING</div>
               <div id="pressure" class="big">1.30 MPa</div>
-              <div id="pressure-status" style="font-size:10px;margin-top:2px;">Within vessel limits</div>
+              <div id="pressure-status" style="font-size:10px;margin-top:2px;">Stable containment</div>
             </div>
             <div class="card">
-              <div class="label">RADIATION</div>
+              <div class="label">RADIATION FLUX</div>
               <div id="rad" class="big">0.14 mSv/h</div>
               <div id="rad-status" style="font-size:10px;margin-top:2px;">Shielding effective</div>
             </div>
@@ -60,22 +60,22 @@
               <div id="sg" class="big">3 / 3</div>
               <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">
                 <div class="pill">Primary SCRAM</div>
-                <div class="pill">Coolant inject</div>
-                <div class="pill">Containment seal</div>
+                <div class="pill">Coolant Surge</div>
+                <div class="pill">Containment Seal</div>
               </div>
             </div>
           </div>
 
           <div class="card">
-            <div class="label">OPERATOR ACTIONS</div>
+            <div class="label">OPERATOR CONTROL SURFACE</div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
               <button class="btn" onclick="scram()">SCRAM CORE</button>
-              <button class="btn" onclick="vent()">Open Relief</button>
-              <button class="btn" onclick="stress()">Run Stress Test</button>
-              <button class="btn" onclick="resetSim()">Reset Simulation</button>
+              <button class="btn" onclick="relief()">Relief Valves</button>
+              <button class="btn" onclick="stress()">Stress Pulse</button>
               <button class="btn" onclick="maxChaos()">Force Failure (Sim)</button>
+              <button class="btn" onclick="resetSim()">Reset</button>
             </div>
-            <div id="log" style="margin-top:6px;font-size:10px;color:#9ca3af;line-height:1.4;"></div>
+            <div id="log" style="margin-top:6px;line-height:1.4;"></div>
           </div>
         </div>
 
@@ -91,7 +91,7 @@
 
           let temp, p, rad, sg, meltdown;
 
-          function l(msg){
+          function log(msg){
             const t = new Date().toISOString().slice(11,19);
             const line = "[" + t + "] " + msg;
             const el = document.createElement('div');
@@ -105,47 +105,48 @@
             rEl.textContent = rad.toFixed(2) + " mSv/h";
             sgEl.textContent = sg + " / 3";
 
-            ts.style.color = temp > 900 ? "#f97316" : temp > 600 ? "#eab308" : "#22c55e";
-            ts.textContent = temp > 900 ? "Critical overheating (simulation)" :
-                             temp > 600 ? "Approaching redline (simulation)" :
-                             "Nominal thermal profile";
+            ts.style.color = temp > 950 ? "#f97316" : temp > 650 ? "#eab308" : "#22c55e";
+            ts.textContent = temp > 950 ? "Critical overheating (sim)" :
+                             temp > 650 ? "Approaching redline (sim)" :
+                             "Nominal";
 
-            ps.style.color = p > 5 ? "#f97316" : p > 3 ? "#eab308" : "#22c55e";
-            ps.textContent = p > 5 ? "Containment strain (simulation)" :
-                             p > 3 ? "Elevated vessel pressure (simulation)" :
-                             "Within vessel limits";
+            ps.style.color = p > 5.5 ? "#f97316" : p > 3.2 ? "#eab308" : "#22c55e";
+            ps.textContent = p > 5.5 ? "Containment strain (sim)" :
+                             p > 3.2 ? "Elevated coupling (sim)" :
+                             "Stable containment";
 
-            rs.style.color = rad > 3 ? "#f97316" : rad > 0.6 ? "#eab308" : "#22c55e";
-            rs.textContent = rad > 3 ? "Severe release (simulation)" :
-                             rad > 0.6 ? "Leak indicated (simulation)" :
+            rs.style.color = rad > 3 ? "#f97316" : rad > 0.7 ? "#eab308" : "#22c55e";
+            rs.textContent = rad > 3 ? "Severe release (sim)" :
+                             rad > 0.7 ? "Leak indicated (sim)" :
                              "Shielding effective";
           }
 
           function tick(){
             if(!meltdown){
-              temp += (Math.random()-0.5)*4;
-              p += (Math.random()-0.5)*0.06;
-              rad += (Math.random()-0.5)*0.02;
+              const j = (Math.random()-0.5);
+              temp += j*4;
+              p += j*0.08;
+              rad += j*0.02;
 
-              if(temp > 950 && sg > 0){
+              if(temp > 1200 && sg > 0){
                 sg--;
-                temp -= 220;
-                p -= 0.8;
-                rad -= 0.3;
-                l("AUTO-SAFEGUARD DEPLOYED (sim) — rods insert + coolant inject.");
+                temp -= 260;
+                p -= 0.7;
+                rad -= 0.2;
+                log("AUTO-SAFEGUARD (sim): rods insert, coolant surge.");
               }
 
-              if(temp > 1300 && p > 5.5 && sg === 0){
+              if(temp > 1350 && p > 5.4 && sg === 0){
                 meltdown = true;
-                l("!!! CORE DESTRUCTION (SIMULATION ONLY) — visual chaos mode.");
+                log("!!! SIMULATED CORE DISASSEMBLY — failure mode visuals only.");
               }
             } else {
               temp += 40;
-              p = Math.max(0.6, p - 0.25);
-              rad += 0.9;
+              p = Math.max(0.4, p - 0.3);
+              rad += 1.0;
             }
 
-            if(temp < 250) temp = 250;
+            if(temp < 260) temp = 260;
             if(p < 0.9) p = 0.9;
             if(rad < 0.05) rad = 0.05;
 
@@ -153,23 +154,23 @@
           }
 
           function scram(){
-            l("OPERATOR: SCRAM executed (sim). Core shutdown sequence.");
-            temp -= 300;
+            log("OPERATOR: SCRAM command (sim).");
+            temp -= 320;
             p -= 0.9;
-            rad -= 0.2;
+            rad -= 0.25;
             if(temp < 260) temp = 260;
             render();
           }
 
-          function vent(){
-            l("OPERATOR: Relief paths opened (sim).");
-            p -= 0.5;
+          function relief(){
+            log("OPERATOR: Relief valves opened (sim).");
+            p -= 0.6;
             if(p < 0.9) p = 0.9;
             render();
           }
 
           function stress(){
-            l("OPERATOR: Stress test initiated (sim).");
+            log("OPERATOR: Transient stress pulse (sim).");
             temp += 260;
             p += 1.4;
             rad += 0.4;
@@ -177,11 +178,11 @@
           }
 
           function maxChaos(){
-            l("!!! OPERATOR: Forced safeguard bypass (sim). Engaging failure scenario.");
+            log("!!! OPERATOR: Forced safeguard bypass (sim).");
             sg = 0;
-            temp = 1200;
+            temp = 1250;
             p = 5.2;
-            rad = 1.4;
+            rad = 1.5;
             render();
           }
 
@@ -191,7 +192,7 @@
             rad = 0.14;
             sg = 3;
             meltdown = false;
-            l("Simulation reset to nominal baseline.");
+            log("Simulation reset to nominal baseline.");
             render();
           }
 
@@ -202,49 +203,48 @@
       </html>
     '';
   in {
-    # NixOS config for the ISO
     nixosConfigurations.chernos-iso = lib.nixosSystem {
       inherit system;
       modules = [
-        # Enable ISO image options
+        # Base ISO module
         "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
 
-        # Our custom system config
         ({ pkgs, lib, ... }: {
-          # Force GRUB on for the ISO (iso-image.nix sets it differently)
-          boot.loader.grub.enable = lib.mkForce true;
-          boot.loader.grub.version = 2;
-          boot.loader.grub.device = "nodev";
-
+          # Use GRUB from iso-image; just set name
           isoImage.isoName = "chernos-os.iso";
 
+          # Core services
           services.xserver.enable = false;
           programs.sway.enable = true;
 
+          # Kiosk user
           users.users.kiosk = {
             isNormalUser = true;
             password = "kiosk";
+            extraGroups = [ "video" "input" ];
           };
 
-          services.getty.autologinUser = "kiosk";
+          # greetd: login manager that starts sway as kiosk user
+          services.greetd.enable = true;
+          services.greetd.settings = {
+            default_session = {
+              command = "${pkgs.sway}/bin/sway";
+              user = "kiosk";
+            };
+          };
 
+          # Packages
           environment.systemPackages = with pkgs; [
             chromium
             swaybg
             vim
           ];
 
-          # Auto-start sway on TTY1
-          environment.loginShellInit = ''
-            if [ "$(tty)" = "/dev/tty1" ]; then
-              exec sway
-            fi
-          '';
-
-          # Sway config: kiosk Chromium with embedded ChernOS UI
+          # Sway config: Chromium kiosk with ChernOS UI
           environment.etc."sway/config".text = ''
             include /etc/sway/config.d/*
 
+            # block usual exit combos
             bindsym $mod+Shift+e exec echo "exit blocked"
             bindsym Ctrl+Alt+BackSpace exec echo "blocked"
             bindsym Ctrl+Alt+Delete exec echo "blocked"
@@ -263,7 +263,7 @@
       ];
     };
 
-    # What GitHub builds: nix build .#iso
+    # So CI & you can run: nix build .#iso
     packages.${system}.iso =
       self.nixosConfigurations.chernos-iso.config.system.build.isoImage;
   };
