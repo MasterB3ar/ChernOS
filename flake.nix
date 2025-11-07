@@ -5,6 +5,7 @@
 
   outputs = { self, nixpkgs }: let
     system = "x86_64-linux";
+    lib = nixpkgs.lib;
     pkgs = import nixpkgs { inherit system; };
 
     chernosPage = pkgs.writeText "index.html" ''
@@ -91,13 +92,12 @@
           let temp, p, rad, sg, meltdown;
 
           function l(msg){
-  const t = new Date().toISOString().slice(11,19);
-  const line = "[" + t + "] " + msg;
-  const el = document.createElement('div');
-  el.textContent = line;
-  logEl.prepend(el);
-}
-
+            const t = new Date().toISOString().slice(11,19);
+            const line = "[" + t + "] " + msg;
+            const el = document.createElement('div');
+            el.textContent = line;
+            logEl.prepend(el);
+          }
 
           function render(){
             tempEl.textContent = Math.round(temp) + "°C";
@@ -202,7 +202,7 @@
       </html>
     '';
   in {
-    nixosConfigurations.chernos-iso = pkgs.nixosSystem {
+    nixosConfigurations.chernos-iso = lib.nixosSystem {
       system = system;
       modules = [
         ({ pkgs, ... }: {
@@ -256,7 +256,7 @@
       ];
     };
 
-    # So you can run: nix build .#iso
+    # Allows: nix build .#iso
     packages.${system}.iso =
       self.nixosConfigurations.chernos-iso.config.system.build.isoImage;
   };
