@@ -202,13 +202,20 @@
       </html>
     '';
   in {
+    # NixOS config for the ISO
     nixosConfigurations.chernos-iso = lib.nixosSystem {
-      system = system;
+      inherit system;
       modules = [
+        # Enable ISO image options (this is the missing piece)
+        "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
+
+        # Our custom system config
         ({ pkgs, ... }: {
           boot.loader.grub.enable = true;
           boot.loader.grub.version = 2;
           boot.loader.grub.device = "nodev";
+
+          # Name of the generated ISO
           isoImage.isoName = "chernos-os.iso";
 
           services.xserver.enable = false;
@@ -234,7 +241,7 @@
             fi
           '';
 
-          # Sway config: kiosk Chromium with ChernOS UI
+          # Sway config: kiosk Chromium with embedded ChernOS UI
           environment.etc."sway/config".text = ''
             include /etc/sway/config.d/*
 
@@ -256,7 +263,7 @@
       ];
     };
 
-    # Allows: nix build .#iso
+    # This is what your workflow builds: nix build .#iso
     packages.${system}.iso =
       self.nixosConfigurations.chernos-iso.config.system.build.isoImage;
   };
