@@ -206,16 +206,16 @@
     nixosConfigurations.chernos-iso = lib.nixosSystem {
       inherit system;
       modules = [
-        # Enable ISO image options (this is the missing piece)
+        # Enable ISO image options
         "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
 
         # Our custom system config
-        ({ pkgs, ... }: {
-          boot.loader.grub.enable = true;
+        ({ pkgs, lib, ... }: {
+          # Force GRUB on for the ISO (iso-image.nix sets it differently)
+          boot.loader.grub.enable = lib.mkForce true;
           boot.loader.grub.version = 2;
           boot.loader.grub.device = "nodev";
 
-          # Name of the generated ISO
           isoImage.isoName = "chernos-os.iso";
 
           services.xserver.enable = false;
@@ -263,7 +263,7 @@
       ];
     };
 
-    # This is what your workflow builds: nix build .#iso
+    # What GitHub builds: nix build .#iso
     packages.${system}.iso =
       self.nixosConfigurations.chernos-iso.config.system.build.isoImage;
   };
