@@ -35,6 +35,7 @@ EOF
     # ---------- PLYMOUTH THEME (nuclear glow) ----------
     plymouthTheme = pkgs.runCommand "plymouth-theme-chernos" {} ''
       mkdir -p $out/share/plymouth/themes/chernos
+
       cat > $out/share/plymouth/themes/chernos/chernos.plymouth <<EOF
 [Plymouth Theme]
 Name=ChernOS Ultra+
@@ -47,16 +48,9 @@ ScriptFile=/usr/share/plymouth/themes/chernos/chernos.script
 EOF
 
       cat > $out/share/plymouth/themes/chernos/chernos.script <<'EOF'
-# Simple green pulse background
 Window.SetBackgroundTopColor (0.0, 0.02, 0.01);
 Window.SetBackgroundBottomColor (0.0, 0.0, 0.0);
-
-fun draw_label () {
-  message = "CHERNOS ULTRA+ BOOT";
-  # Plymouth script text primitive is limited; just draw centered text-like dots
-}
-
-# No-op loop; pulsing is handled via color gradient.
+# Minimal themed splash; no complex scripting needed.
 EOF
     '';
 
@@ -572,7 +566,9 @@ EOF
             sgEl.textContent = sg + " / 3";
 
             const coreIntensity = Math.min(1, Math.max(0, (temp - 260) / 900));
-            coreDot.style.boxShadow = "0 0 " + (12 + 26 * coreIntensity) + "px rgba(191,249,168," + (0.4 + 0.5*coreIntensity) + ")";
+            coreDot.style.boxShadow =
+              "0 0 " + (12 + 26 * coreIntensity) +
+              "px rgba(191,249,168," + (0.4 + 0.5*coreIntensity) + ")";
 
             ts.style.color = temp > 950 ? "#f97316" : temp > 650 ? "#eab308" : "#22c55e";
             ts.textContent =
@@ -719,8 +715,8 @@ EOF
         "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
 
         ({ pkgs, lib, ... }: {
+          # Match your workflow expectation
           isoImage.isoName = "chernos-os.iso";
-
 
           # GRUB with nuclear theme for the ISO
           boot.loader.grub.enable = lib.mkForce true;
@@ -770,21 +766,22 @@ EOF
             };
           };
 
-          # Lock down extra TTYs (still leave tty1 for kiosk / debug)
+          # Lock down extra TTYs (keep tty1 for kiosk)
           systemd.services."getty@tty2".enable = false;
           systemd.services."getty@tty3".enable = false;
           systemd.services."getty@tty4".enable = false;
           systemd.services."getty@tty5".enable = false;
           systemd.services."getty@tty6".enable = false;
 
+          # Kiosk environment tools
           environment.systemPackages = with pkgs; [
             chromium
             swaybg
             vim
-            calamares  # available as tool for future installer integration
+            calamares
           ];
 
-          # Sway config — kiosk, nuclear theme
+          # Sway config — kiosk, no config errors
           environment.etc."sway/config".text = ''
             set $mod Mod4
 
@@ -793,6 +790,7 @@ EOF
             # Prevent accidental exit
             bindsym $mod+Shift+e exec echo "exit blocked"
 
+            # Launch ChernOS UI in Chromium kiosk
             exec ${pkgs.chromium}/bin/chromium \
               --enable-features=UseOzonePlatform \
               --ozone-platform=wayland \
@@ -804,7 +802,16 @@ EOF
               --overscroll-history-navigation=0
           '';
 
-          # Persistence layer (optional) — plug a partition labeled CHERNOS_PERSIST
+          # Disable noisy / unneeded network stuff for clean boot
+          networking.useDHCP = false;
+          networking.networkmanager.enable = false;
+          services.wpa_supplicant.enable = false;
+          services.dhcpcd.enable = false;
+          systemd.services."systemd-networkd".enable = false;
+          systemd.services."systemd-resolved".enable = false;
+          systemd.services."sshd".enable = false;
+
+          # Optional persistence (if partition labeled CHERNOS_PERSIST exists)
           fileSystems."/persist" = {
             device = "/dev/disk/by-label/CHERNOS_PERSIST";
             fsType = "ext4";
