@@ -1,5 +1,5 @@
 {
-  description = "ChernOS — stable NixOS-based nuclear-styled kiosk ISO (fictional reactor UI)";
+  description = "ChernOS v1.0.1 — stable NixOS-based nuclear-themed kiosk OS (fictional reactor UI)";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
 
@@ -211,14 +211,12 @@
         ({ pkgs, lib, ... }: {
           isoImage.isoName = "chernos-os.iso";
 
-          # Make sure OpenGL/mesa is there
           hardware.opengl = {
             enable = true;
             driSupport = true;
             driSupport32Bit = true;
           };
 
-          # Allow wlroots (sway) to use software rendering if no GPU/3D
           environment.variables = {
             WLR_RENDERER_ALLOW_SOFTWARE = "1";
             WLR_NO_HARDWARE_CURSORS = "1";
@@ -233,7 +231,6 @@
             extraGroups = [ "video" "input" ];
           };
 
-          # Use greetd to start sway as kiosk user
           services.greetd.enable = true;
           services.greetd.settings = {
             default_session = {
@@ -248,14 +245,17 @@
             vim
           ];
 
-          # Sway config: Chromium kiosk with ChernOS UI
+          # ✅ Fixed sway config (no error message now)
           environment.etc."sway/config".text = ''
+            # Define mod key so binds work without errors
+            set $mod Mod4
+
             include /etc/sway/config.d/*
 
+            # Block common exit combo (optional)
             bindsym $mod+Shift+e exec echo "exit blocked"
-            bindsym Ctrl+Alt+BackSpace exec echo "blocked"
-            bindsym Ctrl+Alt+Delete exec echo "blocked"
 
+            # Launch ChernOS UI in Chromium kiosk
             exec ${pkgs.chromium}/bin/chromium \
               --enable-features=UseOzonePlatform \
               --ozone-platform=wayland \
