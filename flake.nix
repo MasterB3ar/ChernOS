@@ -206,25 +206,34 @@
     nixosConfigurations.chernos-iso = lib.nixosSystem {
       inherit system;
       modules = [
-        # Base ISO module
         "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
 
         ({ pkgs, lib, ... }: {
-          # Use GRUB from iso-image; just set name
           isoImage.isoName = "chernos-os.iso";
 
-          # Core services
+          # Make sure OpenGL/mesa is there
+          hardware.opengl = {
+            enable = true;
+            driSupport = true;
+            driSupport32Bit = true;
+          };
+
+          # Allow wlroots (sway) to use software rendering if no GPU/3D
+          environment.variables = {
+            WLR_RENDERER_ALLOW_SOFTWARE = "1";
+            WLR_NO_HARDWARE_CURSORS = "1";
+          };
+
           services.xserver.enable = false;
           programs.sway.enable = true;
 
-          # Kiosk user
           users.users.kiosk = {
             isNormalUser = true;
             password = "kiosk";
             extraGroups = [ "video" "input" ];
           };
 
-          # greetd: login manager that starts sway as kiosk user
+          # Use greetd to start sway as kiosk user
           services.greetd.enable = true;
           services.greetd.settings = {
             default_session = {
@@ -233,7 +242,6 @@
             };
           };
 
-          # Packages
           environment.systemPackages = with pkgs; [
             chromium
             swaybg
@@ -244,7 +252,6 @@
           environment.etc."sway/config".text = ''
             include /etc/sway/config.d/*
 
-            # block usual exit combos
             bindsym $mod+Shift+e exec echo "exit blocked"
             bindsym Ctrl+Alt+BackSpace exec echo "blocked"
             bindsym Ctrl+Alt+Delete exec echo "blocked"
@@ -263,7 +270,6 @@
       ];
     };
 
-    # So CI & you can run: nix build .#iso
     packages.${system}.iso =
       self.nixosConfigurations.chernos-iso.config.system.build.isoImage;
   };
