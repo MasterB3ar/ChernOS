@@ -12,9 +12,9 @@
     grubTheme = pkgs.runCommand "grub-theme-chernos" {} ''
       mkdir -p $out/share/grub/themes/chernos
       cat > $out/share/grub/themes/chernos/theme.txt <<EOF
-+ terminal_output gfxterm
-+ color_normal cfeecb 000000
-+ color_highlight bff9a8 000000
+terminal_output gfxterm
+color_normal cfeecb 000000
+color_highlight bff9a8 000000
 
 if ! background_image /@theme_background@; then
   insmod gfxterm
@@ -50,11 +50,11 @@ EOF
       cat > $out/share/plymouth/themes/chernos/chernos.script <<'EOF'
 Window.SetBackgroundTopColor (0.0, 0.02, 0.01);
 Window.SetBackgroundBottomColor (0.0, 0.0, 0.0);
-# Minimal themed splash; no complex scripting needed.
+# Minimal themed splash.
 EOF
     '';
 
-    # ---------- CHERNOS ULTRA+ UI (HTML + JS) ----------
+    # ---------- FULL CHERNOS ULTRA+ UI (HTML + JS) ----------
     chernosPage = pkgs.writeText "index.html" ''
       <!doctype html>
       <html lang="en">
@@ -66,7 +66,6 @@ EOF
         <style>
           :root {
             --nuclear-green: #bff9a8;
-            --nuclear-soft: rgba(191,249,168,0.18);
             --bg-deep: #020806;
           }
           * { box-sizing: border-box; }
@@ -387,51 +386,53 @@ EOF
         </div>
 
         <script>
-          // ---------- DOM ----------
-          const logEl = document.getElementById('log');
-          const tempEl = document.getElementById('temp');
-          const pEl = document.getElementById('pressure');
-          const rEl = document.getElementById('rad');
-          const sgEl = document.getElementById('sg');
-          const ts = document.getElementById('temp-status');
-          const ps = document.getElementById('pressure-status');
-          const rs = document.getElementById('rad-status');
-          const diagToggle = document.getElementById('diag-toggle');
-          const diagBadge = document.getElementById('diag-badge');
-          const diagCard = document.getElementById('diag-card');
-          const muteToggle = document.getElementById('mute-toggle');
-          const muteState = document.getElementById('mute-state');
-          const coreDot = document.getElementById('core-dot');
+          // DOM references
+          var logEl = document.getElementById('log');
+          var tempEl = document.getElementById('temp');
+          var pEl = document.getElementById('pressure');
+          var rEl = document.getElementById('rad');
+          var sgEl = document.getElementById('sg');
+          var ts = document.getElementById('temp-status');
+          var ps = document.getElementById('pressure-status');
+          var rs = document.getElementById('rad-status');
+          var diagToggle = document.getElementById('diag-toggle');
+          var diagBadge = document.getElementById('diag-badge');
+          var diagCard = document.getElementById('diag-card');
+          var muteToggle = document.getElementById('mute-toggle');
+          var muteState = document.getElementById('mute-state');
+          var coreDot = document.getElementById('core-dot');
 
-          const btnScram = document.getElementById('btn-scram');
-          const btnRelief = document.getElementById('btn-relief');
-          const btnStress = document.getElementById('btn-stress');
-          const btnChaos = document.getElementById('btn-chaos');
-          const btnReset = document.getElementById('btn-reset');
+          var btnScram = document.getElementById('btn-scram');
+          var btnRelief = document.getElementById('btn-relief');
+          var btnStress = document.getElementById('btn-stress');
+          var btnChaos = document.getElementById('btn-chaos');
+          var btnReset = document.getElementById('btn-reset');
 
-          const leverCore = document.getElementById('lever-core');
-          const leverCool = document.getElementById('lever-coolant');
+          var leverCore = document.getElementById('lever-core');
+          var leverCool = document.getElementById('lever-coolant');
 
-          // ---------- Simulation state ----------
-          let temp, p, rad, sg, meltdown;
-          let diagnostics = false;
+          // Simulation state
+          var temp, p, rad, sg, meltdown;
+          var diagnostics = false;
 
-          const histLen = 80;
-          let histTemp = [];
-          let histPress = [];
-          let histRad = [];
+          var histLen = 80;
+          var histTemp = [];
+          var histPress = [];
+          var histRad = [];
 
-          // ---------- Audio (hum + alarm) ----------
-          let audioCtx = null;
-          let humNode = null;
-          let alarmNode = null;
-          let audioOn = true;
+          // Audio (hum + alarm)
+          var audioCtx = null;
+          var humNode = null;
+          var alarmNode = null;
+          var audioOn = true;
 
           function ensureAudio(){
             if(audioCtx === null){
               try {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-              } catch(e) { audioCtx = null; }
+              } catch(e) {
+                audioCtx = null;
+              }
             }
           }
 
@@ -440,15 +441,15 @@ EOF
             ensureAudio();
             if(!audioCtx || humNode) return;
             try {
-              const osc = audioCtx.createOscillator();
-              const gain = audioCtx.createGain();
+              var osc = audioCtx.createOscillator();
+              var gain = audioCtx.createGain();
               osc.type = "sine";
               osc.frequency.value = 52;
               gain.gain.value = 0.035;
               osc.connect(gain);
               gain.connect(audioCtx.destination);
               osc.start();
-              humNode = { osc, gain };
+              humNode = { osc: osc, gain: gain };
             } catch(e){}
           }
 
@@ -464,8 +465,8 @@ EOF
             ensureAudio();
             if(!audioCtx || alarmNode) return;
             try {
-              const osc = audioCtx.createOscillator();
-              const gain = audioCtx.createGain();
+              var osc = audioCtx.createOscillator();
+              var gain = audioCtx.createGain();
               osc.type = "square";
               osc.frequency.value = 680;
               gain.gain.value = 0.0;
@@ -473,8 +474,8 @@ EOF
               gain.connect(audioCtx.destination);
               osc.start();
 
-              let on = false;
-              const interval = setInterval(()=>{
+              var on = false;
+              var interval = setInterval(function(){
                 if(!audioOn){
                   gain.gain.value = 0;
                   return;
@@ -483,7 +484,7 @@ EOF
                 gain.gain.value = on ? 0.06 : 0.0;
               }, 260);
 
-              alarmNode = { osc, gain, interval };
+              alarmNode = { osc: osc, gain: gain, interval: interval };
             } catch(e){}
           }
 
@@ -512,42 +513,44 @@ EOF
             setTimeout(startHum, 400);
           });
 
-          // ---------- Logging ----------
+          // Logging
           function log(msg){
-            const t = new Date().toISOString().slice(11,19);
-            const line = "[" + t + "] " + msg;
-            const el = document.createElement('div');
-            el.textContent = line;
+            var t = new Date().toISOString().slice(11,19);
+            var el = document.createElement('div');
+            el.textContent = "[" + t + "] " + msg;
             logEl.prepend(el);
           }
 
-          // ---------- Helpers ----------
+          // History
           function pushHist(buf, value){
             buf.push(value);
             if(buf.length > histLen) buf.shift();
           }
 
-          function drawGraph(canvasId, data, color){
-            const c = document.getElementById(canvasId);
+          function drawGraph(id, data, color){
+            var c = document.getElementById(id);
             if(!c) return;
-            const ctx = c.getContext('2d');
-            const w = c.width;
-            const h = c.height;
+            var ctx = c.getContext('2d');
+            var w = c.width;
+            var h = c.height;
             ctx.clearRect(0,0,w,h);
             if(data.length < 2) return;
 
-            const min = Math.min.apply(null, data);
-            const max = Math.max.apply(null, data);
-            const span = (max - min) || 1;
+            var min = Math.min.apply(null, data);
+            var max = Math.max.apply(null, data);
+            var span = (max - min) || 1;
 
             ctx.beginPath();
             ctx.strokeStyle = color;
             ctx.lineWidth = 1;
-            data.forEach(function(v,i){
-              const x = (i / (data.length - 1)) * (w - 4) + 2;
-              const y = h - 4 - ((v - min)/span) * (h - 8);
-              if(i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-            });
+
+            for(var i=0;i<data.length;i++){
+              var v = data[i];
+              var x = (i / (data.length - 1)) * (w - 4) + 2;
+              var y = h - 4 - ((v - min)/span) * (h - 8);
+              if(i === 0) ctx.moveTo(x,y);
+              else ctx.lineTo(x,y);
+            }
             ctx.stroke();
           }
 
@@ -558,50 +561,53 @@ EOF
             drawGraph("diag-rad", histRad, "#22c55e");
           }
 
-          // ---------- Main telemetry render ----------
+          // Render telemetry
           function render(){
             tempEl.textContent = Math.round(temp) + "°C";
             pEl.textContent = p.toFixed(2) + " MPa";
             rEl.textContent = rad.toFixed(2) + " mSv/h";
             sgEl.textContent = sg + " / 3";
 
-            const coreIntensity = Math.min(1, Math.max(0, (temp - 260) / 900));
-            coreDot.style.boxShadow =
-              "0 0 " + (12 + 26 * coreIntensity) +
-              "px rgba(191,249,168," + (0.4 + 0.5*coreIntensity) + ")";
+            var coreIntensity = (temp - 260) / 900;
+            if(coreIntensity < 0) coreIntensity = 0;
+            if(coreIntensity > 1) coreIntensity = 1;
+            var glow = 12 + 26 * coreIntensity;
+            var alpha = 0.4 + 0.5 * coreIntensity;
+            coreDot.style.boxShadow = "0 0 " + glow + "px rgba(191,249,168," + alpha + ")";
 
-            ts.style.color = temp > 950 ? "#f97316" : temp > 650 ? "#eab308" : "#22c55e";
+            // Status text
+            ts.style.color = temp > 950 ? "#f97316" : (temp > 650 ? "#eab308" : "#22c55e");
             ts.textContent =
               temp > 950 ? "Critical overheating (sim)" :
               temp > 650 ? "Approaching redline (sim)" :
               "Nominal";
 
-            ps.style.color = p > 5.5 ? "#f97316" : p > 3.2 ? "#eab308" : "#22c55e";
+            ps.style.color = p > 5.5 ? "#f97316" : (p > 3.2 ? "#eab308" : "#22c55e");
             ps.textContent =
               p > 5.5 ? "Containment strain (sim)" :
               p > 3.2 ? "Elevated coupling (sim)" :
               "Stable containment";
 
-            rs.style.color = rad > 3 ? "#f97316" : rad > 0.7 ? "#eab308" : "#22c55e";
+            rs.style.color = rad > 3 ? "#f97316" : (rad > 0.7 ? "#eab308" : "#22c55e");
             rs.textContent =
               rad > 3 ? "Severe release (sim)" :
               rad > 0.7 ? "Leak indicated (sim)" :
               "Shielding effective";
           }
 
-          // ---------- Simulation tick ----------
+          // Tick loop
           function tick(){
-            const coreBias = parseInt(leverCore.value,10) / 100;    // 0.4 - 1.2
-            const coolBias = parseInt(leverCool.value,10) / 100;    // 0.8 - 1.4
+            var coreBias = parseInt(leverCore.value,10) / 100;    // 0.4 - 1.2
+            var coolBias = parseInt(leverCool.value,10) / 100;    // 0.8 - 1.4
 
             if(!meltdown){
-              const j = (Math.random() - 0.5);
+              var j = (Math.random() - 0.5);
               temp += j * 3.5 + (coreBias - 0.8) * 4 - (coolBias - 1.0) * 3;
               p += j * 0.06 + (temp - 300)/2600;
               rad += j * 0.018 + Math.max(0, (temp - 400))/6000;
 
               if(temp > 1200 && sg > 0){
-                sg--;
+                sg -= 1;
                 temp -= 260;
                 p -= 0.7;
                 rad -= 0.2;
@@ -631,7 +637,7 @@ EOF
             renderDiagnostics();
           }
 
-          // ---------- Controls ----------
+          // Controls
           function scram(){
             log("OPERATOR: SCRAM command (sim).");
             temp -= 340;
@@ -640,14 +646,12 @@ EOF
             if(temp < 260) temp = 260;
             render();
           }
-
           function relief(){
             log("OPERATOR: Relief valves opened (sim).");
             p -= 0.6;
             if(p < 0.9) p = 0.9;
             render();
           }
-
           function stress(){
             log("OPERATOR: Transient stress pulse (sim).");
             temp += 260;
@@ -655,7 +659,6 @@ EOF
             rad += 0.45;
             render();
           }
-
           function maxChaos(){
             log("!!! OPERATOR: Forced safeguard bypass (sim).");
             sg = 0;
@@ -664,7 +667,6 @@ EOF
             rad = 1.6;
             render();
           }
-
           function resetSim(){
             temp = 312;
             p = 1.3;
@@ -685,7 +687,7 @@ EOF
           btnChaos.onclick = maxChaos;
           btnReset.onclick = resetSim;
 
-          // ---------- Diagnostics toggle ----------
+          // Diagnostics toggle
           diagToggle.addEventListener("click", function(){
             diagnostics = !diagnostics;
             if(diagnostics){
@@ -701,7 +703,7 @@ EOF
             }
           });
 
-          // ---------- Boot ----------
+          // Boot
           resetSim();
           setInterval(tick, 900);
         </script>
@@ -715,16 +717,14 @@ EOF
         "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
 
         ({ pkgs, lib, ... }: {
-          # Match your workflow expectation
           isoImage.isoName = "chernos-os.iso";
 
-          # GRUB with nuclear theme for the ISO
+          # GRUB + Plymouth
           boot.loader.grub.enable = lib.mkForce true;
           boot.loader.grub.version = 2;
           boot.loader.grub.device = "nodev";
           boot.loader.grub.theme = "${grubTheme}/share/grub/themes/chernos/theme.txt";
 
-          # Plymouth boot splash
           boot.plymouth.enable = true;
           boot.plymouth.themePackages = [ plymouthTheme ];
           boot.plymouth.theme = "chernos";
@@ -736,12 +736,16 @@ EOF
             "sysrq=0"
           ];
 
-          # Kiosk & rendering
-          hardware.opengl = {
-            enable = true;
-            driSupport = true;
-            driSupport32Bit = true;
-          };
+          # Clean boot (no network spam)
+          networking.useDHCP = false;
+          networking.networkmanager.enable = false;
+          services.wpa_supplicant.enable = false;
+          systemd.services."systemd-networkd".enable = false;
+          systemd.services."systemd-resolved".enable = false;
+          systemd.services."sshd".enable = false;
+
+          # Graphics / kiosk
+          hardware.opengl.enable = true;
           environment.variables = {
             WLR_RENDERER_ALLOW_SOFTWARE = "1";
             WLR_NO_HARDWARE_CURSORS = "1";
@@ -750,14 +754,12 @@ EOF
           services.xserver.enable = false;
           programs.sway.enable = true;
 
-          # Kiosk user
           users.users.kiosk = {
             isNormalUser = true;
             password = "kiosk";
             extraGroups = [ "video" "input" ];
           };
 
-          # greetd auto-start sway as kiosk user
           services.greetd.enable = true;
           services.greetd.settings = {
             default_session = {
@@ -766,14 +768,14 @@ EOF
             };
           };
 
-          # Lock down extra TTYs (keep tty1 for kiosk)
+          # Lock down extra TTYs
           systemd.services."getty@tty2".enable = false;
           systemd.services."getty@tty3".enable = false;
           systemd.services."getty@tty4".enable = false;
           systemd.services."getty@tty5".enable = false;
           systemd.services."getty@tty6".enable = false;
 
-          # Kiosk environment tools
+          # Tools available inside
           environment.systemPackages = with pkgs; [
             chromium
             swaybg
@@ -781,10 +783,9 @@ EOF
             calamares
           ];
 
-          # Sway config — kiosk, no config errors
+          # Sway kiosk config
           environment.etc."sway/config".text = ''
             set $mod Mod4
-
             include /etc/sway/config.d/*
 
             # Prevent accidental exit
@@ -802,34 +803,22 @@ EOF
               --overscroll-history-navigation=0
           '';
 
-          # Disable noisy / unneeded network stuff for clean boot
-          networking.useDHCP = false;
-          networking.networkmanager.enable = false;
-          services.wpa_supplicant.enable = false;
-          services.dhcpcd.enable = false;
-          systemd.services."systemd-networkd".enable = false;
-          systemd.services."systemd-resolved".enable = false;
-          systemd.services."sshd".enable = false;
-
-          # Optional persistence (if partition labeled CHERNOS_PERSIST exists)
+          # Optional persistence via CHERNOS_PERSIST label
           fileSystems."/persist" = {
             device = "/dev/disk/by-label/CHERNOS_PERSIST";
             fsType = "ext4";
             options = [ "nofail" "x-systemd.device-timeout=1s" ];
           };
-
           fileSystems."/home" = {
             device = "/persist/home";
             fsType = "none";
             options = [ "bind" "nofail" ];
           };
-
           fileSystems."/var" = {
             device = "/persist/var";
             fsType = "none";
             options = [ "bind" "nofail" ];
           };
-
           systemd.tmpfiles.rules = [
             "d /persist 0755 root root -"
             "d /persist/home 0755 root root -"
@@ -839,7 +828,6 @@ EOF
       ];
     };
 
-    # Build with: nix build .#iso
     packages.${system}.iso =
       self.nixosConfigurations.chernos-iso.config.system.build.isoImage;
   };
