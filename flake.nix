@@ -386,7 +386,6 @@ EOF
         </div>
 
         <script>
-          // DOM references
           var logEl = document.getElementById('log');
           var tempEl = document.getElementById('temp');
           var pEl = document.getElementById('pressure');
@@ -411,7 +410,6 @@ EOF
           var leverCore = document.getElementById('lever-core');
           var leverCool = document.getElementById('lever-coolant');
 
-          // Simulation state
           var temp, p, rad, sg, meltdown;
           var diagnostics = false;
 
@@ -420,7 +418,6 @@ EOF
           var histPress = [];
           var histRad = [];
 
-          // Audio (hum + alarm)
           var audioCtx = null;
           var humNode = null;
           var alarmNode = null;
@@ -513,7 +510,6 @@ EOF
             setTimeout(startHum, 400);
           });
 
-          // Logging
           function log(msg){
             var t = new Date().toISOString().slice(11,19);
             var el = document.createElement('div');
@@ -521,7 +517,6 @@ EOF
             logEl.prepend(el);
           }
 
-          // History
           function pushHist(buf, value){
             buf.push(value);
             if(buf.length > histLen) buf.shift();
@@ -561,7 +556,6 @@ EOF
             drawGraph("diag-rad", histRad, "#22c55e");
           }
 
-          // Render telemetry
           function render(){
             tempEl.textContent = Math.round(temp) + "°C";
             pEl.textContent = p.toFixed(2) + " MPa";
@@ -575,7 +569,6 @@ EOF
             var alpha = 0.4 + 0.5 * coreIntensity;
             coreDot.style.boxShadow = "0 0 " + glow + "px rgba(191,249,168," + alpha + ")";
 
-            // Status text
             ts.style.color = temp > 950 ? "#f97316" : (temp > 650 ? "#eab308" : "#22c55e");
             ts.textContent =
               temp > 950 ? "Critical overheating (sim)" :
@@ -595,10 +588,9 @@ EOF
               "Shielding effective";
           }
 
-          // Tick loop
           function tick(){
-            var coreBias = parseInt(leverCore.value,10) / 100;    // 0.4 - 1.2
-            var coolBias = parseInt(leverCool.value,10) / 100;    // 0.8 - 1.4
+            var coreBias = parseInt(leverCore.value,10) / 100;
+            var coolBias = parseInt(leverCool.value,10) / 100;
 
             if(!meltdown){
               var j = (Math.random() - 0.5);
@@ -637,7 +629,6 @@ EOF
             renderDiagnostics();
           }
 
-          // Controls
           function scram(){
             log("OPERATOR: SCRAM command (sim).");
             temp -= 340;
@@ -646,12 +637,14 @@ EOF
             if(temp < 260) temp = 260;
             render();
           }
+
           function relief(){
             log("OPERATOR: Relief valves opened (sim).");
             p -= 0.6;
             if(p < 0.9) p = 0.9;
             render();
           }
+
           function stress(){
             log("OPERATOR: Transient stress pulse (sim).");
             temp += 260;
@@ -659,6 +652,7 @@ EOF
             rad += 0.45;
             render();
           }
+
           function maxChaos(){
             log("!!! OPERATOR: Forced safeguard bypass (sim).");
             sg = 0;
@@ -667,6 +661,7 @@ EOF
             rad = 1.6;
             render();
           }
+
           function resetSim(){
             temp = 312;
             p = 1.3;
@@ -687,7 +682,6 @@ EOF
           btnChaos.onclick = maxChaos;
           btnReset.onclick = resetSim;
 
-          // Diagnostics toggle
           diagToggle.addEventListener("click", function(){
             diagnostics = !diagnostics;
             if(diagnostics){
@@ -703,7 +697,6 @@ EOF
             }
           });
 
-          // Boot
           resetSim();
           setInterval(tick, 900);
         </script>
@@ -715,11 +708,9 @@ EOF
       inherit system;
       modules = [
         "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
-
         ({ pkgs, lib, ... }: {
           isoImage.isoName = "chernos-os.iso";
 
-          # GRUB + Plymouth
           boot.loader.grub.enable = lib.mkForce true;
           boot.loader.grub.version = 2;
           boot.loader.grub.device = "nodev";
@@ -736,15 +727,12 @@ EOF
             "sysrq=0"
           ];
 
-          # Clean boot (no network spam)
           networking.useDHCP = false;
           networking.networkmanager.enable = false;
-          services.wpa_supplicant.enable = false;
           systemd.services."systemd-networkd".enable = false;
           systemd.services."systemd-resolved".enable = false;
           systemd.services."sshd".enable = false;
 
-          # Graphics / kiosk
           hardware.opengl.enable = true;
           environment.variables = {
             WLR_RENDERER_ALLOW_SOFTWARE = "1";
@@ -768,14 +756,12 @@ EOF
             };
           };
 
-          # Lock down extra TTYs
           systemd.services."getty@tty2".enable = false;
           systemd.services."getty@tty3".enable = false;
           systemd.services."getty@tty4".enable = false;
           systemd.services."getty@tty5".enable = false;
           systemd.services."getty@tty6".enable = false;
 
-          # Tools available inside
           environment.systemPackages = with pkgs; [
             chromium
             swaybg
@@ -783,15 +769,12 @@ EOF
             calamares
           ];
 
-          # Sway kiosk config
           environment.etc."sway/config".text = ''
             set $mod Mod4
             include /etc/sway/config.d/*
 
-            # Prevent accidental exit
             bindsym $mod+Shift+e exec echo "exit blocked"
 
-            # Launch ChernOS UI in Chromium kiosk
             exec ${pkgs.chromium}/bin/chromium \
               --enable-features=UseOzonePlatform \
               --ozone-platform=wayland \
@@ -803,7 +786,6 @@ EOF
               --overscroll-history-navigation=0
           '';
 
-          # Optional persistence via CHERNOS_PERSIST label
           fileSystems."/persist" = {
             device = "/dev/disk/by-label/CHERNOS_PERSIST";
             fsType = "ext4";
