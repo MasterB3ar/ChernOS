@@ -719,7 +719,8 @@ EOF
         "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
 
         ({ pkgs, lib, ... }: {
-          isoImage.isoName = "chernos-os-ultra-plus.iso";
+          isoImage.isoName = "chernos-os.iso";
+
 
           # GRUB with nuclear theme for the ISO
           boot.loader.grub.enable = lib.mkForce true;
