@@ -719,22 +719,23 @@ EOF
             "sysrq=0"
           ];
 
-          # No pointless update/logrotate/journal stuff on live ISO
+          # Silence live-only junk
           services.logrotate.enable = false;
           systemd.services."logrotate-checkconf".enable = false;
           systemd.services."systemd-journal-catalog-update".enable = false;
           systemd.services."systemd-update-done".enable = false;
 
-          # Network & SSH silenced
+          # Network & SSH off
           networking.useDHCP = false;
           networking.networkmanager.enable = false;
           systemd.services."systemd-networkd".enable = false;
           systemd.services."systemd-resolved".enable = false;
           systemd.services."sshd".enable = false;
 
-          # Renderer hints for VMs
+          # Force software rendering to avoid "unsupported graphics device"
           hardware.opengl.enable = true;
           environment.variables = {
+            WLR_RENDERER = "pixman";
             WLR_RENDERER_ALLOW_SOFTWARE = "1";
             WLR_NO_HARDWARE_CURSORS = "1";
             LIBGL_ALWAYS_SOFTWARE = "1";
