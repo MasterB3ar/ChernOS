@@ -47,7 +47,7 @@ Window.SetBackgroundBottomColor (0.0, 0.0, 0.0);
 EOF
     '';
 
-    # ---------- FULL UI (HTML + JS) ----------
+    # ---------- CHERNOS UI (HTML + JS) ----------
     chernosPage = pkgs.writeText "index.html" ''
       <!doctype html>
       <html lang="en">
@@ -443,7 +443,7 @@ EOF
 
           function stopHum(){
             if(humNode){
-              try { humNode.osc.stop(); } catch(e){}
+            try { humNode.osc.stop(); } catch(e){}
               humNode = null;
             }
           }
@@ -530,7 +530,7 @@ EOF
             ctx.strokeStyle = color;
             ctx.lineWidth = 1;
 
-            for(var i=0;i<data.length;i++){
+            for (var i = 0; i < data.length; i++) {
               var v = data[i];
               var x = (i / (data.length - 1)) * (w - 4) + 2;
               var y = h - 4 - ((v - min)/span) * (h - 8);
@@ -558,25 +558,35 @@ EOF
             if(coreIntensity > 1) coreIntensity = 1;
             var glow = 12 + 26 * coreIntensity;
             var alpha = 0.4 + 0.5 * coreIntensity;
-            coreDot.style.boxShadow = "0 0 " + glow + "px rgba(191,249,168," + alpha + ")";
+            coreDot.style.boxShadow =
+              "0 0 " + glow + "px rgba(191,249,168," + alpha + ")";
 
-            ts.style.color = temp > 950 ? "#f97316" : (temp > 650 ? "#eab308" : "#22c55e");
-            ts.textContent =
-              temp > 950 ? "Critical overheating (sim)" :
-              temp > 650 ? "Approaching redline (sim)" :
-              "Nominal";
+            ts.style.color = temp > 950 ? "#f97316"
+              : temp > 650 ? "#eab308"
+              : "#22c55e";
+            ts.textContent = temp > 950
+              ? "Critical overheating (sim)"
+              : temp > 650
+              ? "Approaching redline (sim)"
+              : "Nominal";
 
-            ps.style.color = p > 5.5 ? "#f97316" : (p > 3.2 ? "#eab308" : "#22c55e");
-            ps.textContent =
-              p > 5.5 ? "Containment strain (sim)" :
-              p > 3.2 ? "Elevated coupling (sim)" :
-              "Stable containment";
+            ps.style.color = p > 5.5 ? "#f97316"
+              : p > 3.2 ? "#eab308"
+              : "#22c55e";
+            ps.textContent = p > 5.5
+              ? "Containment strain (sim)"
+              : p > 3.2
+              ? "Elevated coupling (sim)"
+              : "Stable containment";
 
-            rs.style.color = rad > 3 ? "#f97316" : (rad > 0.7 ? "#eab308" : "#22c55e");
-            rs.textContent =
-              rad > 3 ? "Severe release (sim)" :
-              rad > 0.7 ? "Leak indicated (sim)" :
-              "Shielding effective";
+            rs.style.color = rad > 3 ? "#f97316"
+              : rad > 0.7 ? "#eab308"
+              : "#22c55e";
+            rs.textContent = rad > 3
+              ? "Severe release (sim)"
+              : rad > 0.7
+              ? "Leak indicated (sim)"
+              : "Shielding effective";
           }
 
           function tick(){
@@ -719,7 +729,7 @@ EOF
             "sysrq=0"
           ];
 
-          # Silence live-only junk
+          # Silence live-only/journal/update units that complain
           services.logrotate.enable = false;
           systemd.services."logrotate-checkconf".enable = false;
           systemd.services."systemd-journal-catalog-update".enable = false;
@@ -732,7 +742,7 @@ EOF
           systemd.services."systemd-resolved".enable = false;
           systemd.services."sshd".enable = false;
 
-          # Force software rendering to avoid "unsupported graphics device"
+          # Force software rendering (fix "unsupported graphics device" noise in VMs)
           hardware.opengl.enable = true;
           environment.variables = {
             WLR_RENDERER = "pixman";
@@ -744,14 +754,14 @@ EOF
           services.xserver.enable = false;
           programs.sway.enable = true;
 
-          # kiosk user
+          # Kiosk user
           users.users.kiosk = {
             isNormalUser = true;
             password = "kiosk";
             extraGroups = [ "video" "input" ];
           };
 
-          # greetd → sway kiosk
+          # greetd → sway → chromium kiosk
           services.greetd.enable = true;
           services.greetd.settings = {
             terminal.vt = 1;
@@ -761,13 +771,14 @@ EOF
             };
           };
 
-          # kill extra TTYs
+          # Disable extra TTYs
           systemd.services."getty@tty2".enable = false;
           systemd.services."getty@tty3".enable = false;
           systemd.services."getty@tty4".enable = false;
           systemd.services."getty@tty5".enable = false;
           systemd.services."getty@tty6".enable = false;
 
+          # Tools
           environment.systemPackages = with pkgs; [
             chromium
             swaybg
@@ -775,11 +786,11 @@ EOF
             calamares
           ];
 
-          # sway config for kiosk
+          # Sway kiosk config
           environment.etc."sway/config".text = ''
             set $mod Mod4
 
-            # prevent exiting
+            # prevent exit
             bindsym $mod+Shift+e exec echo "exit blocked"
 
             exec ${pkgs.chromium}/bin/chromium \
@@ -792,28 +803,6 @@ EOF
               --disable-translate \
               --overscroll-history-navigation=0
           '';
-
-          # optional persistence
-          fileSystems."/persist" = {
-            device = "/dev/disk/by-label/CHERNOS_PERSIST";
-            fsType = "ext4";
-            options = [ "nofail" "x-systemd.device-timeout=1s" ];
-          };
-          fileSystems."/home" = {
-            device = "/persist/home";
-            fsType = "none";
-            options = [ "bind" "nofail" ];
-          };
-          fileSystems."/var" = {
-            device = "/persist/var";
-            fsType = "none";
-            options = [ "bind" "nofail" ];
-          };
-          systemd.tmpfiles.rules = [
-            "d /persist 0755 root root -"
-            "d /persist/home 0755 root root -"
-            "d /persist/var 0755 root root -"
-          ];
         })
       ];
     };
