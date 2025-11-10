@@ -244,9 +244,7 @@ EOF
             font-size: 9px;
             color: #9ca3af;
           }
-          .lever {
-            width: 120px;
-          }
+          .lever { width: 120px; }
           .diag-wrapper {
             display: grid;
             grid-template-columns: repeat(3, minmax(0,1fr));
@@ -711,6 +709,7 @@ EOF
         ({ pkgs, lib, ... }: {
           isoImage.isoName = "chernos-os.iso";
 
+          # Boot stack
           boot.loader.grub.enable = lib.mkForce true;
           boot.loader.grub.version = 2;
           boot.loader.grub.device = "nodev";
@@ -727,35 +726,42 @@ EOF
             "sysrq=0"
           ];
 
+          # Quiet / no useless network stuff
           networking.useDHCP = false;
           networking.networkmanager.enable = false;
           systemd.services."systemd-networkd".enable = false;
           systemd.services."systemd-resolved".enable = false;
           systemd.services."sshd".enable = false;
 
+          # Renderer hints for VMs (less EGL/vmwgfx whining)
           hardware.opengl.enable = true;
           environment.variables = {
             WLR_RENDERER_ALLOW_SOFTWARE = "1";
             WLR_NO_HARDWARE_CURSORS = "1";
+            LIBGL_ALWAYS_SOFTWARE = "1";
           };
 
           services.xserver.enable = false;
           programs.sway.enable = true;
 
+          # kiosk user
           users.users.kiosk = {
             isNormalUser = true;
             password = "kiosk";
             extraGroups = [ "video" "input" ];
           };
 
+          # greetd → sway kiosk (fixed config; no 'likely broken' msg)
           services.greetd.enable = true;
           services.greetd.settings = {
+            terminal.vt = 1;
             default_session = {
               command = "${pkgs.sway}/bin/sway";
               user = "kiosk";
             };
           };
 
+          # kill extra TTYs
           systemd.services."getty@tty2".enable = false;
           systemd.services."getty@tty3".enable = false;
           systemd.services."getty@tty4".enable = false;
@@ -769,10 +775,14 @@ EOF
             calamares
           ];
 
+          # sway config for kiosk
           environment.etc."sway/config".text = ''
             set $mod Mod4
-            include /etc/sway/config.d/*
 
+            # DO NOT include non-existent directories to avoid warnings
+            # include /etc/sway/config.d/*
+
+            # prevent exiting
             bindsym $mod+Shift+e exec echo "exit blocked"
 
             exec ${pkgs.chromium}/bin/chromium \
@@ -786,6 +796,7 @@ EOF
               --overscroll-history-navigation=0
           '';
 
+          # optional persistence
           fileSystems."/persist" = {
             device = "/dev/disk/by-label/CHERNOS_PERSIST";
             fsType = "ext4";
