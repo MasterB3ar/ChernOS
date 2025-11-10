@@ -8,7 +8,7 @@
     lib = nixpkgs.lib;
     pkgs = import nixpkgs { inherit system; };
 
-    # ---------- GRUB THEME (black + neon green) ----------
+    # ---------- GRUB THEME ----------
     grubTheme = pkgs.runCommand "grub-theme-chernos" {} ''
       mkdir -p $out/share/grub/themes/chernos
       cat > $out/share/grub/themes/chernos/theme.txt <<EOF
@@ -20,19 +20,13 @@ if ! background_image /@theme_background@; then
   insmod gfxterm
 fi
 
-+ boot_menu {
-  left = 10%
-  top = 30%
-  width = 80%
-  height = 40%
-  item_color = "cfeecb"
-  selected_item_color = "bff9a8"
-  selected_item_pixmap_style = "highlight"
+menuentry "ChernOS Ultra+ Live" {
+  set gfxpayload=keep
 }
 EOF
     '';
 
-    # ---------- PLYMOUTH THEME (nuclear glow) ----------
+    # ---------- PLYMOUTH THEME ----------
     plymouthTheme = pkgs.runCommand "plymouth-theme-chernos" {} ''
       mkdir -p $out/share/plymouth/themes/chernos
 
@@ -50,11 +44,10 @@ EOF
       cat > $out/share/plymouth/themes/chernos/chernos.script <<'EOF'
 Window.SetBackgroundTopColor (0.0, 0.02, 0.01);
 Window.SetBackgroundBottomColor (0.0, 0.0, 0.0);
-# Minimal themed splash.
 EOF
     '';
 
-    # ---------- FULL CHERNOS ULTRA+ UI (HTML + JS) ----------
+    # ---------- FULL UI (HTML + JS) ----------
     chernosPage = pkgs.writeText "index.html" ''
       <!doctype html>
       <html lang="en">
@@ -726,14 +719,20 @@ EOF
             "sysrq=0"
           ];
 
-          # Quiet / no useless network stuff
+          # No pointless update/logrotate/journal stuff on live ISO
+          services.logrotate.enable = false;
+          systemd.services."logrotate-checkconf".enable = false;
+          systemd.services."systemd-journal-catalog-update".enable = false;
+          systemd.services."systemd-update-done".enable = false;
+
+          # Network & SSH silenced
           networking.useDHCP = false;
           networking.networkmanager.enable = false;
           systemd.services."systemd-networkd".enable = false;
           systemd.services."systemd-resolved".enable = false;
           systemd.services."sshd".enable = false;
 
-          # Renderer hints for VMs (less EGL/vmwgfx whining)
+          # Renderer hints for VMs
           hardware.opengl.enable = true;
           environment.variables = {
             WLR_RENDERER_ALLOW_SOFTWARE = "1";
@@ -751,7 +750,7 @@ EOF
             extraGroups = [ "video" "input" ];
           };
 
-          # greetd → sway kiosk (fixed config; no 'likely broken' msg)
+          # greetd → sway kiosk
           services.greetd.enable = true;
           services.greetd.settings = {
             terminal.vt = 1;
@@ -778,9 +777,6 @@ EOF
           # sway config for kiosk
           environment.etc."sway/config".text = ''
             set $mod Mod4
-
-            # DO NOT include non-existent directories to avoid warnings
-            # include /etc/sway/config.d/*
 
             # prevent exiting
             bindsym $mod+Shift+e exec echo "exit blocked"
