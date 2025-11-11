@@ -745,11 +745,10 @@ EOF
           # Force software rendering (fix "unsupported graphics device" noise in VMs)
           hardware.opengl.enable = true;
           environment.variables = {
-            WLR_RENDERER = "pixman";
-            WLR_RENDERER_ALLOW_SOFTWARE = "1";
-            WLR_NO_HARDWARE_CURSORS = "1";
-            LIBGL_ALWAYS_SOFTWARE = "1";
-          };
+  WLR_RENDERER_ALLOW_SOFTWARE = "1";
+  WLR_NO_HARDWARE_CURSORS = "1";
+};
+
 
           services.xserver.enable = false;
           programs.sway.enable = true;
