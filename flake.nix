@@ -394,7 +394,6 @@ EOF
         </div>
 
         <script>
-          // ---------- DOM refs ----------
           var logEl = document.getElementById("log");
           var tempEl = document.getElementById("temp");
           var pEl = document.getElementById("pressure");
@@ -423,7 +422,6 @@ EOF
           var termInput = document.getElementById("term-input");
           var termRun = document.getElementById("term-run");
 
-          // ---------- Sim state ----------
           var temp, p, rad, sg, meltdown;
           var diagnostics = false;
           var histLen = 80;
@@ -438,15 +436,10 @@ EOF
           var audioOn = true;
 
           var persistEnabled = false;
+          if (window.location.search.indexOf("persist=1") !== -1) {
+            persistEnabled = true;
+          }
 
-          // detect ?persist=1 in URL
-          (function(){
-            if (window.location.search.indexOf("persist=1") !== -1) {
-              persistEnabled = true;
-            }
-          })();
-
-          // ---------- Audio ----------
           function ensureAudio() {
             if (audioCtx !== null) return;
             try {
@@ -553,7 +546,6 @@ EOF
             }, 400);
           });
 
-          // ---------- Logs & persistence ----------
           function maybePersist(line) {
             if (!persistEnabled) return;
             try {
@@ -578,7 +570,6 @@ EOF
             persistBadge.style.color = persistEnabled ? "#bbf7d0" : "#9ca3af";
           }
 
-          // ---------- Graph helpers ----------
           function pushHist(buf,v) {
             buf.push(v);
             if (buf.length > histLen) buf.shift();
@@ -622,7 +613,6 @@ EOF
             drawGraph("g-rad", histRad, "#22c55e");
           }
 
-          // ---------- Render ----------
           function render() {
             tempEl.textContent = String(Math.round(temp)) + "°C";
             pEl.textContent = p.toFixed(2) + " MPa";
@@ -634,25 +624,31 @@ EOF
             if (coreIntensity > 1) coreIntensity = 1;
             var glow = 12 + 26 * coreIntensity;
             var alpha = 0.4 + 0.5 * coreIntensity;
-            coreDot.style.boxShadow = "0 0 " + glow + "px rgba(191,249,168," + alpha + ")";
+            coreDot.style.boxShadow =
+              "0 0 " + glow + "px rgba(191,249,168," + alpha + ")";
 
-            ts.style.color = temp > 950 ? "#f97316" : (temp > 650 ? "#eab308" : "#22c55e");
+            ts.style.color = temp > 950 ? "#f97316" :
+                             temp > 650 ? "#eab308" :
+                             "#22c55e";
             ts.textContent = temp > 950 ? "Critical overheating (sim)" :
                              temp > 650 ? "Approaching redline (sim)" :
                              "Nominal";
 
-            ps.style.color = p > 5.5 ? "#f97316" : (p > 3.2 ? "#eab308" : "#22c55e");
+            ps.style.color = p > 5.5 ? "#f97316" :
+                             p > 3.2 ? "#eab308" :
+                             "#22c55e";
             ps.textContent = p > 5.5 ? "Containment strain (sim)" :
                              p > 3.2 ? "Elevated coupling (sim)" :
                              "Stable";
 
-            rs.style.color = rad > 3 ? "#f97316" : (rad > 0.7 ? "#eab308" : "#22c55e");
+            rs.style.color = rad > 3 ? "#f97316" :
+                             rad > 0.7 ? "#eab308" :
+                             "#22c55e";
             rs.textContent = rad > 3 ? "Severe release (sim)" :
                              rad > 0.7 ? "Leak indicated (sim)" :
                              "Shielding effective";
           }
 
-          // ---------- Tick ----------
           function tick() {
             var coreBias = parseInt(leverCore.value,10) / 100;
             var coolBias = parseInt(leverCool.value,10) / 100;
@@ -694,7 +690,6 @@ EOF
             renderGraphs();
           }
 
-          // ---------- Ops ----------
           function scram() {
             log("OP: SCRAM (sim)");
             temp -= 340;
@@ -748,7 +743,6 @@ EOF
           btnChaos.onclick = chaos;
           btnReset.onclick = resetSim;
 
-          // ---------- Diagnostics ----------
           diagToggle.addEventListener("click", function(){
             diagnostics = !diagnostics;
             diagCard.style.display = diagnostics ? "block" : "none";
@@ -757,7 +751,6 @@ EOF
             else diagCard.classList.remove("diag-active");
           });
 
-          // ---------- Terminal ----------
           function runCmd(raw) {
             var cmd = String(raw || "").trim();
             if (!cmd) return;
@@ -812,7 +805,7 @@ EOF
             if (lower === "audio on") { setAudioOn(true); return; }
             if (lower === "audio off") { setAudioOn(false); return; }
             if (lower === "save-log") {
-              maybePersist("[manual flush]\n");
+              maybePersist("[manual flush]\\n");
               log("log flush requested");
               return;
             }
@@ -832,7 +825,6 @@ EOF
             }
           });
 
-          // ---------- Init ----------
           updatePersistBadge();
           resetSim();
           setInterval(tick, 900);
@@ -912,7 +904,34 @@ EOF
             "d /persist 0755 root root -"
           ];
 
-          # ---------- greetd → sway → chromium kiosk ----------
+          # ---------- /etc/chernos-kiosk.sh script ----------
+          environment.etc."chernos-kiosk.sh" = {
+            mode = "0755";
+            text = ''
+              #!/bin/sh
+              # Optional persistence marker
+              if [ -f /run/chernos-persist.env ]; then
+                . /run/chernos-persist.env
+              fi
+
+              URL="file://${chernosPage}"
+              if [ "x$CHERNOS_PERSIST" = "x1" ]; then
+                URL="$URL?persist=1"
+              fi
+
+              exec ${pkgs.chromium}/bin/chromium \
+                --enable-features=UseOzonePlatform \
+                --ozone-platform=wayland \
+                --kiosk "$URL" \
+                --incognito \
+                --start-fullscreen \
+                --noerrdialogs \
+                --disable-translate \
+                --overscroll-history-navigation=0
+            '';
+          };
+
+          # ---------- greetd → sway → kiosk ----------
           services.greetd.enable = true;
           services.greetd.settings = {
             terminal.vt = 1;
@@ -935,33 +954,15 @@ EOF
             vim
           ];
 
-          # sway config: pass ?persist=1 if CHERNOS_PERSIST was set by helper
+          # sway config: now just calls the helper script (no multiline shell)
           environment.etc."sway/config".text = ''
             set $mod Mod4
 
             # prevent exiting
             bindsym $mod+Shift+e exec echo "exit blocked"
 
-            exec sh -lc '
-              if [ -f /run/chernos-persist.env ]; then
-                . /run/chernos-persist.env
-              fi
-
-              URL="file://${chernosPage}"
-              if [ "x$CHERNOS_PERSIST" = "x1" ]; then
-                URL="$URL?persist=1"
-              fi
-
-              ${pkgs.chromium}/bin/chromium \
-                --enable-features=UseOzonePlatform \
-                --ozone-platform=wayland \
-                --kiosk "$URL" \
-                --incognito \
-                --start-fullscreen \
-                --noerrdialogs \
-                --disable-translate \
-                --overscroll-history-navigation=0
-            '
+            # launch ChernOS kiosk helper script
+            exec /etc/chernos-kiosk.sh
           '';
         })
       ];
