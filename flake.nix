@@ -69,7 +69,8 @@ EOF
         "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
 
         ({ pkgs, lib, ... }: {
-          isoImage.isoName = "chernos-os-v1.4.0.iso";
+          isoImage.isoName = "chernos-os.iso";
+
 
           # ---------- Boot stack ----------
           boot.loader.grub.enable  = lib.mkForce true;
