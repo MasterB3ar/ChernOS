@@ -352,14 +352,17 @@
       cursor: pointer;
       transition: all 0.16s;
       color: #ffffff; /* <-- make "Green / Amber / Redline" text white */
-      .theme-btn[data-theme="2049"] {
-  border-color: #38bdf8;
-}
     }
     .theme-btn.active {
       border-color: var(--ch-accent-soft);
       box-shadow: 0 0 9px var(--ch-accent-soft);
     }
+
+    /* Make 2049 theme button stand out */
+.theme-btn[data-theme="2049"] {
+  border-color: #38bdf8 !important;
+  color: #ffffff !important;
+}
 
     .mute-indicator {
       font-size: 10px;
