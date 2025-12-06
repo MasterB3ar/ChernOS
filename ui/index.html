@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>ChernOS v1.6.0 – Black Chamber Update</title>
+  <title>ChernOS v1.7.0 – Operator Workstation</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -128,7 +128,6 @@
       100% { transform: scale(1.02) rotate(360deg); }
     }
 
-    /* Black Chamber overlay */
     .black-overlay {
       position: fixed;
       inset: 0;
@@ -505,6 +504,60 @@
     .comms-dot.ghost {
       background: #a855f7;
     }
+
+    /* Operator Workstation */
+    .ws-btn {
+      font-size: 10px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      cursor: pointer;
+      transition: all 0.16s;
+    }
+
+    .ws-btn.active {
+      border-color: var(--ch-accent-soft);
+      box-shadow: 0 0 9px var(--ch-accent-soft);
+      background: rgba(2,6,23,0.95);
+      color: #f9fafb;
+    }
+
+    .workspace-dim {
+      opacity: 0.32;
+      filter: blur(0.3px);
+      transition: opacity 0.2s ease-out, filter 0.2s ease-out;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 3px 4px;
+      border-radius: 6px;
+      background: rgba(15,23,42,0.85);
+      border: 1px solid rgba(30,64,175,0.4);
+    }
+
+    .task-row.done {
+      opacity: 0.6;
+    }
+
+    .task-text.done {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+
+    .task-del {
+      font-size: 9px;
+      border-radius: 999px;
+      padding: 2px 6px;
+      border: 1px solid rgba(148,163,184,0.7);
+      background: transparent;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body class="theme-green">
@@ -516,9 +569,9 @@
     <!-- TOP BAR -->
     <div class="card flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <div class="label">ChernOS v1.6.0 – Black Chamber Update</div>
+        <div class="label">ChernOS v1.7.0 – Operator Workstation</div>
         <div class="text-2xl font-semibold" id="title-main">
-          Reactor + Containment + Black Chamber Console
+          Reactor + Containment + Black Chamber Workstation
         </div>
         <div class="status-board">
           <div class="status-cell">CORE CHANNELS: SYNCED</div>
@@ -526,7 +579,7 @@
           <div class="status-cell">CONTAINMENT BUS: ARMED</div>
           <div class="status-cell">BLACK CHAMBER: STANDBY</div>
           <div class="status-cell">DIAGNOSTICS ENGINE: READY</div>
-          <div class="status-cell">OVERDRIVE/CONTAINMENT: ONLINE</div>
+          <div class="status-cell">WORKSTATION: OPERATOR-DRIVEN</div>
         </div>
       </div>
 
@@ -582,7 +635,7 @@
     </div>
 
     <!-- TELEMETRY STRIP -->
-    <div class="grid grid-cols-4 gap-2">
+    <div class="grid grid-cols-4 gap-2" data-panel="reactor">
       <div class="card">
         <div class="label">CORE TEMP</div>
         <div class="big" id="read-temp">312°C</div>
@@ -624,7 +677,7 @@
     </div>
 
     <!-- CONTAINMENT PANEL -->
-    <div class="card mt-1">
+    <div class="card mt-1" data-panel="containment">
       <div class="label">CONTAINMENT PROTOCOLS</div>
       <div class="mt-2 flex flex-wrap gap-2 items-center">
         <div class="contain-pill alpha" id="pill-alpha">
@@ -657,7 +710,7 @@
     </div>
 
     <!-- COMMS / BLACK CHAMBER PANEL -->
-    <div class="card mt-1" id="comms-card">
+    <div class="card mt-1" id="comms-card" data-panel="comms">
       <div class="label">COMMS / BLACK CHAMBER</div>
       <div class="mt-2 flex flex-wrap gap-2 items-center">
         <div class="comms-pill" id="pill-satlink">
@@ -689,9 +742,47 @@
       </div>
     </div>
 
+    <!-- OPERATOR WORKSTATION PANEL -->
+    <div class="card mt-1">
+      <div class="label">OPERATOR WORKSTATION</div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button class="ws-btn active" data-ws-mode="full">Full Console</button>
+        <button class="ws-btn" data-ws-mode="reactor">Reactor Focus</button>
+        <button class="ws-btn" data-ws-mode="containment">Containment Focus</button>
+        <button class="ws-btn" data-ws-mode="comms">Comms Focus</button>
+        <button class="ws-btn" data-ws-mode="logs">Logs Focus</button>
+      </div>
+      <div id="ws-status" class="text-[11px] text-slate-400 mt-1">
+        Workspace: Full Console
+      </div>
+
+      <div class="mt-3 grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-3">
+        <div>
+          <div class="text-[11px] text-slate-400 mb-1">Operator Notepad</div>
+          <textarea
+            id="ws-notes"
+            class="w-full h-24 text-[11px] bg-black/70 border border-slate-600/60 rounded-md p-2 outline-none resize-vertical"
+            placeholder="Shift notes, fictional procedures, reminders (local only)."
+          ></textarea>
+        </div>
+        <div>
+          <div class="text-[11px] text-slate-400 mb-1">Tasks</div>
+          <div class="flex gap-1 mb-1">
+            <input
+              id="ws-task-input"
+              class="flex-1 text-[11px] bg-black/70 border border-slate-600/60 rounded-md px-2 py-1 outline-none"
+              placeholder="Add task (sim only)"
+            >
+            <button class="btn btn-small" id="ws-task-add">Add</button>
+          </div>
+          <div id="ws-task-list" class="space-y-1 max-h-24 overflow-y-auto text-[11px]"></div>
+        </div>
+      </div>
+    </div>
+
     <!-- CONTROLS + TERMINAL + LOG -->
-    <div class="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] gap-3">
-      <div class="card">
+    <div class="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] gap-3" data-panel="reactor logs">
+      <div class="card" data-panel="reactor">
         <div class="label">OPERATOR CONTROL SURFACE</div>
         <div class="flex flex-wrap gap-2 mt-2">
           <button class="btn" id="btn-scram">SCRAM</button>
@@ -714,14 +805,14 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" data-panel="logs">
         <div class="label">EVENT LOG (SIMULATION)</div>
         <div id="log" class="mt-2"></div>
       </div>
     </div>
 
     <!-- DIAGNOSTICS -->
-    <div class="card mt-1" id="diag-card" style="display:none">
+    <div class="card mt-1" id="diag-card" style="display:none" data-panel="reactor">
       <div class="label">DIAGNOSTICS MODE — LIVE TELEMETRY GRAPHS</div>
       <div class="graphs">
         <div>
@@ -742,7 +833,7 @@
 
   <script>
     // ============================================================
-    //   ChernOS v1.6.0 — Black Chamber Update (purely fictional)
+    //   ChernOS v1.7.0 — Operator Workstation (purely fictional)
     // ============================================================
 
     // ----- DOM Refs -----
@@ -811,6 +902,16 @@
 
     const themeButtons = Array.from(document.querySelectorAll(".theme-btn"));
 
+    // Workstation elements
+    const wsButtons   = Array.from(document.querySelectorAll(".ws-btn"));
+    const wsStatus    = document.getElementById("ws-status");
+    const wsNotes     = document.getElementById("ws-notes");
+    const wsTaskInput = document.getElementById("ws-task-input");
+    const wsTaskAdd   = document.getElementById("ws-task-add");
+    const wsTaskList  = document.getElementById("ws-task-list");
+
+    const panelElems  = Array.from(document.querySelectorAll("[data-panel]"));
+
     // Graph canvases
     const gcCore  = document.getElementById("g-core");
     const gcPress = document.getElementById("g-press");
@@ -848,7 +949,9 @@
       ghostLink: false,
       blackChamber: false,
       macroRecording: false,
-      macroBuffer: []
+      macroBuffer: [],
+      workspaceMode: "full",
+      tasks: []
     };
 
     // URL params
@@ -898,12 +1001,9 @@
       div.textContent = line;
       elLog.prepend(div);
       maybePersist(line + "\n");
-      if (state.macroRecording && !msg.startsWith("> macro")) {
-        // logs are not recorded, only operator commands via runCommand
-      }
     }
 
-    log("SIM: ChernOS v1.6.0 Black Chamber console ready.");
+    log("SIM: ChernOS v1.7.0 Operator Workstation console ready.");
 
     // ----- Audio Engine v3 -----
     let audioCtx = null;
@@ -1284,6 +1384,172 @@
       }
     }
 
+    // ----- Workstation: workspace modes -----
+    function applyWorkspaceMode(mode) {
+      state.workspaceMode = mode;
+      try {
+        localStorage.setItem("chernos_ws_mode", mode);
+      } catch (e) {}
+
+      wsButtons.forEach(btn => {
+        const m = btn.getAttribute("data-ws-mode");
+        if (m === mode) btn.classList.add("active");
+        else btn.classList.remove("active");
+      });
+
+      let label = "Full Console";
+      if (mode === "reactor") label = "Reactor Focus";
+      else if (mode === "containment") label = "Containment Focus";
+      else if (mode === "comms") label = "Comms Focus";
+      else if (mode === "logs") label = "Logs Focus";
+
+      wsStatus.textContent = "Workspace: " + label;
+
+      panelElems.forEach(el => {
+        const tags = (el.getAttribute("data-panel") || "").split(/\s+/);
+        if (mode === "full") {
+          el.classList.remove("workspace-dim");
+        } else {
+          if (tags.includes(mode)) {
+            el.classList.remove("workspace-dim");
+          } else {
+            el.classList.add("workspace-dim");
+          }
+        }
+      });
+    }
+
+    wsButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const m = btn.getAttribute("data-ws-mode");
+        applyWorkspaceMode(m);
+      });
+    });
+
+    // ----- Workstation: notes + tasks -----
+    function saveNotes() {
+      try {
+        localStorage.setItem("chernos_ws_notes", wsNotes.value || "");
+      } catch (e) {}
+    }
+
+    wsNotes.addEventListener("input", () => {
+      saveNotes();
+    });
+
+    function saveTasks() {
+      try {
+        localStorage.setItem("chernos_ws_tasks", JSON.stringify(state.tasks || []));
+      } catch (e) {}
+    }
+
+    function renderTasks() {
+      wsTaskList.innerHTML = "";
+      (state.tasks || []).forEach(task => {
+        const row = document.createElement("div");
+        row.className = "task-row" + (task.done ? " done" : "");
+        row.dataset.id = task.id;
+
+        const left = document.createElement("div");
+        left.className = "flex items-center gap-1";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!task.done;
+        cb.className = "w-3 h-3";
+
+        const txt = document.createElement("span");
+        txt.textContent = task.text;
+        txt.className = "task-text" + (task.done ? " done" : "");
+
+        left.appendChild(cb);
+        left.appendChild(txt);
+
+        const del = document.createElement("button");
+        del.className = "task-del";
+        del.textContent = "×";
+
+        cb.addEventListener("change", () => {
+          task.done = cb.checked;
+          saveTasks();
+          renderTasks();
+        });
+
+        del.addEventListener("click", () => {
+          state.tasks = state.tasks.filter(t => t.id !== task.id);
+          saveTasks();
+          renderTasks();
+        });
+
+        row.appendChild(left);
+        row.appendChild(del);
+        wsTaskList.appendChild(row);
+      });
+    }
+
+    wsTaskAdd.addEventListener("click", () => {
+      const raw = (wsTaskInput.value || "").trim();
+      if (!raw) return;
+      const task = {
+        id: Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6),
+        text: raw,
+        done: false
+      };
+      state.tasks.push(task);
+      wsTaskInput.value = "";
+      saveTasks();
+      renderTasks();
+    });
+
+    wsTaskInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        wsTaskAdd.click();
+      }
+    });
+
+    function loadWorkstationState() {
+      try {
+        const notes = localStorage.getItem("chernos_ws_notes");
+        if (notes !== null) wsNotes.value = notes;
+
+        const tasksRaw = localStorage.getItem("chernos_ws_tasks");
+        if (tasksRaw) {
+          try {
+            const arr = JSON.parse(tasksRaw);
+            if (Array.isArray(arr)) state.tasks = arr;
+          } catch (_) {}
+        }
+
+        const mode = localStorage.getItem("chernos_ws_mode");
+        if (mode && ["full","reactor","containment","comms","logs"].includes(mode)) {
+          applyWorkspaceMode(mode);
+        } else {
+          applyWorkspaceMode("full");
+        }
+      } catch (e) {
+        applyWorkspaceMode("full");
+      }
+      renderTasks();
+    }
+
+    // ----- Containment & overlays -----
+    function renderGammaOverlay() {
+      if (state.containment.gamma) {
+        elGammaOverlay.classList.add("active");
+      } else {
+        elGammaOverlay.classList.remove("active");
+      }
+    }
+
+    function renderBlackOverlay() {
+      if (state.blackChamber) {
+        elBlackOverlay.classList.add("active");
+      } else {
+        elBlackOverlay.classList.remove("active");
+      }
+    }
+
     function renderAll() {
       renderTelemetry();
       renderBadges();
@@ -1565,8 +1831,8 @@
         return;
       }
       log(`Macro play: replaying ${state.macroBuffer.length} commands (sim).`);
-      // simple immediate replay
-      for (const cmd of state.macroBuffer) {
+      const cmds = state.macroBuffer.slice();
+      for (const cmd of cmds) {
         runCommand(cmd);
       }
     }
@@ -1616,13 +1882,13 @@
       });
 
       if (themeName === "green") {
-        elTitle.textContent = "Reactor + Containment + Black Chamber Console";
+        elTitle.textContent = "Reactor + Containment + Black Chamber Workstation";
       } else if (themeName === "amber") {
-        elTitle.textContent = "Black Chamber Console · Amber Core";
+        elTitle.textContent = "Operator Workstation · Amber Core";
       } else if (themeName === "redline") {
-        elTitle.textContent = "Black Chamber Console · Redline Sim";
+        elTitle.textContent = "Operator Workstation · Redline Sim";
       } else if (themeName === "2049") {
-        elTitle.textContent = "Black Chamber Console · 2049 Mode (sim)";
+        elTitle.textContent = "Operator Workstation · 2049 Mode (sim)";
       }
       log("Theme set: " + themeName);
       renderAll();
@@ -1649,7 +1915,7 @@
       log("Hidden theme unlocked: 2049 (sim aesthetics only).");
     }
 
-    // ----- Terminal v1.6 -----
+    // ----- Terminal v1.7 -----
     const termHistory = [];
     let termIndex = -1;
     const commands = [
@@ -1668,7 +1934,6 @@
       if (!cmd) return;
       log("> " + cmd);
 
-      // macro capture (record raw command, not log text)
       if (state.macroRecording && !cmd.toLowerCase().startsWith("macro ")) {
         state.macroBuffer.push(cmd);
       }
@@ -1915,6 +2180,7 @@
 
     // ----- Init -----
     applyTheme("green");
+    loadWorkstationState();
     renderAll();
   </script>
 </body>
