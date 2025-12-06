@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>ChernOS v1.5.0 – Containment Protocols</title>
+  <title>ChernOS v1.6.0 – Black Chamber Update</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -71,6 +71,7 @@
       mix-blend-mode: screen;
       animation: glowPulse 4s ease-in-out infinite alternate;
       opacity: 0.7;
+      z-index: 1;
     }
 
     body.theme-amber .reactor-glow {
@@ -114,7 +115,7 @@
       opacity: 0;
       transform: scale(1.02);
       transition: opacity 0.35s ease-out;
-      z-index: 1;
+      z-index: 2;
     }
 
     .gamma-overlay.active {
@@ -127,6 +128,36 @@
       100% { transform: scale(1.02) rotate(360deg); }
     }
 
+    /* Black Chamber overlay */
+    .black-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(0,0,0,0.9), transparent 70%),
+        repeating-linear-gradient(
+          180deg,
+          rgba(15,23,42,0.6),
+          rgba(15,23,42,0.6) 2px,
+          transparent 2px,
+          transparent 4px
+        );
+      mix-blend-mode: multiply;
+      opacity: 0;
+      transition: opacity 0.4s ease-out;
+      z-index: 3;
+    }
+
+    .black-overlay.active {
+      opacity: 0.7;
+      animation: blackScan 7s linear infinite;
+    }
+
+    @keyframes blackScan {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(12px); }
+    }
+
     .card {
       border-radius: 16px;
       border: 1px solid var(--ch-border-soft);
@@ -135,7 +166,7 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 0 24px rgba(0,0,0,0.75);
       position: relative;
-      z-index: 2;
+      z-index: 4;
     }
 
     .label {
@@ -393,14 +424,13 @@
       gap: 4px;
       cursor: pointer;
       transition: all 0.16s;
-      color: #ffffff; /* ensure labels (Green / Amber / Redline / 2049) are visible */
+      color: #ffffff;
     }
     .theme-btn.active {
       border-color: var(--ch-accent-soft);
       box-shadow: 0 0 9px var(--ch-accent-soft);
     }
 
-    /* Highlight the hidden 2049 theme button */
     .theme-btn[data-theme="2049"] {
       border-color: #38bdf8 !important;
       color: #ffffff !important;
@@ -442,25 +472,59 @@
       box-shadow: 0 0 16px rgba(248,113,113,0.7);
       border-color: rgba(248,113,113,0.7) !important;
     }
+
+    .chamber-active {
+      box-shadow: 0 0 16px rgba(15,23,42,0.9);
+      border-color: rgba(15,23,42,0.9) !important;
+      background: rgba(2,6,23,0.95) !important;
+    }
+
+    .comms-pill {
+      font-size: 9px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.9);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-right: 4px;
+    }
+
+    .comms-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #4b5563;
+    }
+
+    .comms-dot.on {
+      background: #22c55e;
+    }
+
+    .comms-dot.ghost {
+      background: #a855f7;
+    }
   </style>
 </head>
 <body class="theme-green">
   <div class="reactor-glow"></div>
   <div id="gamma-overlay" class="gamma-overlay"></div>
+  <div id="black-overlay" class="black-overlay"></div>
 
   <div class="wrap">
     <!-- TOP BAR -->
     <div class="card flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <div class="label">ChernOS v1.5.0 – Containment Protocols</div>
+        <div class="label">ChernOS v1.6.0 – Black Chamber Update</div>
         <div class="text-2xl font-semibold" id="title-main">
-          Reactor Overdrive + Containment Console
+          Reactor + Containment + Black Chamber Console
         </div>
         <div class="status-board">
           <div class="status-cell">CORE CHANNELS: SYNCED</div>
           <div class="status-cell">COOLANT GRID: STABLE</div>
           <div class="status-cell">CONTAINMENT BUS: ARMED</div>
-          <div class="status-cell">I/O BUS: GREEN</div>
+          <div class="status-cell">BLACK CHAMBER: STANDBY</div>
           <div class="status-cell">DIAGNOSTICS ENGINE: READY</div>
           <div class="status-cell">OVERDRIVE/CONTAINMENT: ONLINE</div>
         </div>
@@ -473,6 +537,8 @@
           <span class="badge" id="badge-diag">DIAGNOSTICS: OFF</span>
           <span class="badge" id="badge-contain">CONTAINMENT: STABLE</span>
           <span class="badge" id="badge-lockdown">LOCKDOWN: OFF</span>
+          <span class="badge" id="badge-satlink">SATLINK: OFF</span>
+          <span class="badge" id="badge-black">BLACK CHAMBER: IDLE</span>
         </div>
 
         <div class="flex gap-6 items-center">
@@ -506,6 +572,9 @@
             <div class="mt-2 text-right text-xs text-slate-300">
               <div id="op-name-line">Operator: ANON / Lvl 1</div>
               <div id="op-status-line">Clearance: TECHNICIAN</div>
+              <div id="remote-status-line" class="text-[10px] text-slate-400 mt-1">
+                Remote link: LOCAL ONLY
+              </div>
             </div>
           </div>
         </div>
@@ -579,10 +648,44 @@
         <button class="btn btn-small" id="btn-lockdown-toggle">Lockdown</button>
       </div>
       <div class="mt-2 text-[10px] text-slate-400">
-        Terminal shortcuts: <span class="pill text-[10px]">containment status</span>
+        Terminal shortcuts:
+        <span class="pill text-[10px]">containment status</span>
         <span class="pill text-[10px]">lockdown on/off</span>
         <span class="pill text-[10px]">operator set &lt;name&gt;</span>
         <span class="pill text-[10px]">operator level &lt;n&gt;</span>
+      </div>
+    </div>
+
+    <!-- COMMS / BLACK CHAMBER PANEL -->
+    <div class="card mt-1" id="comms-card">
+      <div class="label">COMMS / BLACK CHAMBER</div>
+      <div class="mt-2 flex flex-wrap gap-2 items-center">
+        <div class="comms-pill" id="pill-satlink">
+          <span class="comms-dot" id="dot-satlink"></span>
+          <span>Satellite Link</span>
+        </div>
+        <div class="comms-pill" id="pill-ghost">
+          <span class="comms-dot" id="dot-ghost"></span>
+          <span>Ghost Mirror</span>
+        </div>
+        <div class="comms-pill" id="pill-black">
+          <span class="comms-dot" id="dot-black"></span>
+          <span>Black Chamber</span>
+        </div>
+      </div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button class="btn btn-small" id="btn-satlink-toggle">Toggle SatLink</button>
+        <button class="btn btn-small" id="btn-ghost-toggle">Toggle Ghost Mirror</button>
+        <button class="btn btn-small" id="btn-black-toggle">Toggle Black Chamber</button>
+        <button class="btn btn-small" id="btn-macro-rec">Macro Rec</button>
+        <button class="btn btn-small" id="btn-macro-play">Macro Play</button>
+      </div>
+      <div class="mt-2 text-[10px] text-slate-400">
+        Terminal shortcuts:
+        <span class="pill text-[10px]">satlink on/off</span>
+        <span class="pill text-[10px]">ghost on/off</span>
+        <span class="pill text-[10px]">black on/off</span>
+        <span class="pill text-[10px]">macro rec / stop / play</span>
       </div>
     </div>
 
@@ -598,12 +701,15 @@
           <button class="btn" id="btn-reset">Reset</button>
         </div>
         <div class="flex flex-wrap gap-2 mt-3">
-          <span class="pill text-[10px]">Terminal: help · status · containment status · lockdown on/off · operator set &lt;name&gt; · operator level &lt;n&gt;</span>
+          <span class="pill text-[10px]">
+            Terminal: help · status · containment status · satlink on/off · ghost on/off ·
+            black on/off · macro rec/stop/play
+          </span>
         </div>
 
         <div class="term-grid">
           <input id="term-input" autocomplete="off"
-            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, diag on/off, containment status, lockdown on/off, operator set &lt;name&gt;, operator level &lt;0–3&gt;)">
+            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, diag on/off, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, operator set &lt;name&gt;, operator level &lt;0–3&gt;)">
           <button class="btn" id="term-run">Run</button>
         </div>
       </div>
@@ -636,7 +742,7 @@
 
   <script>
     // ============================================================
-    //   ChernOS v1.5.0 — Containment Protocols (purely fictional)
+    //   ChernOS v1.6.0 — Black Chamber Update (purely fictional)
     // ============================================================
 
     // ----- DOM Refs -----
@@ -651,21 +757,31 @@
     const elCoreDot   = document.getElementById("core-dot");
     const elBadgeOver = document.getElementById("badge-overdrive");
     const elBadgeDiag = document.getElementById("badge-diag");
-    const elBadgePers = document.getElementById("badge-persist"); // not present now, but kept in logic
     const elBadgeSim  = document.getElementById("badge-sim");
     const elBadgeContain = document.getElementById("badge-contain");
     const elBadgeLockdown = document.getElementById("badge-lockdown");
+    const elBadgeSat  = document.getElementById("badge-satlink");
+    const elBadgeBlack= document.getElementById("badge-black");
     const elAudioState= document.getElementById("audio-state");
     const elDiagCard  = document.getElementById("diag-card");
     const elLog       = document.getElementById("log");
     const elTitle     = document.getElementById("title-main");
     const elGammaOverlay = document.getElementById("gamma-overlay");
+    const elBlackOverlay = document.getElementById("black-overlay");
     const elOpNameLine   = document.getElementById("op-name-line");
     const elOpStatusLine = document.getElementById("op-status-line");
+    const elRemoteStatus = document.getElementById("remote-status-line");
 
     const pillAlpha  = document.getElementById("pill-alpha");
     const pillBeta   = document.getElementById("pill-beta");
     const pillGamma  = document.getElementById("pill-gamma");
+
+    const pillSat    = document.getElementById("pill-satlink");
+    const pillGhost  = document.getElementById("pill-ghost");
+    const pillBlack  = document.getElementById("pill-black");
+    const dotSat     = document.getElementById("dot-satlink");
+    const dotGhost   = document.getElementById("dot-ghost");
+    const dotBlack   = document.getElementById("dot-black");
 
     const leverCore   = document.getElementById("lever-core");
     const leverCool   = document.getElementById("lever-coolant");
@@ -683,6 +799,12 @@
     const btnCfg      = document.getElementById("btn-cfg-toggle");
     const btnPulse    = document.getElementById("btn-contain-pulse");
     const btnLockdown = document.getElementById("btn-lockdown-toggle");
+
+    const btnSatlink  = document.getElementById("btn-satlink-toggle");
+    const btnGhost    = document.getElementById("btn-ghost-toggle");
+    const btnBlack    = document.getElementById("btn-black-toggle");
+    const btnMacroRec = document.getElementById("btn-macro-rec");
+    const btnMacroPlay= document.getElementById("btn-macro-play");
 
     const termInput   = document.getElementById("term-input");
     const termRun     = document.getElementById("term-run");
@@ -706,7 +828,7 @@
       rad: 0.14,
       safeguards: 3,
       overdrive: false,
-      meltdownStage: 0, // 0=none, 1..5
+      meltdownStage: 0, // 0..5
       diagnostics: false,
       audioOn: true,
       theme: "green",
@@ -721,10 +843,15 @@
         gamma: false
       },
       operatorName: "ANON",
-      operatorLevel: 1 // 0..3
+      operatorLevel: 1,
+      satLink: false,
+      ghostLink: false,
+      blackChamber: false,
+      macroRecording: false,
+      macroBuffer: []
     };
 
-    // detect ?persist=1, ?op=name, ?lvl=n
+    // URL params
     const params = new URLSearchParams(window.location.search);
     if (params.get("persist") === "1") {
       state.persistEnabled = true;
@@ -753,7 +880,7 @@
     }
     updateOperatorLines();
 
-    // ----- Logging & persistence -----
+    // ----- Logging & (optional) persistence -----
     function maybePersist(line) {
       if (!state.persistEnabled) return;
       try {
@@ -771,11 +898,14 @@
       div.textContent = line;
       elLog.prepend(div);
       maybePersist(line + "\n");
+      if (state.macroRecording && !msg.startsWith("> macro")) {
+        // logs are not recorded, only operator commands via runCommand
+      }
     }
 
-    log("SIM: ChernOS v1.5.0 Containment Protocols console ready.");
+    log("SIM: ChernOS v1.6.0 Black Chamber console ready.");
 
-    // ----- Audio Engine v3 (fictional) -----
+    // ----- Audio Engine v3 -----
     let audioCtx = null;
     let humNode = null;
     let coolantNode = null;
@@ -876,8 +1006,9 @@
       const activeCount =
         (state.containment.alpha ? 1 : 0) +
         (state.containment.betaLatched ? 1 : 0) +
-        (state.containment.gamma ? 1 : 0);
-      containNode.g.gain.value = state.audioOn ? Math.min(0.04, activeCount * 0.015) : 0;
+        (state.containment.gamma ? 1 : 0) +
+        (state.blackChamber ? 1 : 0);
+      containNode.g.gain.value = state.audioOn ? Math.min(0.055, activeCount * 0.015) : 0;
     }
 
     function startGammaCharge() {
@@ -892,7 +1023,7 @@
 
       let up = true;
       const iv = setInterval(() => {
-        if (!state.audioOn || !state.containment.gamma) {
+        if (!state.audioOn || (!state.containment.gamma && !state.blackChamber)) {
           g.gain.value = 0.0;
           return;
         }
@@ -1062,7 +1193,8 @@
       const meltdownBoost = state.meltdownStage > 0 ? 0.3 * state.meltdownStage : 0;
       const intensity = base + heatFactor * 1.2 + meltdownBoost;
       const glow = 14 + 26 * intensity;
-      const colorShift = state.meltdownStage >= 4 ? "#fb7185" :
+      const colorShift = state.blackChamber ? "#0f172a" :
+                         state.meltdownStage >= 4 ? "#fb7185" :
                          state.meltdownStage >= 2 ? "#f97316" :
                          "var(--ch-accent)";
       elCoreDot.style.boxShadow = `0 0 ${glow}px rgba(191,249,168,${0.45 + intensity * 0.25})`;
@@ -1089,6 +1221,24 @@
       setPill(pillGamma, state.containment.gamma, state.meltdownStage >= 3);
     }
 
+    function updateCommsPills() {
+      dotSat.classList.toggle("on", state.satLink);
+      dotGhost.classList.toggle("on", state.ghostLink);
+      dotGhost.classList.toggle("ghost", state.ghostLink);
+      dotBlack.classList.toggle("on", state.blackChamber);
+      pillBlack.classList.toggle("chamber-active", state.blackChamber);
+
+      if (!state.satLink && !state.ghostLink) {
+        elRemoteStatus.textContent = "Remote link: LOCAL ONLY";
+      } else if (state.satLink && !state.ghostLink) {
+        elRemoteStatus.textContent = "Remote link: SATELLITE UPLINK (sim)";
+      } else if (!state.satLink && state.ghostLink) {
+        elRemoteStatus.textContent = "Remote link: GHOST MIRROR (sim)";
+      } else {
+        elRemoteStatus.textContent = "Remote link: SAT+GHOST ROUTING (sim)";
+      }
+    }
+
     function renderBadges() {
       elBadgeOver.textContent = "OVERDRIVE: " + (state.overdrive ? "ON" : "OFF");
       elBadgeOver.style.color = state.overdrive ? "#fb7185" : "#9ca3af";
@@ -1110,6 +1260,12 @@
 
       elBadgeLockdown.textContent = "LOCKDOWN: " + (state.lockdown ? "ON" : "OFF");
       elBadgeLockdown.style.color = state.lockdown ? "#fb7185" : "#9ca3af";
+
+      elBadgeSat.textContent = "SATLINK: " + (state.satLink ? "ON" : "OFF");
+      elBadgeSat.style.color = state.satLink ? "#bbf7d0" : "#9ca3af";
+
+      elBadgeBlack.textContent = "BLACK CHAMBER: " + (state.blackChamber ? "ACTIVE" : "IDLE");
+      elBadgeBlack.style.color = state.blackChamber ? "#facc6b" : "#9ca3af";
     }
 
     function renderGammaOverlay() {
@@ -1120,11 +1276,21 @@
       }
     }
 
+    function renderBlackOverlay() {
+      if (state.blackChamber) {
+        elBlackOverlay.classList.add("active");
+      } else {
+        elBlackOverlay.classList.remove("active");
+      }
+    }
+
     function renderAll() {
       renderTelemetry();
       renderBadges();
       renderGammaOverlay();
+      renderBlackOverlay();
       updateContainPills();
+      updateCommsPills();
       renderGraphs();
     }
 
@@ -1154,6 +1320,11 @@
 
       if (state.containment.betaLatched) {
         dP *= 0.5;
+      }
+
+      if (state.blackChamber) {
+        dR *= 0.9;
+        dP *= 0.95;
       }
 
       if (state.meltdownStage === 0) {
@@ -1340,6 +1511,66 @@
       renderAll();
     }
 
+    // ----- COMMS / BLACK CHAMBER actions -----
+    btnSatlink.addEventListener("click", () => {
+      state.satLink = !state.satLink;
+      log(`SATLINK ${state.satLink ? "routed to sim uplink" : "disconnected"} (visual only).`);
+      renderAll();
+    });
+
+    btnGhost.addEventListener("click", () => {
+      state.ghostLink = !state.ghostLink;
+      log(`GHOST MIRROR ${state.ghostLink ? "latched (sim)" : "released (sim)"}.`);
+      renderAll();
+    });
+
+    btnBlack.addEventListener("click", () => {
+      toggleBlackChamber();
+    });
+
+    function toggleBlackChamber(forceOn) {
+      const target = (typeof forceOn === "boolean") ? forceOn : !state.blackChamber;
+      state.blackChamber = target;
+      if (state.blackChamber) {
+        log("BLACK CHAMBER engaged (visual dark-mode layer only).");
+      } else {
+        log("BLACK CHAMBER disengaged.");
+      }
+      updateContainHumGain();
+      renderAll();
+    }
+
+    btnMacroRec.addEventListener("click", () => {
+      startMacroRecording();
+    });
+
+    btnMacroPlay.addEventListener("click", () => {
+      playMacro();
+    });
+
+    function startMacroRecording() {
+      state.macroRecording = true;
+      state.macroBuffer = [];
+      log("Macro recording started (sim). Commands will be captured until `macro stop`.");
+    }
+
+    function stopMacroRecording() {
+      state.macroRecording = false;
+      log("Macro recording stopped (sim). Use `macro play` to replay.");
+    }
+
+    function playMacro() {
+      if (state.macroBuffer.length === 0) {
+        log("Macro play: buffer empty.");
+        return;
+      }
+      log(`Macro play: replaying ${state.macroBuffer.length} commands (sim).`);
+      // simple immediate replay
+      for (const cmd of state.macroBuffer) {
+        runCommand(cmd);
+      }
+    }
+
     // ----- Diagnostics toggle -----
     btnDiag.addEventListener("click", () => {
       state.diagnostics = !state.diagnostics;
@@ -1385,13 +1616,13 @@
       });
 
       if (themeName === "green") {
-        elTitle.textContent = "Reactor Overdrive + Containment Console";
+        elTitle.textContent = "Reactor + Containment + Black Chamber Console";
       } else if (themeName === "amber") {
-        elTitle.textContent = "Containment Console · Amber Core";
+        elTitle.textContent = "Black Chamber Console · Amber Core";
       } else if (themeName === "redline") {
-        elTitle.textContent = "Containment Console · Redline Sim";
+        elTitle.textContent = "Black Chamber Console · Redline Sim";
       } else if (themeName === "2049") {
-        elTitle.textContent = "Containment Console · 2049 Mode (sim)";
+        elTitle.textContent = "Black Chamber Console · 2049 Mode (sim)";
       }
       log("Theme set: " + themeName);
       renderAll();
@@ -1418,7 +1649,7 @@
       log("Hidden theme unlocked: 2049 (sim aesthetics only).");
     }
 
-    // ----- Terminal v1.5 -----
+    // ----- Terminal v1.6 -----
     const termHistory = [];
     let termIndex = -1;
     const commands = [
@@ -1427,7 +1658,9 @@
       "audio on","audio off","save-log","theme green","theme amber",
       "theme redline","theme 2049","power","coolant","engine status",
       "unlock 2049","containment status","lockdown on","lockdown off",
-      "operator set","operator level"
+      "operator set","operator level","satlink on","satlink off",
+      "ghost on","ghost off","black on","black off",
+      "macro rec","macro stop","macro play"
     ];
 
     function runCommand(raw) {
@@ -1435,13 +1668,18 @@
       if (!cmd) return;
       log("> " + cmd);
 
+      // macro capture (record raw command, not log text)
+      if (state.macroRecording && !cmd.toLowerCase().startsWith("macro ")) {
+        state.macroBuffer.push(cmd);
+      }
+
       termHistory.unshift(cmd);
       termIndex = -1;
 
       const lower = cmd.toLowerCase();
 
       if (lower === "help") {
-        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <green|amber|redline|2049>, containment status, lockdown on/off, operator set <name>, operator level <0-3>, engine status, save-log, unlock 2049");
+        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <green|amber|redline|2049>, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, operator set <name>, operator level <0-3>, engine status, save-log, unlock 2049");
         return;
       }
 
@@ -1449,7 +1687,8 @@
         log("status: temp=" + Math.round(state.temp) + "C, p=" + state.pressure.toFixed(2) +
             "MPa, rad=" + state.rad.toFixed(2) + "mSv/h, sg=" + state.safeguards +
             ", od=" + (state.overdrive ? "on" : "off") + ", diag=" + (state.diagnostics ? "on" : "off") +
-            ", meltdownStage=" + state.meltdownStage);
+            ", meltdownStage=" + state.meltdownStage + ", satLink=" + state.satLink +
+            ", black=" + state.blackChamber);
         return;
       }
 
@@ -1527,7 +1766,7 @@
       }
 
       if (lower === "engine status") {
-        log("engine: ticks=" + state.ticks + ", meltdownStage=" + state.meltdownStage + ", overdrive=" + (state.overdrive?"on":"off") + ", lockdown=" + state.lockdown);
+        log("engine: ticks=" + state.ticks + ", meltdownStage=" + state.meltdownStage + ", overdrive=" + (state.overdrive?"on":"off") + ", lockdown=" + state.lockdown + ", blackChamber=" + state.blackChamber);
         return;
       }
 
@@ -1549,6 +1788,68 @@
 
       if (lower === "lockdown off") {
         if (state.lockdown) toggleLockdown(false);
+        return;
+      }
+
+      if (lower === "satlink on") {
+        if (!state.satLink) {
+          state.satLink = true;
+          log("SATLINK routed to sim uplink (visual only).");
+          renderAll();
+        }
+        return;
+      }
+
+      if (lower === "satlink off") {
+        if (state.satLink) {
+          state.satLink = false;
+          log("SATLINK disconnected (sim).");
+          renderAll();
+        }
+        return;
+      }
+
+      if (lower === "ghost on") {
+        if (!state.ghostLink) {
+          state.ghostLink = true;
+          log("GHOST MIRROR latched (sim).");
+          renderAll();
+        }
+        return;
+      }
+
+      if (lower === "ghost off") {
+        if (state.ghostLink) {
+          state.ghostLink = false;
+          log("GHOST MIRROR released (sim).");
+          renderAll();
+        }
+        return;
+      }
+
+      if (lower === "black on") {
+        if (!state.blackChamber) toggleBlackChamber(true);
+        return;
+      }
+
+      if (lower === "black off") {
+        if (state.blackChamber) toggleBlackChamber(false);
+        return;
+      }
+
+      if (lower === "macro rec") {
+        startMacroRecording();
+        return;
+      }
+
+      if (lower === "macro stop") {
+        if (state.macroRecording) stopMacroRecording();
+        else log("Macro stop: no recording active.");
+        return;
+      }
+
+      if (lower === "macro play") {
+        playMacro();
         return;
       }
 
