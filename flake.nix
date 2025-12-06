@@ -1,22 +1,23 @@
 {
-  description = "ChernOS v1.3.0 — Meltdown Protocol";
+  description = "ChernOS v1.4.0 — Reactor Overdrive";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
 
   outputs = { self, nixpkgs }: let
     system = "x86_64-linux";
-    lib = nixpkgs.lib;
-    pkgs = import nixpkgs { inherit system; };
+    lib    = nixpkgs.lib;
+    pkgs   = import nixpkgs { inherit system; };
 
     # ---------- GRUB THEME ----------
     grubTheme = pkgs.runCommand "grub-theme-chernos" {} ''
       mkdir -p $out/share/grub/themes/chernos
+
       cat > $out/share/grub/themes/chernos/theme.txt <<EOF
 terminal_output gfxterm
 color_normal cfeecb 000000
 color_highlight bff9a8 000000
 
-menuentry "ChernOS Live" {
+menuentry "ChernOS v1.4.0 Live" {
   set gfxpayload=keep
 }
 EOF
@@ -57,800 +58,1264 @@ EOF
     '';
 
     # ---------- ChernOS UI (HTML + JS) ----------
+    #
+    # IMPORTANT:
+    #  - For now this is a placeholder.
+    #  - In Part 2 I will send you the full v1.4.0 Reactor Overdrive HTML+JS.
+    #  - When you get it, REPLACE the placeholder content between the two
+    #    single quotes ('') with that HTML.
+    #
     chernosPage = pkgs.writeText "index.html" ''
-      <!doctype html>
-      <html lang="en">
-      <head>
-        <meta charset="utf-8">
-        <title>ChernOS v1.3.0 – Meltdown Protocol</title>
-        <meta name="viewport" content="width=device-width,initial-scale=1">
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>
-          :root {
-            --nuclear-green: #bff9a8;
-            --bg-deep: #020806;
-          }
-          * { box-sizing: border-box; }
-          body {
-            margin: 0;
-            background:
-              radial-gradient(circle at 20% 0%, rgba(0,255,140,0.06), transparent 60%),
-              radial-gradient(circle at 85% 0%, rgba(0,255,140,0.03), transparent 55%),
-              var(--bg-deep);
-            color: #cfeecb;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif;
-            overflow: hidden;
-          }
-          .wrap {
-            min-height: 100vh;
-            padding: 22px 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            position: relative;
-          }
-          .reactor-glow {
-            position: fixed;
-            inset: -40px;
-            pointer-events: none;
-            background:
-              radial-gradient(circle at 15% 10%, rgba(0,255,140,0.05), transparent 70%),
-              radial-gradient(circle at 80% -10%, rgba(0,255,140,0.04), transparent 70%);
-            mix-blend-mode: screen;
-            opacity: 0.6;
-            animation: glowPulse 4s ease-in-out infinite alternate;
-          }
-          @keyframes glowPulse {
-            0% { opacity: 0.35; filter: blur(0); }
-            100% { opacity: 0.9; filter: blur(1px); }
-          }
-          .card {
-            border-radius: 16px;
-            border: 1px solid rgba(191,249,168,0.16);
-            background: radial-gradient(circle at top, rgba(0,255,140,0.04), transparent 90%) rgba(0,0,0,0.45);
-            padding: 12px 16px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 0 26px rgba(0,0,0,0.75);
-          }
-          .label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            color: #9ca3af;
-          }
-          .big {
-            font-size: 24px;
-            font-weight: 600;
-            color: var(--nuclear-green);
-          }
-          .grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0,1fr));
-            gap: 9px;
-          }
-          .pill {
-            font-size: 9px;
-            padding: 3px 8px;
-            border-radius: 999px;
-            border: 1px solid rgba(191,249,168,0.22);
-            color: #9ca3af;
-          }
-          .btn {
-            padding: 5px 9px;
-            border-radius: 6px;
-            border: 1px solid rgba(191,249,168,0.25);
-            font-size: 10px;
-            color: var(--nuclear-green);
-            background: transparent;
-            cursor: pointer;
-            transition: all 0.16s ease-out;
-          }
-          .btn:hover {
-            background: rgba(191,249,168,0.16);
-            box-shadow: 0 0 12px rgba(191,249,168,0.18);
-          }
-          .toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-            justify-content: space-between;
-          }
-          .badge {
-            font-size: 9px;
-            padding: 2px 7px;
-            border-radius: 999px;
-            border: 1px solid rgba(191,249,168,0.32);
-            color: var(--nuclear-green);
-          }
-          .status-board {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0,1fr));
-            gap: 6px;
-            margin-top: 4px;
-          }
-          .status-cell {
-            font-size: 9px;
-            padding: 4px 6px;
-            border-radius: 8px;
-            border: 1px solid rgba(191,249,168,0.16);
-            background: rgba(0,0,0,0.7);
-            color: #9ca3af;
-            position: relative;
-            overflow: hidden;
-          }
-          .status-cell::after {
-            content: "";
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(to bottom, rgba(191,249,168,0.05), transparent);
-            mix-blend-mode: screen;
-            opacity: 0;
-            animation: flicker 3.4s infinite;
-          }
-          @keyframes flicker {
-            0%,82%,100% { opacity: 0; }
-            85% { opacity: 0.18; }
-            87% { opacity: 0.02; }
-            90% { opacity: 0.15; }
-            93% { opacity: 0; }
-          }
-          .core-ring-wrap {
-            position: relative;
-            width: 90px;
-            height: 90px;
-          }
-          .core-ring {
-            position: absolute;
-            inset: 0;
-            border-radius: 50%;
-            border: 2px solid rgba(191,249,168,0.26);
-            box-shadow: 0 0 12px rgba(191,249,168,0.25);
-            animation: ringSpin 9s linear infinite;
-          }
-          .core-ring.inner {
-            inset: 16px;
-            border-color: rgba(191,249,168,0.45);
-            animation-duration: 6s;
-            animation-direction: reverse;
-          }
-          .core-dot {
-            position: absolute;
-            inset: 32px;
-            border-radius: 50%;
-            background: radial-gradient(circle, var(--nuclear-green), transparent);
-            box-shadow: 0 0 18px rgba(191,249,168,0.9);
-          }
-          @keyframes ringSpin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-          .lever-wrap {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-            font-size: 9px;
-            color: #9ca3af;
-          }
-          .lever {
-            width: 120px;
-          }
-          #log {
-            max-height: 180px;
-            overflow: auto;
-            font-size: 10px;
-          }
-          .term {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 6px;
-            margin-top: 6px;
-          }
-          .term input {
-            width: 100%;
-            background: #00000090;
-            border: 1px solid rgba(191,249,168,0.25);
-            border-radius: 6px;
-            padding: 6px 8px;
-            color: #cfeecb;
-            font-size: 12px;
-          }
-          .graphs {
-            display: grid;
-            grid-template-columns: repeat(3, minmax(0,1fr));
-            gap: 8px;
-            margin-top: 6px;
-          }
-          canvas {
-            width: 100%;
-            height: 52px;
-            border-radius: 8px;
-            background: rgba(0,0,0,0.65);
-            border: 1px solid rgba(191,249,168,0.20);
-          }
-          .diag-active {
-            box-shadow: 0 0 18px rgba(191,249,168,0.22);
-            border-color: rgba(191,249,168,0.48);
-          }
-          .mute-indicator {
-            font-size: 9px;
-            color: #9ca3af;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="reactor-glow"></div>
-        <div class="wrap">
-          <!-- Top bar -->
-          <div class="card toolbar">
-            <div>
-              <div class="label">ChernOS v1.3.0</div>
-              <div class="big">Meltdown Protocol</div>
-              <div class="status-board">
-                <div class="status-cell">CORE CHANNELS: SYNCED</div>
-                <div class="status-cell">COOLANT LOOP: NOMINAL</div>
-                <div class="status-cell">CONTAINMENT GRID: STABLE</div>
-                <div class="status-cell">I/O BUS: GREEN</div>
-                <div class="status-cell">SENSOR MESH: ONLINE</div>
-                <div class="status-cell">ALERT QUEUE: IDLE</div>
-              </div>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-end">
-              <div style="display:flex;gap:6px;align-items:center">
-                <span class="badge">SIM-CORE ONLINE</span>
-                <span class="badge" id="diag-badge">DIAGNOSTICS: OFF</span>
-                <span class="badge" id="persist-badge">PERSISTENCE: OFF</span>
-              </div>
-              <div style="display:flex;gap:10px;align-items:center">
-                <div class="core-ring-wrap">
-                  <div class="core-ring"></div>
-                  <div class="core-ring inner"></div>
-                  <div class="core-dot" id="core-dot"></div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
-                  <button class="btn" id="diag-toggle">Diagnostics Mode</button>
-                  <button class="btn" id="mute-toggle">Toggle Audio</button>
-                  <span class="mute-indicator" id="mute-state">Audio: ON</span>
-                </div>
-              </div>
-            </div>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ChernOS v1.4.0 – Reactor Overdrive</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --ch-accent: #bff9a8;
+      --ch-accent-soft: rgba(191,249,168,0.5);
+      --ch-bg: #020806;
+      --ch-bg-card: rgba(0,0,0,0.6);
+      --ch-text-main: #cfeecb;
+      --ch-text-soft: #9ca3af;
+      --ch-border-soft: rgba(191,249,168,0.18);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(0,255,140,0.06), transparent 60%),
+        radial-gradient(circle at 90% 0%, rgba(0,255,140,0.03), transparent 55%),
+        var(--ch-bg);
+      color: var(--ch-text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow: hidden;
+    }
+
+    body.theme-amber {
+      --ch-accent: #facc6b;
+      --ch-accent-soft: rgba(250,204,107,0.55);
+      --ch-bg: #1a1208;
+      --ch-bg-card: rgba(10,4,0,0.7);
+    }
+
+    body.theme-redline {
+      --ch-accent: #fb7185;
+      --ch-accent-soft: rgba(248,113,113,0.6);
+      --ch-bg: #050009;
+      --ch-bg-card: rgba(8,0,12,0.75);
+    }
+
+    body.theme-2049 {
+      --ch-accent: #38bdf8;
+      --ch-accent-soft: rgba(56,189,248,0.6);
+      --ch-bg: #020617;
+      --ch-bg-card: rgba(2,6,23,0.85);
+    }
+
+    .wrap {
+      min-height: 100vh;
+      padding: 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+
+    .reactor-glow {
+      position: fixed;
+      inset: -40px;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(0,255,140,0.06), transparent 70%),
+        radial-gradient(circle at 85% -10%, rgba(0,255,140,0.06), transparent 65%);
+      mix-blend-mode: screen;
+      animation: glowPulse 4s ease-in-out infinite alternate;
+      opacity: 0.7;
+    }
+
+    body.theme-amber .reactor-glow {
+      background:
+        radial-gradient(circle at 15% 10%, rgba(250,204,107,0.1), transparent 70%),
+        radial-gradient(circle at 85% -10%, rgba(250,204,107,0.08), transparent 65%);
+    }
+
+    body.theme-redline .reactor-glow {
+      background:
+        radial-gradient(circle at 10% 0%, rgba(248,113,113,0.12), transparent 70%),
+        radial-gradient(circle at 90% -5%, rgba(239,68,68,0.1), transparent 65%);
+    }
+
+    body.theme-2049 .reactor-glow {
+      background:
+        radial-gradient(circle at 15% 10%, rgba(56,189,248,0.12), transparent 72%),
+        radial-gradient(circle at 85% 0%, rgba(168,85,247,0.08), transparent 68%);
+    }
+
+    @keyframes glowPulse {
+      0% { opacity: 0.4; filter: blur(0); }
+      100% { opacity: 0.9; filter: blur(1px); }
+    }
+
+    .card {
+      border-radius: 16px;
+      border: 1px solid var(--ch-border-soft);
+      background: radial-gradient(circle at top, var(--ch-accent-soft), transparent 110%) var(--ch-bg-card);
+      padding: 12px 14px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 24px rgba(0,0,0,0.75);
+    }
+
+    .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ch-text-soft);
+    }
+
+    .big {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--ch-accent);
+    }
+
+    .pill {
+      font-size: 9px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(191,249,168,0.25);
+      border-color: var(--ch-border-soft);
+      color: var(--ch-text-soft);
+    }
+
+    .btn {
+      padding: 4px 9px;
+      border-radius: 7px;
+      border: 1px solid rgba(191,249,168,0.25);
+      border-color: var(--ch-border-soft);
+      font-size: 11px;
+      color: var(--ch-accent);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.16s ease-out;
+    }
+    .btn:hover {
+      background: rgba(0,0,0,0.8);
+      box-shadow: 0 0 10px var(--ch-accent-soft);
+    }
+
+    .badge {
+      font-size: 9px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(191,249,168,0.32);
+      border-color: var(--ch-border-soft);
+      color: var(--ch-accent);
+      white-space: nowrap;
+    }
+
+    .status-board {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .status-cell {
+      font-size: 9px;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(191,249,168,0.16);
+      border-color: rgba(191,249,168,0.12);
+      background: rgba(0,0,0,0.7);
+      color: var(--ch-text-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .status-cell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(191,249,168,0.06), transparent);
+      mix-blend-mode: screen;
+      opacity: 0;
+      animation: flicker 3.4s infinite;
+    }
+
+    @keyframes flicker {
+      0%,82%,100% { opacity: 0; }
+      84% { opacity: 0.2; }
+      87% { opacity: 0.04; }
+      90% { opacity: 0.17; }
+      93% { opacity: 0; }
+    }
+
+    .core-ring-wrap {
+      width: 100px;
+      height: 100px;
+      position: relative;
+    }
+
+    .core-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(191,249,168,0.25);
+      border-color: var(--ch-accent-soft);
+      box-shadow: 0 0 14px rgba(0,0,0,0.9);
+      animation: ringSpin 9s linear infinite;
+    }
+
+    .core-ring.inner {
+      inset: 16px;
+      border-width: 2px;
+      animation-duration: 6s;
+      animation-direction: reverse;
+      border-color: rgba(255,255,255,0.35);
+    }
+
+    .core-dot {
+      position: absolute;
+      inset: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--ch-accent), transparent);
+      box-shadow: 0 0 18px var(--ch-accent-soft);
+      transition: box-shadow 0.3s ease-out, transform 0.25s ease-out;
+    }
+
+    @keyframes ringSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    input[type="range"].lever {
+      width: 130px;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      outline: none;
+    }
+    input[type="range"].lever::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--ch-accent);
+      box-shadow: 0 0 6px var(--ch-accent-soft);
+      cursor: pointer;
+      border: 1px solid rgba(0,0,0,0.7);
+    }
+    input[type="range"].lever::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--ch-accent);
+      cursor: pointer;
+      border: none;
+    }
+
+    #log {
+      max-height: 190px;
+      overflow-y: auto;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    #log::-webkit-scrollbar {
+      width: 6px;
+    }
+    #log::-webkit-scrollbar-thumb {
+      background: rgba(148,163,184,0.6);
+      border-radius: 999px;
+    }
+
+    .term-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    #term-input {
+      width: 100%;
+      background: rgba(0,0,0,0.85);
+      border-radius: 7px;
+      border: 1px solid var(--ch-border-soft);
+      padding: 6px 8px;
+      font-size: 12px;
+      color: var(--ch-text-main);
+      outline: none;
+    }
+    #term-input:focus {
+      box-shadow: 0 0 9px var(--ch-accent-soft);
+    }
+
+    .graphs {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 58px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.65);
+      border: 1px solid rgba(15,23,42,0.9);
+    }
+
+    .diag-active {
+      box-shadow: 0 0 18px var(--ch-accent-soft);
+      border-color: rgba(191,249,168,0.5);
+    }
+
+    .overdrive-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .soft {
+      color: var(--ch-text-soft);
+      font-size: 11px;
+    }
+
+    .crit {
+      color: #fb7185;
+    }
+
+    .warn {
+      color: #facc6b;
+    }
+
+    .ok {
+      color: #4ade80;
+    }
+
+    .theme-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      margin-right: 4px;
+    }
+
+    .theme-btn {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.75);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.16s;
+    }
+    .theme-btn.active {
+      border-color: var(--ch-accent-soft);
+      box-shadow: 0 0 9px var(--ch-accent-soft);
+    }
+
+    .mute-indicator {
+      font-size: 10px;
+      color: var(--ch-text-soft);
+    }
+  </style>
+</head>
+<body class="theme-green">
+  <div class="reactor-glow"></div>
+
+  <div class="wrap">
+    <!-- TOP BAR -->
+    <div class="card flex flex-wrap items-start justify-between gap-4">
+      <div class="space-y-2">
+        <div class="label">ChernOS v1.4.0</div>
+        <div class="text-2xl font-semibold" id="title-main">
+          Reactor Overdrive Console
+        </div>
+        <div class="status-board">
+          <div class="status-cell">CORE CHANNELS: SYNCED</div>
+          <div class="status-cell">COOLANT GRID: STABLE</div>
+          <div class="status-cell">CONTAINMENT: SEALED</div>
+          <div class="status-cell">I/O BUS: GREEN</div>
+          <div class="status-cell">DIAGNOSTICS ENGINE: READY</div>
+          <div class="status-cell">OVERDRIVE SIM: ARMED</div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 items-end">
+        <div class="flex flex-wrap gap-2 items-center">
+          <span class="badge" id="badge-sim">SIM-CORE ONLINE</span>
+          <span class="badge" id="badge-overdrive">OVERDRIVE: OFF</span>
+          <span class="badge" id="badge-diag">DIAGNOSTICS: OFF</span>
+          <span class="badge" id="badge-persist">PERSISTENCE: OFF</span>
+        </div>
+
+        <div class="flex gap-6 items-center">
+          <div class="core-ring-wrap">
+            <div class="core-ring"></div>
+            <div class="core-ring inner"></div>
+            <div class="core-dot" id="core-dot"></div>
           </div>
-
-          <!-- Telemetry row -->
-          <div class="grid-4">
-            <div class="card">
-              <div class="label">CORE TEMP</div>
-              <div id="temp" class="big">312°C</div>
-              <div id="temp-status" style="font-size:10px;margin-top:2px;">Nominal</div>
+          <div class="flex flex-col gap-2 items-end">
+            <div class="flex gap-2">
+              <button class="btn" id="btn-diag-toggle">Diagnostics</button>
+              <button class="btn" id="btn-overdrive-toggle">Overdrive</button>
             </div>
-            <div class="card">
-              <div class="label">PRESSURE COUPLING</div>
-              <div id="pressure" class="big">1.30 MPa</div>
-              <div id="pressure-status" style="font-size:10px;margin-top:2px;">Stable</div>
+            <div class="flex gap-2">
+              <button class="btn" id="btn-audio-toggle">Toggle Audio</button>
+              <span class="mute-indicator" id="audio-state">Audio: ON</span>
             </div>
-            <div class="card">
-              <div class="label">RADIATION FLUX</div>
-              <div id="rad" class="big">0.14 mSv/h</div>
-              <div id="rad-status" style="font-size:10px;margin-top:2px;">Shielded</div>
-            </div>
-            <div class="card">
-              <div class="label">SAFEGUARDS</div>
-              <div id="sg" class="big">3 / 3</div>
-              <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
-                <div class="pill">Primary SCRAM</div>
-                <div class="pill">Coolant Surge</div>
-                <div class="pill">Containment Seal</div>
-              </div>
-              <div style="margin-top:6px;display:flex;gap:8px">
-                <div class="lever-wrap">
-                  <span>Core Drive</span>
-                  <input id="lever-core" class="lever" type="range" min="40" max="120" value="80">
-                </div>
-                <div class="lever-wrap">
-                  <span>Coolant Bias</span>
-                  <input id="lever-coolant" class="lever" type="range" min="80" max="140" value="100">
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Controls + log + terminal -->
-          <div class="card">
-            <div class="label">OPERATOR CONTROL SURFACE</div>
-            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px">
-              <button class="btn" id="btn-scram">SCRAM</button>
-              <button class="btn" id="btn-relief">Relief</button>
-              <button class="btn" id="btn-stress">Stress Pulse</button>
-              <button class="btn" id="btn-chaos">Force Failure</button>
-              <button class="btn" id="btn-reset">Reset</button>
-            </div>
-
-            <div class="term">
-              <input id="term-input" placeholder="terminal (help, status, log &lt;msg&gt;, power &lt;n&gt;, coolant &lt;n&gt;, diag on/off, audio on/off, save-log)">
-              <button class="btn" id="term-run">Run</button>
-            </div>
-
-            <div id="log" style="margin-top:6px;line-height:1.4"></div>
-          </div>
-
-          <!-- Diagnostics graphs -->
-          <div class="card" id="diag-card" style="display:none">
-            <div class="label">DIAGNOSTICS MODE — TELEMETRY</div>
-            <div class="graphs">
-              <div>
-                <div style="font-size:9px;color:#9ca3af;margin:2px 0">Core Temp</div>
-                <canvas id="g-core"></canvas>
-              </div>
-              <div>
-                <div style="font-size:9px;color:#9ca3af;margin:2px 0">Pressure</div>
-                <canvas id="g-press"></canvas>
-              </div>
-              <div>
-                <div style="font-size:9px;color:#9ca3af;margin:2px 0">Radiation</div>
-                <canvas id="g-rad"></canvas>
-              </div>
+            <div class="flex gap-2 mt-1">
+              <button class="theme-btn active" data-theme="green">
+                <span class="theme-dot" style="background:#22c55e;"></span>Green
+              </button>
+              <button class="theme-btn" data-theme="amber">
+                <span class="theme-dot" style="background:#facc6b;"></span>Amber
+              </button>
+              <button class="theme-btn" data-theme="redline">
+                <span class="theme-dot" style="background:#fb7185;"></span>Redline
+              </button>
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <script>
-          var logEl = document.getElementById("log");
-          var tempEl = document.getElementById("temp");
-          var pEl = document.getElementById("pressure");
-          var rEl = document.getElementById("rad");
-          var sgEl = document.getElementById("sg");
-          var ts = document.getElementById("temp-status");
-          var ps = document.getElementById("pressure-status");
-          var rs = document.getElementById("rad-status");
-          var diagToggle = document.getElementById("diag-toggle");
-          var diagBadge = document.getElementById("diag-badge");
-          var diagCard = document.getElementById("diag-card");
-          var muteToggle = document.getElementById("mute-toggle");
-          var muteState = document.getElementById("mute-state");
-          var persistBadge = document.getElementById("persist-badge");
-          var coreDot = document.getElementById("core-dot");
+    <!-- TELEMETRY STRIP -->
+    <div class="grid grid-cols-4 gap-2">
+      <div class="card">
+        <div class="label">CORE TEMP</div>
+        <div class="big" id="read-temp">312°C</div>
+        <div class="soft mt-1" id="status-temp">Nominal</div>
+      </div>
 
-          var btnScram = document.getElementById("btn-scram");
-          var btnRelief = document.getElementById("btn-relief");
-          var btnStress = document.getElementById("btn-stress");
-          var btnChaos = document.getElementById("btn-chaos");
-          var btnReset = document.getElementById("btn-reset");
+      <div class="card">
+        <div class="label">PRESSURE COUPLING</div>
+        <div class="big" id="read-pressure">1.30 MPa</div>
+        <div class="soft mt-1" id="status-pressure">Stable</div>
+      </div>
 
-          var leverCore = document.getElementById("lever-core");
-          var leverCool = document.getElementById("lever-coolant");
+      <div class="card">
+        <div class="label">RADIATION FLUX</div>
+        <div class="big" id="read-rad">0.14 mSv/h</div>
+        <div class="soft mt-1" id="status-rad">Shielded</div>
+      </div>
 
-          var termInput = document.getElementById("term-input");
-          var termRun = document.getElementById("term-run");
+      <div class="card">
+        <div class="label">SAFEGUARDS & DRIVE</div>
+        <div class="flex justify-between items-center">
+          <div>
+            <div class="text-lg font-semibold" id="read-sg">3 / 3</div>
+            <div class="overdrive-label mt-1" id="overdrive-state-label">OVERDRIVE: DISARMED</div>
+          </div>
+          <div class="flex flex-col gap-1 ml-2">
+            <div class="text-[10px] text-slate-400">Core Drive</div>
+            <input id="lever-core" type="range" min="40" max="125" value="80" class="lever">
+            <div class="text-[10px] text-slate-400 mt-1">Coolant Bias</div>
+            <input id="lever-coolant" type="range" min="80" max="145" value="100" class="lever">
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <span class="pill">SCRAM RODS</span>
+          <span class="pill">COOLANT SURGE</span>
+          <span class="pill">CONTAINMENT SEAL</span>
+        </div>
+      </div>
+    </div>
 
-          var temp, p, rad, sg, meltdown;
-          var diagnostics = false;
-          var histLen = 80;
-          var histTemp = [];
-          var histPress = [];
-          var histRad = [];
+    <!-- CONTROLS + TERMINAL + LOG -->
+    <div class="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] gap-3">
+      <div class="card">
+        <div class="label">OPERATOR CONTROL SURFACE</div>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button class="btn" id="btn-scram">SCRAM</button>
+          <button class="btn" id="btn-relief">Relief</button>
+          <button class="btn" id="btn-stress">Stress Pulse</button>
+          <button class="btn" id="btn-chaos">Force Failure</button>
+          <button class="btn" id="btn-reset">Reset</button>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <span class="pill text-[10px]">Terminal: help · status · overdrive on/off · theme &lt;name&gt;</span>
+        </div>
 
-          var audioCtx = null;
-          var humNode = null;
-          var coolantNode = null;
-          var sirenNode = null;
-          var audioOn = true;
+        <div class="term-grid">
+          <input id="term-input" autocomplete="off"
+            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, theme &lt;green|amber|redline|2049&gt;, audio on/off, diag on/off, save-log)">
+          <button class="btn" id="term-run">Run</button>
+        </div>
+      </div>
 
-          var persistEnabled = false;
-          if (window.location.search.indexOf("persist=1") !== -1) {
-            persistEnabled = true;
-          }
+      <div class="card">
+        <div class="label">EVENT LOG (SIMULATION)</div>
+        <div id="log" class="mt-2"></div>
+      </div>
+    </div>
 
-          function ensureAudio() {
-            if (audioCtx !== null) return;
-            try {
-              audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            } catch(e) {
-              audioCtx = null;
-            }
-          }
+    <!-- DIAGNOSTICS -->
+    <div class="card mt-1" id="diag-card" style="display:none">
+      <div class="label">DIAGNOSTICS MODE — LIVE TELEMETRY GRAPHS</div>
+      <div class="graphs">
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Core Temp</div>
+          <canvas id="g-core" width="260" height="60"></canvas>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Pressure</div>
+          <canvas id="g-press" width="260" height="60"></canvas>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Radiation</div>
+          <canvas id="g-rad" width="260" height="60"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
 
-          function startHum() {
-            if (!audioOn || audioCtx === null || humNode) return;
-            var osc = audioCtx.createOscillator();
-            var g = audioCtx.createGain();
-            osc.type = "sine";
-            osc.frequency.value = 52;
-            g.gain.value = 0.035;
-            osc.connect(g);
-            g.connect(audioCtx.destination);
-            osc.start();
-            humNode = { osc: osc, gain: g };
-          }
+  <script>
+    // ============================================================
+    //     ChernOS v1.4.0 — Reactor Overdrive (purely fictional)
+    // ============================================================
 
-          function stopHum() {
-            if (humNode) {
-              try { humNode.osc.stop(); } catch(e) {}
-              humNode = null;
-            }
-          }
+    // ----- DOM Refs -----
+    const elTemp      = document.getElementById("read-temp");
+    const elTempStat  = document.getElementById("status-temp");
+    const elP         = document.getElementById("read-pressure");
+    const elPStat     = document.getElementById("status-pressure");
+    const elR         = document.getElementById("read-rad");
+    const elRStat     = document.getElementById("status-rad");
+    const elSG        = document.getElementById("read-sg");
+    const elOverLbl   = document.getElementById("overdrive-state-label");
+    const elCoreDot   = document.getElementById("core-dot");
+    const elBadgeOver = document.getElementById("badge-overdrive");
+    const elBadgeDiag = document.getElementById("badge-diag");
+    const elBadgePers = document.getElementById("badge-persist");
+    const elBadgeSim  = document.getElementById("badge-sim");
+    const elAudioState= document.getElementById("audio-state");
+    const elDiagCard  = document.getElementById("diag-card");
+    const elLog       = document.getElementById("log");
+    const elTitle     = document.getElementById("title-main");
 
-          function startCoolant() {
-            if (!audioOn || audioCtx === null || coolantNode) return;
-            var osc = audioCtx.createOscillator();
-            var g = audioCtx.createGain();
-            osc.type = "triangle";
-            osc.frequency.value = 18;
-            g.gain.value = 0.02;
-            osc.connect(g);
-            g.connect(audioCtx.destination);
-            osc.start();
-            coolantNode = { osc: osc, gain: g };
-          }
+    const leverCore   = document.getElementById("lever-core");
+    const leverCool   = document.getElementById("lever-coolant");
 
-          function stopCoolant() {
-            if (coolantNode) {
-              try { coolantNode.osc.stop(); } catch(e) {}
-              coolantNode = null;
-            }
-          }
+    const btnScram    = document.getElementById("btn-scram");
+    const btnRelief   = document.getElementById("btn-relief");
+    const btnStress   = document.getElementById("btn-stress");
+    const btnChaos    = document.getElementById("btn-chaos");
+    const btnReset    = document.getElementById("btn-reset");
+    const btnDiag     = document.getElementById("btn-diag-toggle");
+    const btnOver     = document.getElementById("btn-overdrive-toggle");
+    const btnAudio    = document.getElementById("btn-audio-toggle");
 
-          function startSiren() {
-            if (!audioOn || audioCtx === null || sirenNode) return;
-            var osc = audioCtx.createOscillator();
-            var g = audioCtx.createGain();
-            osc.type = "square";
-            g.gain.value = 0.0;
-            osc.connect(g);
-            g.connect(audioCtx.destination);
-            osc.start();
-            var up = true;
-            var iv = setInterval(function(){
-              if (!audioOn) {
-                g.gain.value = 0;
-                return;
-              }
-              up = !up;
-              osc.frequency.value = up ? 700 : 520;
-              g.gain.value = up ? 0.06 : 0.0;
-            }, 260);
-            sirenNode = { osc: osc, gain: g, interval: iv };
-          }
+    const termInput   = document.getElementById("term-input");
+    const termRun     = document.getElementById("term-run");
 
-          function stopSiren() {
-            if (sirenNode) {
-              clearInterval(sirenNode.interval);
-              try { sirenNode.osc.stop(); } catch(e) {}
-              sirenNode = null;
-            }
-          }
+    const themeButtons = Array.from(document.querySelectorAll(".theme-btn"));
 
-          function setAudioOn(on) {
-            audioOn = on;
-            if (on) {
-              ensureAudio();
-              startHum();
-              startCoolant();
-              if (meltdown) startSiren();
-              muteState.textContent = "Audio: ON";
-            } else {
-              stopHum();
-              stopCoolant();
-              stopSiren();
-              muteState.textContent = "Audio: OFF";
-            }
-          }
+    // Graph canvases
+    const gcCore  = document.getElementById("g-core");
+    const gcPress = document.getElementById("g-press");
+    const gcRad   = document.getElementById("g-rad");
 
-          muteToggle.addEventListener("click", function(){
-            setAudioOn(!audioOn);
-          });
+    // ----- Simulation state -----
+    const histLen = 90;
+    let histTemp  = [];
+    let histPress = [];
+    let histRad   = [];
 
-          window.addEventListener("load", function(){
-            setTimeout(function(){
-              ensureAudio();
-              setAudioOn(true);
-            }, 400);
-          });
+    const state = {
+      temp: 312,
+      pressure: 1.3,
+      rad: 0.14,
+      safeguards: 3,
+      overdrive: false,
+      meltdownStage: 0, // 0=none, 1=warning, 2=runaway, 3=collapse (sim)
+      diagnostics: false,
+      audioOn: true,
+      theme: "green",
+      persistEnabled: false,
+      ticks: 0,
+      microJitter: 0
+    };
 
-          function maybePersist(line) {
-            if (!persistEnabled) return;
-            try {
-              if (navigator.sendBeacon) {
-                var blob = new Blob([line], { type: "text/plain" });
-                navigator.sendBeacon("/persist/chernos-logs/log.txt", blob);
-              }
-            } catch(e) {}
-          }
+    // detect ?persist=1
+    if (window.location.search.indexOf("persist=1") !== -1) {
+      state.persistEnabled = true;
+    }
 
-          function log(msg) {
-            var t = new Date().toISOString().slice(11,19);
-            var line = "[" + t + "] " + msg;
-            var el = document.createElement("div");
-            el.textContent = line;
-            logEl.prepend(el);
-            maybePersist(line + "\n");
-          }
+    // ----- Logging & persistence -----
+    function maybePersist(line) {
+      if (!state.persistEnabled) return;
+      try {
+        if (navigator.sendBeacon) {
+          const blob = new Blob([line], { type: "text/plain" });
+          navigator.sendBeacon("/persist/chernos-logs/log.txt", blob);
+        }
+      } catch (e) {}
+    }
 
-          function updatePersistBadge() {
-            persistBadge.textContent = "PERSISTENCE: " + (persistEnabled ? "ON" : "OFF");
-            persistBadge.style.color = persistEnabled ? "#bbf7d0" : "#9ca3af";
-          }
+    function log(msg) {
+      const t = new Date().toISOString().slice(11, 19);
+      const line = `[${t}] ${msg}`;
+      const div = document.createElement("div");
+      div.textContent = line;
+      elLog.prepend(div);
+      maybePersist(line + "\n");
+    }
 
-          function pushHist(buf,v) {
-            buf.push(v);
-            if (buf.length > histLen) buf.shift();
-          }
+    // pre-fill initial log
+    log("SIM: ChernOS v1.4.0 Reactor Overdrive console ready.");
 
-          function drawGraph(id,data,color) {
-            var c = document.getElementById(id);
-            if (!c) return;
-            var ctx = c.getContext("2d");
-            var w = c.width;
-            var h = c.height;
-            ctx.clearRect(0,0,w,h);
-            if (data.length < 2) return;
+    function updatePersistBadge() {
+      elBadgePers.textContent = "PERSISTENCE: " + (state.persistEnabled ? "ON" : "OFF");
+      elBadgePers.style.color = state.persistEnabled ? "#bbf7d0" : "#9ca3af";
+    }
+    updatePersistBadge();
 
-            var min = data[0];
-            var max = data[0];
-            for (var i=1;i<data.length;i++) {
-              if (data[i] < min) min = data[i];
-              if (data[i] > max) max = data[i];
-            }
-            var span = max - min;
-            if (span === 0) span = 1;
+    // ----- Audio Engine v2 (purely aesthetic) -----
+    let audioCtx = null;
+    let humNode = null;
+    let coolantNode = null;
+    let crackNode = null;
+    let sirenNode = null;
 
-            ctx.beginPath();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 1;
+    function ensureAudio() {
+      if (audioCtx) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        audioCtx = null;
+      }
+    }
 
-            for (var j=0;j<data.length;j++) {
-              var x = (j / (data.length - 1)) * (w - 4) + 2;
-              var y = h - 4 - ((data[j] - min) / span) * (h - 8);
-              if (j === 0) ctx.moveTo(x,y);
-              else ctx.lineTo(x,y);
-            }
-            ctx.stroke();
-          }
+    function startHum() {
+      if (!state.audioOn || !audioCtx || humNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 50;
+      g.gain.value = 0.03;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+      humNode = { osc, g };
+    }
 
-          function renderGraphs() {
-            if (!diagnostics) return;
-            drawGraph("g-core", histTemp, "#bff9a8");
-            drawGraph("g-press", histPress, "#86efac");
-            drawGraph("g-rad", histRad, "#22c55e");
-          }
+    function startCoolant() {
+      if (!state.audioOn || !audioCtx || coolantNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = 19;
+      g.gain.value = 0.02;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+      coolantNode = { osc, g };
+    }
 
-          function render() {
-            tempEl.textContent = String(Math.round(temp)) + "°C";
-            pEl.textContent = p.toFixed(2) + " MPa";
-            rEl.textContent = rad.toFixed(2) + " mSv/h";
-            sgEl.textContent = String(sg) + " / 3";
+    function startCrackle() {
+      if (!state.audioOn || !audioCtx || crackNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.value = 1200;
+      g.gain.value = 0.0;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+      const iv = setInterval(() => {
+        if (!state.audioOn || state.meltdownStage === 0) {
+          g.gain.value = 0.0;
+          return;
+        }
+        g.gain.value = (Math.random() < 0.35 ? 0.03 : 0.0);
+      }, 90);
+      crackNode = { osc, g, iv };
+    }
 
-            var coreIntensity = (temp - 260) / 900;
-            if (coreIntensity < 0) coreIntensity = 0;
-            if (coreIntensity > 1) coreIntensity = 1;
-            var glow = 12 + 26 * coreIntensity;
-            var alpha = 0.4 + 0.5 * coreIntensity;
-            coreDot.style.boxShadow =
-              "0 0 " + glow + "px rgba(191,249,168," + alpha + ")";
+    function startSiren() {
+      if (!state.audioOn || !audioCtx || sirenNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "sawtooth";
+      g.gain.value = 0.0;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
 
-            ts.style.color = temp > 950 ? "#f97316" :
-                             temp > 650 ? "#eab308" :
-                             "#22c55e";
-            ts.textContent = temp > 950 ? "Critical overheating (sim)" :
-                             temp > 650 ? "Approaching redline (sim)" :
-                             "Nominal";
+      let up = true;
+      const iv = setInterval(() => {
+        if (!state.audioOn || state.meltdownStage < 2) {
+          g.gain.value = 0.0;
+          return;
+        }
+        up = !up;
+        osc.frequency.value = up ? 720 : 540;
+        g.gain.value = up ? 0.08 : 0.02;
+      }, 280);
 
-            ps.style.color = p > 5.5 ? "#f97316" :
-                             p > 3.2 ? "#eab308" :
-                             "#22c55e";
-            ps.textContent = p > 5.5 ? "Containment strain (sim)" :
-                             p > 3.2 ? "Elevated coupling (sim)" :
-                             "Stable";
+      sirenNode = { osc, g, iv };
+    }
 
-            rs.style.color = rad > 3 ? "#f97316" :
-                             rad > 0.7 ? "#eab308" :
-                             "#22c55e";
-            rs.textContent = rad > 3 ? "Severe release (sim)" :
-                             rad > 0.7 ? "Leak indicated (sim)" :
-                             "Shielding effective";
-          }
+    function stopNode(nodeObj, hasInterval) {
+      if (!nodeObj) return;
+      if (hasInterval && nodeObj.iv) clearInterval(nodeObj.iv);
+      try { nodeObj.osc.stop(); } catch (_) {}
+    }
 
-          function tick() {
-            var coreBias = parseInt(leverCore.value,10) / 100;
-            var coolBias = parseInt(leverCool.value,10) / 100;
+    function stopAllAudio() {
+      stopNode(humNode, false); humNode = null;
+      stopNode(coolantNode, false); coolantNode = null;
+      stopNode(crackNode, true); crackNode = null;
+      stopNode(sirenNode, true); sirenNode = null;
+    }
 
-            if (!meltdown) {
-              var j = Math.random() - 0.5;
-              temp += j * 3.5 + (coreBias - 0.8) * 4 - (coolBias - 1.0) * 3;
-              p    += j * 0.06 + (temp - 300) / 2600;
-              rad  += j * 0.018 + Math.max(0, (temp - 400)) / 6000;
+    function applyAudioState() {
+      if (!state.audioOn) {
+        stopAllAudio();
+        elAudioState.textContent = "Audio: OFF";
+        return;
+      }
+      ensureAudio();
+      elAudioState.textContent = "Audio: ON";
+      startHum();
+      startCoolant();
+      startCrackle();
+      startSiren();
+    }
 
-              if (temp > 1200 && sg > 0) {
-                sg -= 1;
-                temp -= 260;
-                p -= 0.7;
-                rad -= 0.2;
-                log("AUTO-SAFEGUARD (sim): staged insertion + coolant surge.");
-              }
+    btnAudio.addEventListener("click", () => {
+      state.audioOn = !state.audioOn;
+      applyAudioState();
+    });
 
-              if (temp > 1350 && p > 5.4 && sg === 0) {
-                meltdown = true;
-                log("!!! MELTDOWN SIM: Visuals + alarms only.");
-                startSiren();
-              }
-            } else {
-              temp += 36;
-              p = Math.max(0.4, p - 0.25);
-              rad += 0.9;
-            }
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        ensureAudio();
+        applyAudioState();
+      }, 400);
+    });
 
-            if (temp < 260) temp = 260;
-            if (p < 0.9) p = 0.9;
-            if (rad < 0.05) rad = 0.05;
+    // ----- Graph helpers -----
+    function pushHist(buf, v) {
+      buf.push(v);
+      if (buf.length > histLen) buf.shift();
+    }
 
-            pushHist(histTemp, temp);
-            pushHist(histPress, p);
-            pushHist(histRad, rad);
+    function drawGraph(canvas, data, color) {
+      if (!canvas || !canvas.getContext) return;
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      if (data.length < 2) return;
 
-            render();
-            renderGraphs();
-          }
+      let min = data[0], max = data[0];
+      for (let i=1; i<data.length; i++) {
+        if (data[i] < min) min = data[i];
+        if (data[i] > max) max = data[i];
+      }
+      let span = max - min;
+      if (span === 0) span = 1;
 
-          function scram() {
-            log("OP: SCRAM (sim)");
-            temp -= 340;
-            p -= 1.0;
-            rad -= 0.3;
-            if (temp < 260) temp = 260;
-            render();
-          }
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
 
-          function relief() {
-            log("OP: Relief valves (sim)");
-            p -= 0.6;
-            if (p < 0.9) p = 0.9;
-            render();
-          }
+      for (let i=0; i<data.length; i++) {
+        const x = (i / (data.length - 1)) * (w - 4) + 2;
+        const y = h - 4 - ((data[i] - min) / span) * (h - 8);
+        if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
 
-          function stress() {
-            log("OP: Stress pulse (sim)");
-            temp += 260;
-            p += 1.4;
-            rad += 0.45;
-            render();
-          }
+    function renderGraphs() {
+      if (!state.diagnostics) return;
+      drawGraph(gcCore,  histTemp,  "#bbf7d0");
+      drawGraph(gcPress, histPress, "#86efac");
+      drawGraph(gcRad,   histRad,   "#4ade80");
+    }
 
-          function chaos() {
-            log("OP: Forced safeguard bypass (sim)");
-            sg = 0;
-            temp = 1250;
-            p = 5.3;
-            rad = 1.6;
-            render();
-          }
+    // ----- Rendering -----
+    function renderTelemetry() {
+      elTemp.textContent = Math.round(state.temp) + "°C";
+      elP.textContent    = state.pressure.toFixed(2) + " MPa";
+      elR.textContent    = state.rad.toFixed(2) + " mSv/h";
+      elSG.textContent   = state.safeguards + " / 3";
 
-          function resetSim() {
-            temp = 312;
-            p = 1.3;
-            rad = 0.14;
-            sg = 3;
-            meltdown = false;
-            histTemp = [];
-            histPress = [];
-            histRad = [];
-            stopSiren();
-            log("Simulation reset to nominal baseline.");
-            render();
-          }
+      const t = state.temp;
+      const p = state.pressure;
+      const r = state.rad;
 
-          btnScram.onclick = scram;
-          btnRelief.onclick = relief;
-          btnStress.onclick = stress;
-          btnChaos.onclick = chaos;
-          btnReset.onclick = resetSim;
+      // temp status
+      if (t > 1150) {
+        elTempStat.textContent = "Critical overheating (sim)";
+        elTempStat.className = "soft crit";
+      } else if (t > 730) {
+        elTempStat.textContent = "Approaching redline (sim)";
+        elTempStat.className = "soft warn";
+      } else {
+        elTempStat.textContent = "Nominal";
+        elTempStat.className = "soft ok";
+      }
 
-          diagToggle.addEventListener("click", function(){
-            diagnostics = !diagnostics;
-            diagCard.style.display = diagnostics ? "block" : "none";
-            diagBadge.textContent = "DIAGNOSTICS: " + (diagnostics ? "ON" : "OFF");
-            if (diagnostics) diagCard.classList.add("diag-active");
-            else diagCard.classList.remove("diag-active");
-          });
+      // pressure
+      if (p > 5.8) {
+        elPStat.textContent = "Containment strain (sim)";
+        elPStat.className = "soft crit";
+      } else if (p > 3.3) {
+        elPStat.textContent = "Elevated coupling (sim)";
+        elPStat.className = "soft warn";
+      } else {
+        elPStat.textContent = "Stable";
+        elPStat.className = "soft ok";
+      }
 
-          function runCmd(raw) {
-            var cmd = String(raw || "").trim();
-            if (!cmd) return;
-            log("> " + cmd);
-            var lower = cmd.toLowerCase();
+      // radiation
+      if (r > 3.0) {
+        elRStat.textContent = "Severe release (sim)";
+        elRStat.className = "soft crit";
+      } else if (r > 0.8) {
+        elRStat.textContent = "Leak indicated (sim)";
+        elRStat.className = "soft warn";
+      } else {
+        elRStat.textContent = "Shielding effective";
+        elRStat.className = "soft ok";
+      }
 
-            if (lower === "help") {
-              log("commands: help, status, log <msg>, power <n>, coolant <n>, scram, relief, stress, chaos, reset, diag on/off, audio on/off, save-log");
-              return;
-            }
-            if (lower === "status") {
-              log("status: temp=" + Math.round(temp) + "C, p=" + p.toFixed(2) + "MPa, rad=" + rad.toFixed(2) + "mSv/h, sg=" + sg);
-              return;
-            }
-            if (lower.indexOf("log ") === 0) {
-              log(cmd.slice(4));
-              return;
-            }
-            if (lower.indexOf("power ") === 0) {
-              var n1 = parseInt(lower.split(/\s+/)[1]);
-              if (!isNaN(n1)) {
-                if (n1 < 40) n1 = 40;
-                if (n1 > 120) n1 = 120;
-                leverCore.value = String(n1);
-                log("core drive set via terminal");
-              }
-              return;
-            }
-            if (lower.indexOf("coolant ") === 0) {
-              var n2 = parseInt(lower.split(/\s+/)[1]);
-              if (!isNaN(n2)) {
-                if (n2 < 80) n2 = 80;
-                if (n2 > 140) n2 = 140;
-                leverCool.value = String(n2);
-                log("coolant bias set via terminal");
-              }
-              return;
-            }
-            if (lower === "scram") { scram(); return; }
-            if (lower === "relief") { relief(); return; }
-            if (lower === "stress") { stress(); return; }
-            if (lower === "chaos") { chaos(); return; }
-            if (lower === "reset") { resetSim(); return; }
-            if (lower === "diag on") {
-              if (!diagnostics) diagToggle.click();
-              return;
-            }
-            if (lower === "diag off") {
-              if (diagnostics) diagToggle.click();
-              return;
-            }
-            if (lower === "audio on") { setAudioOn(true); return; }
-            if (lower === "audio off") { setAudioOn(false); return; }
-            if (lower === "save-log") {
-              maybePersist("[manual flush]\\n");
-              log("log flush requested");
-              return;
-            }
+      // overdrive label
+      if (!state.overdrive) {
+        elOverLbl.textContent = "OVERDRIVE: DISARMED";
+      } else if (state.meltdownStage === 0) {
+        elOverLbl.textContent = "OVERDRIVE: ACTIVE (sim boost)";
+      } else {
+        elOverLbl.textContent = "OVERDRIVE: LOCKED (meltdown sim)";
+      }
 
-            log("unknown command — try `help`");
-          }
+      // core glow intensity
+      const base = state.overdrive ? 1.1 : 0.75;
+      const heatFactor = Math.min(1, Math.max(0, (t - 280) / 900));
+      const intensity = base + heatFactor * 1.2;
+      const glow = 14 + 26 * intensity;
+      elCoreDot.style.boxShadow = `0 0 ${glow}px rgba(191,249,168,${0.45 + intensity * 0.4})`;
+      elCoreDot.style.transform  = `scale(${0.9 + intensity * 0.25})`;
+    }
 
-          termRun.addEventListener("click", function(){
-            runCmd(termInput.value);
-            termInput.value = "";
-          });
+    function renderBadges() {
+      // Overdrive
+      elBadgeOver.textContent = "OVERDRIVE: " + (state.overdrive ? "ON" : "OFF");
+      elBadgeOver.style.color = state.overdrive ? "#fb7185" : "#9ca3af";
 
-          termInput.addEventListener("keydown", function(e){
-            if (e.key === "Enter") {
-              runCmd(termInput.value);
-              termInput.value = "";
-            }
-          });
+      // Diagnostics
+      elBadgeDiag.textContent = "DIAGNOSTICS: " + (state.diagnostics ? "ON" : "OFF");
+      elBadgeDiag.style.color = state.diagnostics ? "#bbf7d0" : "#9ca3af";
 
-          updatePersistBadge();
-          resetSim();
-          setInterval(tick, 900);
-          setInterval(updatePersistBadge, 2000);
-        </script>
-      </body>
-      </html>
-    '';
+      // Sim
+      elBadgeSim.textContent = "SIM-CORE ONLINE";
+    }
+
+    function renderAll() {
+      renderTelemetry();
+      renderBadges();
+      renderGraphs();
+    }
+
+    // ----- Simulation Engine -----
+    function stepSim() {
+      state.ticks++;
+
+      const drive  = parseInt(leverCore.value, 10)   / 100;
+      const cool   = parseInt(leverCool.value, 10)   / 100;
+      const jitter = (Math.random() - 0.5);
+
+      // small micro jitter baseline
+      state.microJitter = 0.3 * jitter;
+
+      // base behavior
+      let dT = jitter * 2.2 + (drive - 0.85) * 5.2 - (cool - 1.0) * 3.4;
+      let dP = jitter * 0.07 + (state.temp - 320) / 2600;
+      let dR = jitter * 0.02 + Math.max(0, (state.temp - 420)) / 6400;
+
+      // overdrive exaggerates
+      if (state.overdrive && state.meltdownStage === 0) {
+        dT *= 1.8;
+        dP *= 1.5;
+        dR *= 1.7;
+      }
+
+      // meltdown stages
+      if (state.meltdownStage === 0) {
+        if (state.temp > 1220 && state.safeguards > 0) {
+          state.safeguards -= 1;
+          state.temp -= 260;
+          state.pressure -= 0.9;
+          state.rad -= 0.25;
+          log("AUTO-SAFEGUARD (sim): staged insertion + coolant surge.");
+        }
+
+        if (state.temp > 1300 && state.pressure > 5.4 && state.safeguards === 0) {
+          state.meltdownStage = 1;
+          log("MELTDOWN STAGE 1 (sim): Overheat threshold exceeded.");
+        }
+      } else if (state.meltdownStage === 1) {
+        dT += 16.5;
+        dP += 0.11;
+        dR += 0.24;
+        if (state.temp > 1450) {
+          state.meltdownStage = 2;
+          log("MELTDOWN STAGE 2 (sim): Pressure runaway engaged.");
+        }
+      } else if (state.meltdownStage === 2) {
+        dT += 28;
+        dP -= 0.15;
+        dR += 0.6;
+        if (state.rad > 4.0) {
+          state.meltdownStage = 3;
+          log("MELTDOWN STAGE 3 (sim): Core collapse visualized.");
+        }
+      } else if (state.meltdownStage === 3) {
+        dT += 6;
+        dP = Math.max(0.6, state.pressure - 0.25);
+        dR += 0.2;
+      }
+
+      state.temp     += dT;
+      state.pressure += dP;
+      state.rad      += dR;
+
+      // clamps
+      if (state.temp < 260) state.temp = 260;
+      if (state.pressure < 0.9) state.pressure = 0.9;
+      if (state.rad < 0.05) state.rad = 0.05;
+
+      // log history
+      pushHist(histTemp,  state.temp);
+      pushHist(histPress, state.pressure);
+      pushHist(histRad,   state.rad);
+
+      renderAll();
+    }
+
+    setInterval(stepSim, 850);
+
+    // ----- Operator actions -----
+    function doScram() {
+      log("OP: SCRAM (sim)");
+      state.temp -= 360;
+      state.pressure -= 1.2;
+      state.rad -= 0.35;
+      if (state.temp < 260) state.temp = 260;
+      if (state.pressure < 0.9) state.pressure = 0.9;
+      if (state.rad < 0.05) state.rad = 0.05;
+      if (state.meltdownStage > 0) {
+        log("SCRAM (sim): meltdown chain remains in visual mode only.");
+      }
+      renderAll();
+    }
+
+    function doRelief() {
+      log("OP: Relief valves (sim)");
+      state.pressure -= 0.7;
+      if (state.pressure < 0.9) state.pressure = 0.9;
+      renderAll();
+    }
+
+    function doStress() {
+      log("OP: Stress pulse (sim)");
+      state.temp += 260;
+      state.pressure += 1.4;
+      state.rad += 0.45;
+      renderAll();
+    }
+
+    function doChaos() {
+      log("OP: Forced safeguard bypass (sim)");
+      state.safeguards = 0;
+      state.temp = 1250;
+      state.pressure = 5.3;
+      state.rad = 1.6;
+      renderAll();
+    }
+
+    function resetSim() {
+      state.temp = 312;
+      state.pressure = 1.3;
+      state.rad = 0.14;
+      state.safeguards = 3;
+      state.meltdownStage = 0;
+      histTemp = [];
+      histPress = [];
+      histRad = [];
+      log("Simulation reset to nominal baseline.");
+      renderAll();
+    }
+
+    btnScram.addEventListener("click", doScram);
+    btnRelief.addEventListener("click", doRelief);
+    btnStress.addEventListener("click", doStress);
+    btnChaos.addEventListener("click", doChaos);
+    btnReset.addEventListener("click", resetSim);
+
+    // ----- Diagnostics toggle -----
+    btnDiag.addEventListener("click", () => {
+      state.diagnostics = !state.diagnostics;
+      elDiagCard.style.display = state.diagnostics ? "block" : "none";
+      if (state.diagnostics) {
+        elDiagCard.classList.add("diag-active");
+        log("Diagnostics mode enabled (sim).");
+      } else {
+        elDiagCard.classList.remove("diag-active");
+        log("Diagnostics mode disabled (sim).");
+      }
+      renderBadges();
+    });
+
+    // ----- Overdrive toggle -----
+    btnOver.addEventListener("click", () => {
+      if (state.meltdownStage > 0) {
+        log("Overdrive: locked (meltdown sim active).");
+        return;
+      }
+      state.overdrive = !state.overdrive;
+      if (state.overdrive) {
+        log("Overdrive mode enabled (physics exaggerated, visual only).");
+      } else {
+        log("Overdrive mode disabled.");
+      }
+      renderBadges();
+      renderTelemetry();
+    });
+
+    // ----- Theme handling -----
+    function applyTheme(themeName) {
+      state.theme = themeName;
+      document.body.className = `theme-${themeName}`;
+      themeButtons.forEach(btn => {
+        const t = btn.getAttribute("data-theme");
+        if (t === themeName) btn.classList.add("active");
+        else btn.classList.remove("active");
+      });
+
+      if (themeName === "green") {
+        elTitle.textContent = "Reactor Overdrive Console";
+      } else if (themeName === "amber") {
+        elTitle.textContent = "Reactor Overdrive · Amber Core";
+      } else if (themeName === "redline") {
+        elTitle.textContent = "Reactor Overdrive · Redline Sim";
+      } else if (themeName === "2049") {
+        elTitle.textContent = "Reactor Overdrive · 2049 Mode (sim)";
+      }
+      log("Theme set: " + themeName);
+      renderAll();
+    }
+
+    themeButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const t = btn.getAttribute("data-theme");
+        applyTheme(t);
+      });
+    });
+
+    // hidden 2049 mode
+    function unlock2049() {
+      if (document.querySelector('[data-theme="2049"]')) return;
+      const parent = themeButtons[0].parentElement;
+      const btn = document.createElement("button");
+      btn.className = "theme-btn";
+      btn.setAttribute("data-theme", "2049");
+      btn.innerHTML = '<span class="theme-dot" style="background:#38bdf8;"></span>2049';
+      parent.appendChild(btn);
+      themeButtons.push(btn);
+      btn.addEventListener("click", () => applyTheme("2049"));
+      log("Hidden theme unlocked: 2049 (sim aesthetics only).");
+    }
+
+    // ----- Terminal v1.4 -----
+    const termHistory = [];
+    let termIndex = -1;
+    const commands = [
+      "help","status","scram","relief","stress","chaos","reset",
+      "diag on","diag off","overdrive on","overdrive off",
+      "audio on","audio off","save-log","theme green","theme amber",
+      "theme redline","theme 2049","power","coolant","engine status","unlock 2049"
+    ];
+
+    function runCommand(raw) {
+      const cmd = String(raw || "").trim();
+      if (!cmd) return;
+      log("> " + cmd);
+
+      termHistory.unshift(cmd);
+      termIndex = -1;
+
+      const lower = cmd.toLowerCase();
+
+      if (lower === "help") {
+        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <green|amber|redline|2049>, engine status, save-log, unlock 2049");
+        return;
+      }
+
+      if (lower === "status") {
+        log("status: temp=" + Math.round(state.temp) + "C, p=" + state.pressure.toFixed(2) +
+            "MPa, rad=" + state.rad.toFixed(2) + "mSv/h, sg=" + state.safeguards +
+            ", od=" + (state.overdrive ? "on" : "off") + ", diag=" + (state.diagnostics ? "on" : "off"));
+        return;
+      }
+
+      if (lower === "scram") { doScram(); return; }
+      if (lower === "relief") { doRelief(); return; }
+      if (lower === "stress") { doStress(); return; }
+      if (lower === "chaos") { doChaos(); return; }
+      if (lower === "reset") { resetSim(); return; }
+
+      if (lower.startsWith("power ")) {
+        const n = parseInt(lower.split(/\s+/)[1], 10);
+        if (!isNaN(n)) {
+          let v = Math.min(125, Math.max(40, n));
+          leverCore.value = v;
+          log("Core drive set via terminal: " + v);
+        } else {
+          log("Invalid power value.");
+        }
+        return;
+      }
+
+      if (lower.startsWith("coolant ")) {
+        const n = parseInt(lower.split(/\s+/)[1], 10);
+        if (!isNaN(n)) {
+          let v = Math.min(145, Math.max(80, n));
+          leverCool.value = v;
+          log("Coolant bias set via terminal: " + v);
+        } else {
+          log("Invalid coolant value.");
+        }
+        return;
+      }
+
+      if (lower === "diag on") {
+        if (!state.diagnostics) btnDiag.click();
+        return;
+      }
+      if (lower === "diag off") {
+        if (state.diagnostics) btnDiag.click();
+        return;
+      }
+
+      if (lower === "overdrive on") {
+        if (!state.overdrive) btnOver.click();
+        return;
+      }
+      if (lower === "overdrive off") {
+        if (state.overdrive) btnOver.click();
+        return;
+      }
+
+      if (lower === "audio on") {
+        if (!state.audioOn) { state.audioOn = true; applyAudioState(); }
+        return;
+      }
+      if (lower === "audio off") {
+        if (state.audioOn) { state.audioOn = false; applyAudioState(); }
+        return;
+      }
+
+      if (lower.startsWith("theme ")) {
+        const t = lower.split(/\s+/)[1];
+        if (["green","amber","redline","2049"].includes(t)) {
+          if (t === "2049") unlock2049();
+          applyTheme(t);
+        } else {
+          log("Unknown theme. Use: green, amber, redline, 2049");
+        }
+        return;
+      }
+
+      if (lower === "engine status") {
+        log("engine: ticks=" + state.ticks + ", meltdownStage=" + state.meltdownStage + ", overdrive=" + (state.overdrive?"on":"off"));
+        return;
+      }
+
+      if (lower === "save-log") {
+        maybePersist("[manual flush]\\n");
+        log("log flush requested (sim)");
+        return;
+      }
+
+      if (lower === "unlock 2049") {
+        unlock2049();
+        return;
+      }
+
+      log("Unknown command — try `help`.");
+    }
+
+    termRun.addEventListener("click", () => {
+      runCommand(termInput.value);
+      termInput.value = "";
+    });
+
+    termInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        runCommand(termInput.value);
+        termInput.value = "";
+      } else if (e.key === "ArrowUp") {
+        if (termHistory.length === 0) return;
+        e.preventDefault();
+        if (termIndex < termHistory.length - 1) termIndex++;
+        termInput.value = termHistory[termIndex];
+      } else if (e.key === "ArrowDown") {
+        if (termHistory.length === 0) return;
+        e.preventDefault();
+        if (termIndex > 0) {
+          termIndex--;
+          termInput.value = termHistory[termIndex];
+        } else {
+          termIndex = -1;
+          termInput.value = "";
+        }
+      } else if (e.key === "Tab") {
+        e.preventDefault();
+        const current = termInput.value.trim().toLowerCase();
+        if (!current) return;
+        const match = commands.find(c => c.startsWith(current));
+        if (match) termInput.value = match;
+      }
+    });
+
+    // ----- Init -----
+    applyTheme("green");
+    renderAll();
+  </script>
+</body>
+</html>
 
   in {
     nixosConfigurations.chernos-iso = lib.nixosSystem {
       inherit system;
       modules = [
+        # Base ISO module
         "${nixpkgs}/nixos/modules/installer/cd-dvd/iso-image.nix"
+
         ({ pkgs, lib, ... }: {
-          isoImage.isoName = "chernos-os.iso";
+          isoImage.isoName = "chernos-os-v1.4.0.iso";
 
           # ---------- Boot stack ----------
-          boot.loader.grub.enable = lib.mkForce true;
+          boot.loader.grub.enable  = lib.mkForce true;
           boot.loader.grub.version = 2;
-          boot.loader.grub.device = "nodev";
-          boot.loader.grub.theme = "${grubTheme}/share/grub/themes/chernos/theme.txt";
+          boot.loader.grub.device  = "nodev";
+          boot.loader.grub.theme   = "${grubTheme}/share/grub/themes/chernos/theme.txt";
 
-          boot.plymouth.enable = true;
+          boot.plymouth.enable        = true;
           boot.plymouth.themePackages = [ plymouthTheme ];
-          boot.plymouth.theme = "chernos";
+          boot.plymouth.theme         = "chernos";
+
           boot.kernelParams = [
             "quiet"
             "splash"
@@ -859,42 +1324,43 @@ EOF
             "sysrq=0"
           ];
 
-          # ---------- Silence noisy services ----------
+          # ---------- Silence noisy units on live ISO ----------
           services.logrotate.enable = false;
-          systemd.services."logrotate-checkconf".enable = false;
-          systemd.services."systemd-journal-catalog-update".enable = false;
-          systemd.services."systemd-update-done".enable = false;
+          systemd.services."logrotate-checkconf".enable              = false;
+          systemd.services."systemd-journal-catalog-update".enable   = false;
+          systemd.services."systemd-update-done".enable              = false;
 
-          # ---------- Networking / SSH off ----------
-          networking.useDHCP = false;
-          networking.networkmanager.enable = false;
+          # ---------- Networking / SSH off for kiosk ----------
+          networking.useDHCP                 = false;
+          networking.networkmanager.enable   = false;
           systemd.services."systemd-networkd".enable = false;
           systemd.services."systemd-resolved".enable = false;
-          systemd.services."sshd".enable = false;
+          systemd.services."sshd".enable              = false;
 
-          # ---------- Rendering (smooth pointer) ----------
+          # ---------- Rendering ----------
           hardware.opengl.enable = true;
           environment.variables = {
             WLR_RENDERER_ALLOW_SOFTWARE = "1";
-            WLR_NO_HARDWARE_CURSORS = "1";
+            WLR_NO_HARDWARE_CURSORS     = "1";  # helps with VM cursor lag
           };
 
+          # ---------- Display: Wayland / Sway kiosk ----------
           services.xserver.enable = false;
-          programs.sway.enable = true;
+          programs.sway.enable    = true;
 
           # ---------- kiosk user ----------
           users.users.kiosk = {
             isNormalUser = true;
-            password = "kiosk";
-            extraGroups = [ "video" "input" ];
+            password     = "kiosk";
+            extraGroups  = [ "video" "input" ];
           };
 
           # ---------- Optional persistence service ----------
           systemd.services.chernos-persist = {
             wantedBy = [ "multi-user.target" ];
-            after = [ "local-fs.target" "systemd-udev-settle.service" ];
+            after    = [ "local-fs.target" "systemd-udev-settle.service" ];
             serviceConfig = {
-              Type = "oneshot";
+              Type      = "oneshot";
               ExecStart = "${mountHelper}/bin/chernos-persist-helper";
               RemainAfterExit = true;
             };
@@ -904,7 +1370,7 @@ EOF
             "d /persist 0755 root root -"
           ];
 
-          # ---------- /etc/chernos-kiosk.sh script ----------
+          # ---------- /etc/chernos-kiosk.sh (Chromium launcher) ----------
           environment.etc."chernos-kiosk.sh" = {
             mode = "0755";
             text = ''
@@ -931,43 +1397,45 @@ EOF
             '';
           };
 
-          # ---------- greetd → sway → kiosk ----------
+          # ---------- greetd → sway → Chromium kiosk ----------
           services.greetd.enable = true;
           services.greetd.settings = {
             terminal.vt = 1;
             default_session = {
               command = "${pkgs.sway}/bin/sway";
-              user = "kiosk";
+              user    = "kiosk";
             };
           };
 
-          # disable extra TTYs
+          # Disable extra TTYs
           systemd.services."getty@tty2".enable = false;
           systemd.services."getty@tty3".enable = false;
           systemd.services."getty@tty4".enable = false;
           systemd.services."getty@tty5".enable = false;
           systemd.services."getty@tty6".enable = false;
 
+          # Tools on the ISO
           environment.systemPackages = with pkgs; [
             chromium
             swaybg
             vim
           ];
 
-          # sway config: now just calls the helper script (no multiline shell)
+          # ---------- sway config: call kiosk script ----------
           environment.etc."sway/config".text = ''
             set $mod Mod4
 
-            # prevent exiting
+            # Prevent exit
             bindsym $mod+Shift+e exec echo "exit blocked"
 
-            # launch ChernOS kiosk helper script
+            # Launch ChernOS kiosk helper script
             exec /etc/chernos-kiosk.sh
           '';
         })
       ];
     };
 
+    # Build ISO with: nix build .#iso
     packages.${system}.iso =
       self.nixosConfigurations.chernos-iso.config.system.build.isoImage;
   };
