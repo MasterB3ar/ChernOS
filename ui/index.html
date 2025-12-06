@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>ChernOS v1.4.0 – Reactor Overdrive</title>
+  <title>ChernOS v1.5.0 – Containment Protocols</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -24,8 +24,8 @@
         var(--ch-bg);
       color: var(--ch-text-main);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  overflow-y: auto;    /* allow vertical scrolling */
-  overflow-x: hidden;  /* keep horizontal locked */
+      overflow-y: auto;
+      overflow-x: hidden;
     }
 
     body.theme-amber {
@@ -56,6 +56,9 @@
       flex-direction: column;
       gap: 10px;
       position: relative;
+      overflow-y: auto;
+      max-height: 100vh;
+      padding-bottom: 40px;
     }
 
     .reactor-glow {
@@ -93,6 +96,37 @@
       100% { opacity: 0.9; filter: blur(1px); }
     }
 
+    .gamma-overlay {
+      position: fixed;
+      inset: -20px;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle at 0 0, rgba(56,189,248,0.18), transparent 60%),
+        radial-gradient(circle at 100% 0, rgba(59,130,246,0.18), transparent 60%),
+        repeating-linear-gradient(
+          60deg,
+          rgba(56,189,248,0.08),
+          rgba(56,189,248,0.08) 2px,
+          transparent 2px,
+          transparent 6px
+        );
+      mix-blend-mode: screen;
+      opacity: 0;
+      transform: scale(1.02);
+      transition: opacity 0.35s ease-out;
+      z-index: 1;
+    }
+
+    .gamma-overlay.active {
+      opacity: 0.65;
+      animation: gammaSpin 9s linear infinite;
+    }
+
+    @keyframes gammaSpin {
+      0% { transform: scale(1.02) rotate(0deg); }
+      100% { transform: scale(1.02) rotate(360deg); }
+    }
+
     .card {
       border-radius: 16px;
       border: 1px solid var(--ch-border-soft);
@@ -100,6 +134,8 @@
       padding: 12px 14px;
       backdrop-filter: blur(10px);
       box-shadow: 0 0 24px rgba(0,0,0,0.75);
+      position: relative;
+      z-index: 2;
     }
 
     .label {
@@ -138,6 +174,12 @@
     .btn:hover {
       background: rgba(0,0,0,0.8);
       box-shadow: 0 0 10px var(--ch-accent-soft);
+    }
+
+    .btn-small {
+      padding: 3px 7px;
+      font-size: 10px;
+      border-radius: 999px;
     }
 
     .badge {
@@ -217,7 +259,7 @@
       border-radius: 50%;
       background: radial-gradient(circle, var(--ch-accent), transparent);
       box-shadow: 0 0 18px var(--ch-accent-soft);
-      transition: box-shadow 0.3s ease-out, transform 0.25s ease-out;
+      transition: box-shadow 0.3s ease-out, transform 0.25s ease-out, background 0.2s;
     }
 
     @keyframes ringSpin {
@@ -351,43 +393,76 @@
       gap: 4px;
       cursor: pointer;
       transition: all 0.16s;
-      color: #ffffff; /* <-- make "Green / Amber / Redline" text white */
+      color: #ffffff; /* ensure labels (Green / Amber / Redline / 2049) are visible */
     }
     .theme-btn.active {
       border-color: var(--ch-accent-soft);
       box-shadow: 0 0 9px var(--ch-accent-soft);
     }
 
-    /* Make 2049 theme button stand out */
-.theme-btn[data-theme="2049"] {
-  border-color: #38bdf8 !important;
-  color: #ffffff !important;
-}
+    /* Highlight the hidden 2049 theme button */
+    .theme-btn[data-theme="2049"] {
+      border-color: #38bdf8 !important;
+      color: #ffffff !important;
+    }
 
     .mute-indicator {
       font-size: 10px;
       color: var(--ch-text-soft);
     }
+
+    .contain-pill {
+      font-size: 9px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      background: rgba(15,23,42,0.85);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-right: 4px;
+    }
+
+    .contain-pill span.dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #4ade80;
+    }
+
+    .contain-pill.alpha span.dot { background: #22c55e; }
+    .contain-pill.beta span.dot  { background: #facc6b; }
+    .contain-pill.gamma span.dot { background: #fb7185; }
+
+    .contain-pill.off span.dot {
+      background: #4b5563;
+    }
+
+    .lockdown-active {
+      box-shadow: 0 0 16px rgba(248,113,113,0.7);
+      border-color: rgba(248,113,113,0.7) !important;
+    }
   </style>
 </head>
 <body class="theme-green">
   <div class="reactor-glow"></div>
+  <div id="gamma-overlay" class="gamma-overlay"></div>
 
-<div class="wrap" style="overflow-y:auto; max-height:100vh; padding-bottom:40px;">
+  <div class="wrap">
     <!-- TOP BAR -->
     <div class="card flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <div class="label">ChernOS v1.4.0</div>
+        <div class="label">ChernOS v1.5.0 – Containment Protocols</div>
         <div class="text-2xl font-semibold" id="title-main">
-          Reactor Overdrive Console
+          Reactor Overdrive + Containment Console
         </div>
         <div class="status-board">
           <div class="status-cell">CORE CHANNELS: SYNCED</div>
           <div class="status-cell">COOLANT GRID: STABLE</div>
-          <div class="status-cell">CONTAINMENT: SEALED</div>
+          <div class="status-cell">CONTAINMENT BUS: ARMED</div>
           <div class="status-cell">I/O BUS: GREEN</div>
           <div class="status-cell">DIAGNOSTICS ENGINE: READY</div>
-          <div class="status-cell">OVERDRIVE SIM: ARMED</div>
+          <div class="status-cell">OVERDRIVE/CONTAINMENT: ONLINE</div>
         </div>
       </div>
 
@@ -396,7 +471,8 @@
           <span class="badge" id="badge-sim">SIM-CORE ONLINE</span>
           <span class="badge" id="badge-overdrive">OVERDRIVE: OFF</span>
           <span class="badge" id="badge-diag">DIAGNOSTICS: OFF</span>
-          <span class="badge" id="badge-persist">PERSISTENCE: OFF</span>
+          <span class="badge" id="badge-contain">CONTAINMENT: STABLE</span>
+          <span class="badge" id="badge-lockdown">LOCKDOWN: OFF</span>
         </div>
 
         <div class="flex gap-6 items-center">
@@ -414,6 +490,7 @@
               <button class="btn" id="btn-audio-toggle">Toggle Audio</button>
               <span class="mute-indicator" id="audio-state">Audio: ON</span>
             </div>
+
             <div class="flex gap-2 mt-1">
               <button class="theme-btn active" data-theme="green">
                 <span class="theme-dot" style="background:#22c55e;"></span>Green
@@ -424,6 +501,11 @@
               <button class="theme-btn" data-theme="redline">
                 <span class="theme-dot" style="background:#fb7185;"></span>Redline
               </button>
+            </div>
+
+            <div class="mt-2 text-right text-xs text-slate-300">
+              <div id="op-name-line">Operator: ANON / Lvl 1</div>
+              <div id="op-status-line">Clearance: TECHNICIAN</div>
             </div>
           </div>
         </div>
@@ -472,6 +554,38 @@
       </div>
     </div>
 
+    <!-- CONTAINMENT PANEL -->
+    <div class="card mt-1">
+      <div class="label">CONTAINMENT PROTOCOLS</div>
+      <div class="mt-2 flex flex-wrap gap-2 items-center">
+        <div class="contain-pill alpha" id="pill-alpha">
+          <span class="dot"></span>
+          <span>CFA (Thermal Buffer)</span>
+        </div>
+        <div class="contain-pill beta" id="pill-beta">
+          <span class="dot"></span>
+          <span>CFB (Pressure Latch)</span>
+        </div>
+        <div class="contain-pill gamma" id="pill-gamma">
+          <span class="dot"></span>
+          <span>CFG (Gamma Field)</span>
+        </div>
+      </div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button class="btn btn-small" id="btn-cfa-toggle">Toggle Alpha</button>
+        <button class="btn btn-small" id="btn-cfb-reset">Reset Beta Latch</button>
+        <button class="btn btn-small" id="btn-cfg-toggle">Toggle Gamma Field</button>
+        <button class="btn btn-small" id="btn-contain-pulse">Pulse Sweep</button>
+        <button class="btn btn-small" id="btn-lockdown-toggle">Lockdown</button>
+      </div>
+      <div class="mt-2 text-[10px] text-slate-400">
+        Terminal shortcuts: <span class="pill text-[10px]">containment status</span>
+        <span class="pill text-[10px]">lockdown on/off</span>
+        <span class="pill text-[10px]">operator set &lt;name&gt;</span>
+        <span class="pill text-[10px]">operator level &lt;n&gt;</span>
+      </div>
+    </div>
+
     <!-- CONTROLS + TERMINAL + LOG -->
     <div class="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] gap-3">
       <div class="card">
@@ -484,12 +598,12 @@
           <button class="btn" id="btn-reset">Reset</button>
         </div>
         <div class="flex flex-wrap gap-2 mt-3">
-          <span class="pill text-[10px]">Terminal: help · status · overdrive on/off · theme &lt;name&gt;</span>
+          <span class="pill text-[10px]">Terminal: help · status · containment status · lockdown on/off · operator set &lt;name&gt; · operator level &lt;n&gt;</span>
         </div>
 
         <div class="term-grid">
           <input id="term-input" autocomplete="off"
-            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, theme &lt;green|amber|redline|2049&gt;, audio on/off, diag on/off, save-log)">
+            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, diag on/off, containment status, lockdown on/off, operator set &lt;name&gt;, operator level &lt;0–3&gt;)">
           <button class="btn" id="term-run">Run</button>
         </div>
       </div>
@@ -522,7 +636,7 @@
 
   <script>
     // ============================================================
-    //     ChernOS v1.4.0 — Reactor Overdrive (purely fictional)
+    //   ChernOS v1.5.0 — Containment Protocols (purely fictional)
     // ============================================================
 
     // ----- DOM Refs -----
@@ -537,12 +651,21 @@
     const elCoreDot   = document.getElementById("core-dot");
     const elBadgeOver = document.getElementById("badge-overdrive");
     const elBadgeDiag = document.getElementById("badge-diag");
-    const elBadgePers = document.getElementById("badge-persist");
+    const elBadgePers = document.getElementById("badge-persist"); // not present now, but kept in logic
     const elBadgeSim  = document.getElementById("badge-sim");
+    const elBadgeContain = document.getElementById("badge-contain");
+    const elBadgeLockdown = document.getElementById("badge-lockdown");
     const elAudioState= document.getElementById("audio-state");
     const elDiagCard  = document.getElementById("diag-card");
     const elLog       = document.getElementById("log");
     const elTitle     = document.getElementById("title-main");
+    const elGammaOverlay = document.getElementById("gamma-overlay");
+    const elOpNameLine   = document.getElementById("op-name-line");
+    const elOpStatusLine = document.getElementById("op-status-line");
+
+    const pillAlpha  = document.getElementById("pill-alpha");
+    const pillBeta   = document.getElementById("pill-beta");
+    const pillGamma  = document.getElementById("pill-gamma");
 
     const leverCore   = document.getElementById("lever-core");
     const leverCool   = document.getElementById("lever-coolant");
@@ -555,6 +678,11 @@
     const btnDiag     = document.getElementById("btn-diag-toggle");
     const btnOver     = document.getElementById("btn-overdrive-toggle");
     const btnAudio    = document.getElementById("btn-audio-toggle");
+    const btnCfa      = document.getElementById("btn-cfa-toggle");
+    const btnCfb      = document.getElementById("btn-cfb-reset");
+    const btnCfg      = document.getElementById("btn-cfg-toggle");
+    const btnPulse    = document.getElementById("btn-contain-pulse");
+    const btnLockdown = document.getElementById("btn-lockdown-toggle");
 
     const termInput   = document.getElementById("term-input");
     const termRun     = document.getElementById("term-run");
@@ -578,19 +706,52 @@
       rad: 0.14,
       safeguards: 3,
       overdrive: false,
-      meltdownStage: 0, // 0=none, 1=warning, 2=runaway, 3=collapse (sim)
+      meltdownStage: 0, // 0=none, 1..5
       diagnostics: false,
       audioOn: true,
       theme: "green",
       persistEnabled: false,
       ticks: 0,
-      microJitter: 0
+      microJitter: 0,
+      lockdown: false,
+      implosionPlayed: false,
+      containment: {
+        alpha: false,
+        betaLatched: false,
+        gamma: false
+      },
+      operatorName: "ANON",
+      operatorLevel: 1 // 0..3
     };
 
-    // detect ?persist=1
-    if (window.location.search.indexOf("persist=1") !== -1) {
+    // detect ?persist=1, ?op=name, ?lvl=n
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("persist") === "1") {
       state.persistEnabled = true;
     }
+    if (params.get("op")) {
+      state.operatorName = decodeURIComponent(params.get("op"));
+    }
+    if (params.get("lvl")) {
+      const lvl = parseInt(params.get("lvl"), 10);
+      if (!isNaN(lvl)) {
+        state.operatorLevel = Math.min(3, Math.max(0, lvl));
+      }
+    }
+
+    function levelLabel(lvl) {
+      if (lvl === 0) return "GUEST";
+      if (lvl === 1) return "TECHNICIAN";
+      if (lvl === 2) return "ENGINEER";
+      if (lvl === 3) return "DIRECTOR";
+      return "UNKNOWN";
+    }
+
+    function updateOperatorLines() {
+      elOpNameLine.textContent = `Operator: ${state.operatorName || "ANON"} / Lvl ${state.operatorLevel}`;
+      elOpStatusLine.textContent = `Clearance: ${levelLabel(state.operatorLevel)}`;
+    }
+    updateOperatorLines();
 
     // ----- Logging & persistence -----
     function maybePersist(line) {
@@ -612,21 +773,16 @@
       maybePersist(line + "\n");
     }
 
-    // pre-fill initial log
-    log("SIM: ChernOS v1.4.0 Reactor Overdrive console ready.");
+    log("SIM: ChernOS v1.5.0 Containment Protocols console ready.");
 
-    function updatePersistBadge() {
-      elBadgePers.textContent = "PERSISTENCE: " + (state.persistEnabled ? "ON" : "OFF");
-      elBadgePers.style.color = state.persistEnabled ? "#bbf7d0" : "#9ca3af";
-    }
-    updatePersistBadge();
-
-    // ----- Audio Engine v2 (purely aesthetic) -----
+    // ----- Audio Engine v3 (fictional) -----
     let audioCtx = null;
     let humNode = null;
     let coolantNode = null;
     let crackNode = null;
     let sirenNode = null;
+    let containNode = null;
+    let gammaNode = null;
 
     function ensureAudio() {
       if (audioCtx) return;
@@ -703,6 +859,64 @@
       sirenNode = { osc, g, iv };
     }
 
+    function startContainHum() {
+      if (!state.audioOn || !audioCtx || containNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 35;
+      g.gain.value = 0.0;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+      containNode = { osc, g };
+    }
+
+    function updateContainHumGain() {
+      if (!containNode) return;
+      const activeCount =
+        (state.containment.alpha ? 1 : 0) +
+        (state.containment.betaLatched ? 1 : 0) +
+        (state.containment.gamma ? 1 : 0);
+      containNode.g.gain.value = state.audioOn ? Math.min(0.04, activeCount * 0.015) : 0;
+    }
+
+    function startGammaCharge() {
+      if (!state.audioOn || !audioCtx || gammaNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = 260;
+      g.gain.value = 0.0;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+
+      let up = true;
+      const iv = setInterval(() => {
+        if (!state.audioOn || !state.containment.gamma) {
+          g.gain.value = 0.0;
+          return;
+        }
+        up = !up;
+        osc.frequency.value = up ? 260 : 320;
+        g.gain.value = up ? 0.03 : 0.01;
+      }, 220);
+
+      gammaNode = { osc, g, iv };
+    }
+
+    function playImplosion() {
+      if (!state.audioOn || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 90;
+      g.gain.value = 0.12;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+      setTimeout(() => g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2), 40);
+      setTimeout(() => { try { osc.stop(); } catch (_) {} }, 400);
+    }
+
     function stopNode(nodeObj, hasInterval) {
       if (!nodeObj) return;
       if (hasInterval && nodeObj.iv) clearInterval(nodeObj.iv);
@@ -714,6 +928,8 @@
       stopNode(coolantNode, false); coolantNode = null;
       stopNode(crackNode, true); crackNode = null;
       stopNode(sirenNode, true); sirenNode = null;
+      stopNode(containNode, false); containNode = null;
+      stopNode(gammaNode, true); gammaNode = null;
     }
 
     function applyAudioState() {
@@ -728,6 +944,9 @@
       startCoolant();
       startCrackle();
       startSiren();
+      startContainHum();
+      startGammaCharge();
+      updateContainHumGain();
     }
 
     btnAudio.addEventListener("click", () => {
@@ -794,8 +1013,10 @@
       const p = state.pressure;
       const r = state.rad;
 
-      // temp status
-      if (t > 1150) {
+      if (t > 1450) {
+        elTempStat.textContent = "Stage 3–4 runaway (sim)";
+        elTempStat.className = "soft crit";
+      } else if (t > 1150) {
         elTempStat.textContent = "Critical overheating (sim)";
         elTempStat.className = "soft crit";
       } else if (t > 730) {
@@ -806,8 +1027,7 @@
         elTempStat.className = "soft ok";
       }
 
-      // pressure
-      if (p > 5.8) {
+      if (p > 6.2) {
         elPStat.textContent = "Containment strain (sim)";
         elPStat.className = "soft crit";
       } else if (p > 3.3) {
@@ -818,8 +1038,7 @@
         elPStat.className = "soft ok";
       }
 
-      // radiation
-      if (r > 3.0) {
+      if (r > 4.0) {
         elRStat.textContent = "Severe release (sim)";
         elRStat.className = "soft crit";
       } else if (r > 0.8) {
@@ -830,7 +1049,6 @@
         elRStat.className = "soft ok";
       }
 
-      // overdrive label
       if (!state.overdrive) {
         elOverLbl.textContent = "OVERDRIVE: DISARMED";
       } else if (state.meltdownStage === 0) {
@@ -839,35 +1057,78 @@
         elOverLbl.textContent = "OVERDRIVE: LOCKED (meltdown sim)";
       }
 
-      // core glow intensity
       const base = state.overdrive ? 1.1 : 0.75;
       const heatFactor = Math.min(1, Math.max(0, (t - 280) / 900));
-      const intensity = base + heatFactor * 1.2;
+      const meltdownBoost = state.meltdownStage > 0 ? 0.3 * state.meltdownStage : 0;
+      const intensity = base + heatFactor * 1.2 + meltdownBoost;
       const glow = 14 + 26 * intensity;
-      elCoreDot.style.boxShadow = `0 0 ${glow}px rgba(191,249,168,${0.45 + intensity * 0.4})`;
-      elCoreDot.style.transform  = `scale(${0.9 + intensity * 0.25})`;
+      const colorShift = state.meltdownStage >= 4 ? "#fb7185" :
+                         state.meltdownStage >= 2 ? "#f97316" :
+                         "var(--ch-accent)";
+      elCoreDot.style.boxShadow = `0 0 ${glow}px rgba(191,249,168,${0.45 + intensity * 0.25})`;
+      elCoreDot.style.transform  = `scale(${0.9 + intensity * 0.22})`;
+      elCoreDot.style.background = `radial-gradient(circle, ${colorShift}, transparent)`;
+    }
+
+    function updateContainPills() {
+      function setPill(el, active, crit) {
+        el.classList.remove("off");
+        el.style.borderColor = active ? "rgba(191,249,168,0.6)" : "rgba(148,163,184,0.4)";
+        const dot = el.querySelector("span.dot");
+        if (!dot) return;
+        if (!active) {
+          dot.style.background = "#4b5563";
+        } else if (crit) {
+          dot.style.background = "#fb7185";
+        } else {
+          dot.style.background = "#22c55e";
+        }
+      }
+      setPill(pillAlpha, state.containment.alpha, false);
+      setPill(pillBeta, state.containment.betaLatched, state.containment.betaLatched && state.meltdownStage >= 2);
+      setPill(pillGamma, state.containment.gamma, state.meltdownStage >= 3);
     }
 
     function renderBadges() {
-      // Overdrive
       elBadgeOver.textContent = "OVERDRIVE: " + (state.overdrive ? "ON" : "OFF");
       elBadgeOver.style.color = state.overdrive ? "#fb7185" : "#9ca3af";
 
-      // Diagnostics
       elBadgeDiag.textContent = "DIAGNOSTICS: " + (state.diagnostics ? "ON" : "OFF");
       elBadgeDiag.style.color = state.diagnostics ? "#bbf7d0" : "#9ca3af";
 
-      // Sim
       elBadgeSim.textContent = "SIM-CORE ONLINE";
+
+      const anyContain = state.containment.alpha || state.containment.betaLatched || state.containment.gamma;
+      elBadgeContain.textContent = "CONTAINMENT: " +
+        (state.meltdownStage >= 4 && !state.containment.gamma ? "BREACH" :
+         state.meltdownStage >= 2 ? "ENGAGED" :
+         anyContain ? "ARMED" : "STABLE");
+      elBadgeContain.style.color =
+        (state.meltdownStage >= 4 && !state.containment.gamma) ? "#fb7185" :
+        (state.meltdownStage >= 2 || anyContain) ? "#facc6b" :
+        "#bbf7d0";
+
+      elBadgeLockdown.textContent = "LOCKDOWN: " + (state.lockdown ? "ON" : "OFF");
+      elBadgeLockdown.style.color = state.lockdown ? "#fb7185" : "#9ca3af";
+    }
+
+    function renderGammaOverlay() {
+      if (state.containment.gamma) {
+        elGammaOverlay.classList.add("active");
+      } else {
+        elGammaOverlay.classList.remove("active");
+      }
     }
 
     function renderAll() {
       renderTelemetry();
       renderBadges();
+      renderGammaOverlay();
+      updateContainPills();
       renderGraphs();
     }
 
-    // ----- Simulation Engine -----
+    // ----- Simulation Engine (meltdown v2.0) -----
     function stepSim() {
       state.ticks++;
 
@@ -875,22 +1136,26 @@
       const cool   = parseInt(leverCool.value, 10)   / 100;
       const jitter = (Math.random() - 0.5);
 
-      // small micro jitter baseline
       state.microJitter = 0.3 * jitter;
 
-      // base behavior
       let dT = jitter * 2.2 + (drive - 0.85) * 5.2 - (cool - 1.0) * 3.4;
       let dP = jitter * 0.07 + (state.temp - 320) / 2600;
       let dR = jitter * 0.02 + Math.max(0, (state.temp - 420)) / 6400;
 
-      // overdrive exaggerates
-      if (state.overdrive && state.meltdownStage === 0) {
+      if (state.overdrive && state.meltdownStage === 0 && !state.lockdown) {
         dT *= 1.8;
         dP *= 1.5;
         dR *= 1.7;
       }
 
-      // meltdown stages
+      if (state.containment.alpha) {
+        dT *= 0.8;
+      }
+
+      if (state.containment.betaLatched) {
+        dP *= 0.5;
+      }
+
       if (state.meltdownStage === 0) {
         if (state.temp > 1220 && state.safeguards > 0) {
           state.safeguards -= 1;
@@ -900,42 +1165,68 @@
           log("AUTO-SAFEGUARD (sim): staged insertion + coolant surge.");
         }
 
-        if (state.temp > 1300 && state.pressure > 5.4 && state.safeguards === 0) {
+        if (state.temp > 1300 && state.pressure > 5.0 && state.safeguards === 0) {
           state.meltdownStage = 1;
-          log("MELTDOWN STAGE 1 (sim): Overheat threshold exceeded.");
+          log("MELTDOWN STAGE 1 (sim): Thermal spike detected.");
         }
       } else if (state.meltdownStage === 1) {
-        dT += 16.5;
-        dP += 0.11;
-        dR += 0.24;
-        if (state.temp > 1450) {
+        dT += 12.0;
+        dP += 0.09;
+        dR += 0.14;
+        if (state.temp > 1400) {
           state.meltdownStage = 2;
-          log("MELTDOWN STAGE 2 (sim): Pressure runaway engaged.");
+          state.containment.betaLatched = true;
+          log("MELTDOWN STAGE 2 (sim): Pressure surge, Beta latch engaged.");
         }
       } else if (state.meltdownStage === 2) {
-        dT += 28;
-        dP -= 0.15;
-        dR += 0.6;
-        if (state.rad > 4.0) {
+        dT += 20;
+        dP += 0.05;
+        dR += 0.25;
+        if (state.rad > 1.7) {
           state.meltdownStage = 3;
-          log("MELTDOWN STAGE 3 (sim): Core collapse visualized.");
+          log("MELTDOWN STAGE 3 (sim): Radiation breach indicated.");
         }
       } else if (state.meltdownStage === 3) {
-        dT += 6;
-        dP = Math.max(0.6, state.pressure - 0.25);
-        dR += 0.2;
+        dT += 26;
+        dP -= 0.05;
+        dR += 0.4;
+        if (!state.containment.gamma && state.rad > 3.5) {
+          state.meltdownStage = 4;
+          log("MELTDOWN STAGE 4 (sim): Containment failure visualized.");
+        } else if (state.containment.gamma && state.rad > 3.5) {
+          state.meltdownStage = 4;
+          log("MELTDOWN STAGE 4 (sim): Gamma field holding collapse (visual only).");
+        }
+      } else if (state.meltdownStage === 4) {
+        dT += 14;
+        dP = Math.max(0.6, state.pressure - 0.2);
+        dR += 0.18;
+
+        if (!state.containment.gamma && state.rad > 4.2 && !state.lockdown) {
+          state.meltdownStage = 5;
+          log("MELTDOWN STAGE 5 (sim): Core implosion depicted.");
+          if (!state.implosionPlayed) {
+            state.implosionPlayed = true;
+            playImplosion();
+          }
+        } else if (state.containment.gamma) {
+          dT -= 10;
+          dR -= 0.2;
+        }
+      } else if (state.meltdownStage === 5) {
+        dT -= 18;
+        dP = Math.max(0.7, state.pressure - 0.25);
+        dR -= 0.26;
       }
 
       state.temp     += dT;
       state.pressure += dP;
       state.rad      += dR;
 
-      // clamps
       if (state.temp < 260) state.temp = 260;
       if (state.pressure < 0.9) state.pressure = 0.9;
       if (state.rad < 0.05) state.rad = 0.05;
 
-      // log history
       pushHist(histTemp,  state.temp);
       pushHist(histPress, state.pressure);
       pushHist(histRad,   state.rad);
@@ -990,6 +1281,7 @@
       state.rad = 0.14;
       state.safeguards = 3;
       state.meltdownStage = 0;
+      state.implosionPlayed = false;
       histTemp = [];
       histPress = [];
       histRad = [];
@@ -1002,6 +1294,51 @@
     btnStress.addEventListener("click", doStress);
     btnChaos.addEventListener("click", doChaos);
     btnReset.addEventListener("click", resetSim);
+
+    // ----- Containment actions -----
+    btnCfa.addEventListener("click", () => {
+      state.containment.alpha = !state.containment.alpha;
+      log(`Containment Alpha (thermal buffer) ${state.containment.alpha ? "enabled" : "disabled"} (sim).`);
+      updateContainHumGain();
+      renderAll();
+    });
+
+    btnCfb.addEventListener("click", () => {
+      state.containment.betaLatched = false;
+      log("Containment Beta latch reset (sim).");
+      updateContainHumGain();
+      renderAll();
+    });
+
+    btnCfg.addEventListener("click", () => {
+      state.containment.gamma = !state.containment.gamma;
+      log(`Containment Gamma field ${state.containment.gamma ? "engaged" : "disengaged"} (sim).`);
+      updateContainHumGain();
+      renderAll();
+    });
+
+    btnPulse.addEventListener("click", () => {
+      log("Containment pulse sweep triggered (sim).");
+      state.rad = Math.max(0.05, state.rad - 0.6);
+      renderAll();
+    });
+
+    btnLockdown.addEventListener("click", () => {
+      toggleLockdown();
+    });
+
+    function toggleLockdown(forceOn) {
+      const target = (typeof forceOn === "boolean") ? forceOn : !state.lockdown;
+      state.lockdown = target;
+      if (state.lockdown) {
+        log("LOCKDOWN: High-risk controls restricted (sim).");
+        btnLockdown.classList.add("lockdown-active");
+      } else {
+        log("LOCKDOWN: Restrictions lifted (sim).");
+        btnLockdown.classList.remove("lockdown-active");
+      }
+      renderAll();
+    }
 
     // ----- Diagnostics toggle -----
     btnDiag.addEventListener("click", () => {
@@ -1021,6 +1358,10 @@
     btnOver.addEventListener("click", () => {
       if (state.meltdownStage > 0) {
         log("Overdrive: locked (meltdown sim active).");
+        return;
+      }
+      if (state.lockdown) {
+        log("Overdrive blocked by LOCKDOWN (sim).");
         return;
       }
       state.overdrive = !state.overdrive;
@@ -1044,13 +1385,13 @@
       });
 
       if (themeName === "green") {
-        elTitle.textContent = "Reactor Overdrive Console";
+        elTitle.textContent = "Reactor Overdrive + Containment Console";
       } else if (themeName === "amber") {
-        elTitle.textContent = "Reactor Overdrive · Amber Core";
+        elTitle.textContent = "Containment Console · Amber Core";
       } else if (themeName === "redline") {
-        elTitle.textContent = "Reactor Overdrive · Redline Sim";
+        elTitle.textContent = "Containment Console · Redline Sim";
       } else if (themeName === "2049") {
-        elTitle.textContent = "Reactor Overdrive · 2049 Mode (sim)";
+        elTitle.textContent = "Containment Console · 2049 Mode (sim)";
       }
       log("Theme set: " + themeName);
       renderAll();
@@ -1077,14 +1418,16 @@
       log("Hidden theme unlocked: 2049 (sim aesthetics only).");
     }
 
-    // ----- Terminal v1.4 -----
+    // ----- Terminal v1.5 -----
     const termHistory = [];
     let termIndex = -1;
     const commands = [
       "help","status","scram","relief","stress","chaos","reset",
       "diag on","diag off","overdrive on","overdrive off",
       "audio on","audio off","save-log","theme green","theme amber",
-      "theme redline","theme 2049","power","coolant","engine status","unlock 2049"
+      "theme redline","theme 2049","power","coolant","engine status",
+      "unlock 2049","containment status","lockdown on","lockdown off",
+      "operator set","operator level"
     ];
 
     function runCommand(raw) {
@@ -1098,14 +1441,20 @@
       const lower = cmd.toLowerCase();
 
       if (lower === "help") {
-        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <green|amber|redline|2049>, engine status, save-log, unlock 2049");
+        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <green|amber|redline|2049>, containment status, lockdown on/off, operator set <name>, operator level <0-3>, engine status, save-log, unlock 2049");
         return;
       }
 
       if (lower === "status") {
         log("status: temp=" + Math.round(state.temp) + "C, p=" + state.pressure.toFixed(2) +
             "MPa, rad=" + state.rad.toFixed(2) + "mSv/h, sg=" + state.safeguards +
-            ", od=" + (state.overdrive ? "on" : "off") + ", diag=" + (state.diagnostics ? "on" : "off"));
+            ", od=" + (state.overdrive ? "on" : "off") + ", diag=" + (state.diagnostics ? "on" : "off") +
+            ", meltdownStage=" + state.meltdownStage);
+        return;
+      }
+
+      if (lower === "containment status") {
+        log(`containment: alpha=${state.containment.alpha}, betaLatched=${state.containment.betaLatched}, gamma=${state.containment.gamma}, lockdown=${state.lockdown}`);
         return;
       }
 
@@ -1178,7 +1527,7 @@
       }
 
       if (lower === "engine status") {
-        log("engine: ticks=" + state.ticks + ", meltdownStage=" + state.meltdownStage + ", overdrive=" + (state.overdrive?"on":"off"));
+        log("engine: ticks=" + state.ticks + ", meltdownStage=" + state.meltdownStage + ", overdrive=" + (state.overdrive?"on":"off") + ", lockdown=" + state.lockdown);
         return;
       }
 
@@ -1190,6 +1539,40 @@
 
       if (lower === "unlock 2049") {
         unlock2049();
+        return;
+      }
+
+      if (lower === "lockdown on") {
+        if (!state.lockdown) toggleLockdown(true);
+        return;
+      }
+
+      if (lower === "lockdown off") {
+        if (state.lockdown) toggleLockdown(false);
+        return;
+      }
+
+      if (lower.startsWith("operator set ")) {
+        const name = cmd.slice("operator set ".length).trim();
+        if (!name) {
+          log("operator set: missing name.");
+          return;
+        }
+        state.operatorName = name;
+        updateOperatorLines();
+        log("Operator name set to: " + name);
+        return;
+      }
+
+      if (lower.startsWith("operator level ")) {
+        const n = parseInt(lower.split(/\s+/)[2], 10);
+        if (isNaN(n)) {
+          log("operator level: expected number 0–3.");
+          return;
+        }
+        state.operatorLevel = Math.min(3, Math.max(0, n));
+        updateOperatorLines();
+        log("Operator level set to: " + state.operatorLevel + " (" + levelLabel(state.operatorLevel) + ")");
         return;
       }
 
