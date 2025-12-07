@@ -93,6 +93,20 @@
       100% { opacity: 0.9; filter: blur(1px); }
     }
 
+    .bc-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 40%, rgba(15,23,42,0.9), transparent 70%),
+        radial-gradient(circle at 10% 10%, rgba(30,64,175,0.35), transparent 70%),
+        radial-gradient(circle at 90% 30%, rgba(12,10,24,0.6), transparent 75%);
+      mix-blend-mode: soft-light;
+      opacity: 0;
+      transition: opacity 0.35s ease-out;
+      z-index: 10;
+    }
+
     .card {
       border-radius: 16px;
       border: 1px solid var(--ch-border-soft);
@@ -314,7 +328,7 @@
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.16em;
-      color: var(--ch-text-main); /* make it visible on dark bg */
+      color: var(--ch-text-main);
     }
 
     .soft {
@@ -436,10 +450,22 @@
       cursor: pointer;
       background: rgba(15,23,42,0.9);
     }
+
+    .workspace-btn.active {
+      border-color: var(--ch-accent-soft);
+      box-shadow: 0 0 10px var(--ch-accent-soft);
+    }
+
+    .dim-panel {
+      opacity: 0.35;
+      filter: blur(0.3px);
+      transition: opacity 0.2s ease-out, filter 0.2s ease-out;
+    }
   </style>
 </head>
 <body class="theme-green">
   <div class="reactor-glow"></div>
+  <div class="bc-overlay" id="bc-overlay"></div>
 
   <div class="wrap">
     <!-- TOP BAR -->
@@ -447,7 +473,7 @@
       <div class="space-y-2">
         <div class="label">ChernOS v1.8.0</div>
         <div class="text-2xl font-semibold" id="title-main">
-          Simulated Network Layer Console
+          Simulated Network Layer · Operator Workstation
         </div>
         <div class="status-board">
           <div class="status-cell">CORE CHANNELS: SYNCED</div>
@@ -466,6 +492,8 @@
           <span class="badge" id="badge-diag">DIAGNOSTICS: OFF</span>
           <span class="badge" id="badge-persist">PERSISTENCE: OFF</span>
           <span class="badge" id="badge-net">NET: ONLINE</span>
+          <span class="badge" id="badge-lockdown">LOCKDOWN: OFF</span>
+          <span class="badge" id="badge-bc">BC: IDLE</span>
         </div>
 
         <div class="flex gap-6 items-center">
@@ -493,34 +521,34 @@
               <button class="theme-btn" data-theme="redline">
                 <span class="theme-dot" style="background:#fb7185;"></span>Redline
               </button>
-              <!-- hidden 2049 will be injected dynamically -->
+              <!-- 2049 theme injected dynamically -->
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TELEMETRY STRIP + NETWORK STRIP -->
+    <!-- TELEMETRY + NETWORK -->
     <div class="grid grid-cols-5 gap-2">
-      <div class="card">
+      <div class="card" data-panel="reactor">
         <div class="label">CORE TEMP</div>
         <div class="big" id="read-temp">312°C</div>
         <div class="soft mt-1" id="status-temp">Nominal</div>
       </div>
 
-      <div class="card">
+      <div class="card" data-panel="reactor">
         <div class="label">PRESSURE COUPLING</div>
         <div class="big" id="read-pressure">1.30 MPa</div>
         <div class="soft mt-1" id="status-pressure">Stable</div>
       </div>
 
-      <div class="card">
+      <div class="card" data-panel="reactor">
         <div class="label">RADIATION FLUX</div>
         <div class="big" id="read-rad">0.14 mSv/h</div>
         <div class="soft mt-1" id="status-rad">Shielded</div>
       </div>
 
-      <div class="card">
+      <div class="card" data-panel="reactor">
         <div class="label">SAFEGUARDS & DRIVE</div>
         <div class="flex justify-between items-center">
           <div>
@@ -541,8 +569,7 @@
         </div>
       </div>
 
-      <!-- NETWORK STATUS PANEL -->
-      <div class="card">
+      <div class="card" data-panel="reactor">
         <div class="label">NETWORK LAYER — SIMULATED</div>
         <div class="flex justify-between items-center mt-1">
           <div class="space-y-1">
@@ -568,9 +595,9 @@
       </div>
     </div>
 
-    <!-- CONTROLS + TERMINAL + LOG -->
+    <!-- CONTROLS + LOG -->
     <div class="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] gap-3">
-      <div class="card">
+      <div class="card" data-panel="reactor">
         <div class="label">OPERATOR CONTROL SURFACE</div>
         <div class="flex flex-wrap gap-2 mt-2">
           <button class="btn" id="btn-scram">SCRAM</button>
@@ -581,25 +608,25 @@
         </div>
         <div class="flex flex-wrap gap-2 mt-3">
           <span class="pill text-[10px]">
-            Terminal: help · status · net status · net ping &lt;host&gt; · net lookup &lt;name&gt;
+            Terminal: help · status · containment status · net status · net ping &lt;host&gt; · operator set &lt;name&gt;
           </span>
         </div>
 
         <div class="term-grid">
           <input id="term-input" autocomplete="off"
-            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, diag on/off, audio on/off, theme &lt;green|amber|redline|2049&gt;, net status, net ping &lt;host&gt;, net lookup &lt;name&gt;, net stress, net reset, save-log)">
+            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, diag on/off, audio on/off, theme &lt;green|amber|redline|2049&gt;, net status, net ping &lt;host&gt;, net lookup &lt;name&gt;, net stress, net reset, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, operator set &lt;name&gt;, operator level &lt;0-3&gt;, save-log)">
           <button class="btn" id="term-run">Run</button>
         </div>
       </div>
 
-      <div class="card">
+      <div class="card" data-panel="logs">
         <div class="label">EVENT LOG (SIMULATION)</div>
         <div id="log" class="mt-2"></div>
       </div>
     </div>
 
     <!-- DIAGNOSTICS -->
-    <div class="card mt-1" id="diag-card" style="display:none">
+    <div class="card mt-1" id="diag-card" data-panel="reactor" style="display:none">
       <div class="label">DIAGNOSTICS MODE — LIVE TELEMETRY & NETWORK GRAPHS</div>
       <div class="graphs">
         <div>
@@ -621,8 +648,54 @@
       </div>
     </div>
 
+    <!-- CONTAINMENT + COMMS -->
+    <div class="grid grid-cols-2 gap-3 mt-2">
+      <!-- Containment -->
+      <div class="card" data-panel="containment">
+        <div class="label">CONTAINMENT PROTOCOLS — SIM</div>
+        <div class="flex justify-between items-start mt-2">
+          <div class="space-y-1 text-xs">
+            <div><span class="net-dot" id="cont-alpha-dot"></span> CFA: <span id="cont-alpha-text">ENGAGED</span></div>
+            <div><span class="net-dot" id="cont-beta-dot"></span> CFB: <span id="cont-beta-text">ENGAGED</span></div>
+            <div><span class="net-dot" id="cont-gamma-dot"></span> CFG (Gamma): <span id="cont-gamma-text">IDLE</span></div>
+          </div>
+          <div class="text-right text-xs text-slate-400 space-y-1">
+            <div>Lockdown: <span id="cont-lock-text">OFF</span></div>
+            <div>Profile: <span id="cont-profile">Nominal Shield</span></div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button class="btn" id="btn-cont-gamma">Toggle Gamma</button>
+          <button class="btn" id="btn-lockdown">Toggle Lockdown</button>
+        </div>
+      </div>
+
+      <!-- COMMS / Black Chamber -->
+      <div class="card" data-panel="comms">
+        <div class="label">COMMS / BLACK CHAMBER — SIM</div>
+        <div class="flex justify-between items-start mt-2">
+          <div class="space-y-1 text-xs">
+            <div><span class="net-dot" id="com-sat-dot"></span> SatLink: <span id="com-sat-text">IDLE</span></div>
+            <div><span class="net-dot" id="com-ghost-dot"></span> Ghost Mirror: <span id="com-ghost-text">IDLE</span></div>
+            <div><span class="net-dot" id="com-bc-dot"></span> Black Chamber: <span id="com-bc-text">IDLE</span></div>
+          </div>
+          <div class="text-right text-xs text-slate-400 space-y-1">
+            <div>Remote link: <span id="com-link-text">LOCAL ONLY</span></div>
+            <div>Macro: <span id="com-macro-text">IDLE</span></div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button class="btn" id="btn-satlink">Toggle SatLink</button>
+          <button class="btn" id="btn-ghost">Toggle Ghost</button>
+          <button class="btn" id="btn-bc">Toggle Black Chamber</button>
+          <button class="btn" id="btn-macro-rec">Macro Rec</button>
+          <button class="btn" id="btn-macro-play">Macro Play</button>
+        </div>
+      </div>
+    </div>
+
     <!-- OPERATOR WORKSTATION -->
-    <div class="card mt-2">
+    <div class="card mt-2" data-panel="logs">
       <div class="flex justify-between items-center">
         <div>
           <div class="label">OPERATOR WORKSTATION</div>
@@ -631,8 +704,16 @@
           </div>
         </div>
         <div class="text-xs text-slate-400">
-          Operator: <span id="op-name">UNBOUND</span>
+          Operator: <span id="op-identity">UNBOUND / Lvl 0 (GUEST)</span>
         </div>
+      </div>
+
+      <div class="flex flex-wrap gap-2 mt-3 text-[11px]">
+        <button class="btn workspace-btn" data-workspace="full">Full Console</button>
+        <button class="btn workspace-btn" data-workspace="reactor">Reactor Focus</button>
+        <button class="btn workspace-btn" data-workspace="containment">Containment Focus</button>
+        <button class="btn workspace-btn" data-workspace="comms">Comms Focus</button>
+        <button class="btn workspace-btn" data-workspace="logs">Logs Focus</button>
       </div>
 
       <div class="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.1fr)] gap-3 mt-3">
@@ -658,6 +739,7 @@
   <script>
     // ============================================================
     //   ChernOS v1.8.0 — Simulated Network Layer (purely fictional)
+    //   Based on v1.7.0 Operator Workstation / Containment / Comms
     // ============================================================
 
     // ----- DOM Refs -----
@@ -675,10 +757,13 @@
     const elBadgePers = document.getElementById("badge-persist");
     const elBadgeSim  = document.getElementById("badge-sim");
     const elBadgeNet  = document.getElementById("badge-net");
+    const elBadgeLock = document.getElementById("badge-lockdown");
+    const elBadgeBC   = document.getElementById("badge-bc");
     const elAudioState= document.getElementById("audio-state");
     const elDiagCard  = document.getElementById("diag-card");
     const elLog       = document.getElementById("log");
     const elTitle     = document.getElementById("title-main");
+    const bcOverlayEl = document.getElementById("bc-overlay");
 
     const leverCore   = document.getElementById("lever-core");
     const leverCool   = document.getElementById("lever-coolant");
@@ -708,12 +793,40 @@
     const btnNetStress= document.getElementById("btn-net-stress");
     const btnNetReset = document.getElementById("btn-net-reset");
 
+    // Containment DOM
+    const contAlphaDot = document.getElementById("cont-alpha-dot");
+    const contBetaDot  = document.getElementById("cont-beta-dot");
+    const contGammaDot = document.getElementById("cont-gamma-dot");
+    const contAlphaText= document.getElementById("cont-alpha-text");
+    const contBetaText = document.getElementById("cont-beta-text");
+    const contGammaText= document.getElementById("cont-gamma-text");
+    const contLockText = document.getElementById("cont-lock-text");
+    const contProfile  = document.getElementById("cont-profile");
+    const btnContGamma = document.getElementById("btn-cont-gamma");
+    const btnLockdown  = document.getElementById("btn-lockdown");
+
+    // Comms DOM
+    const comSatDot   = document.getElementById("com-sat-dot");
+    const comGhostDot = document.getElementById("com-ghost-dot");
+    const comBCDot    = document.getElementById("com-bc-dot");
+    const comSatText  = document.getElementById("com-sat-text");
+    const comGhostText= document.getElementById("com-ghost-text");
+    const comBCText   = document.getElementById("com-bc-text");
+    const comLinkText = document.getElementById("com-link-text");
+    const comMacroText= document.getElementById("com-macro-text");
+    const btnSatLink  = document.getElementById("btn-satlink");
+    const btnGhost    = document.getElementById("btn-ghost");
+    const btnBC       = document.getElementById("btn-bc");
+    const btnMacroRec = document.getElementById("btn-macro-rec");
+    const btnMacroPlay= document.getElementById("btn-macro-play");
+
     // Operator workstation DOM
-    const opNameEl    = document.getElementById("op-name");
+    const opIdentityEl= document.getElementById("op-identity");
     const opNotesEl   = document.getElementById("op-notes");
     const taskInputEl = document.getElementById("task-input");
     const taskAddBtn  = document.getElementById("task-add");
     const taskListEl  = document.getElementById("task-list");
+    const workspaceButtons = Array.from(document.querySelectorAll(".workspace-btn"));
 
     // Graph canvases
     const gcCore  = document.getElementById("g-core");
@@ -741,18 +854,32 @@
       persistEnabled: false,
       ticks: 0,
       microJitter: 0,
-      // new: network
+      workspaceMode: "full",
       net: {
-        mode: "online", // online | degraded | offline
+        mode: "online",
         latencyMs: 12,
         jitterMs: 1.3,
         lossPct: 0.1,
         rate: 260,
         integrity: 99.3,
-        stressLevel: 0 // 0=none, 1=minor, 2=heavy
+        stressLevel: 0
+      },
+      containment: {
+        alpha: true,
+        beta: true,
+        gamma: false,
+        lockdown: false
+      },
+      comms: {
+        satlink: false,
+        ghost: false,
+        chamber: false,
+        macroRecording: false,
+        macroBuffer: []
       },
       operator: {
-        name: "UNBOUND"
+        name: "UNBOUND",
+        level: 0
       }
     };
 
@@ -761,14 +888,20 @@
       state.persistEnabled = true;
     }
 
-    // operator name from URL (?op=NAME)
+    // operator from URL (?op=NAME&lvl=N)
     (function initOperatorFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const op = params.get("op");
+      const lvl = params.get("lvl");
       if (op) {
-        state.operator.name = op.toUpperCase();
+        state.operator.name = String(op).toUpperCase();
       }
-      opNameEl.textContent = state.operator.name;
+      if (lvl !== null) {
+        const n = parseInt(lvl, 10);
+        if (!isNaN(n) && n >= 0 && n <= 3) {
+          state.operator.level = n;
+        }
+      }
     })();
 
     // ----- Logging & persistence -----
@@ -791,7 +924,7 @@
       maybePersist(line + "\n");
     }
 
-    log("SIM: ChernOS v1.8.0 Simulated Network Layer ready.");
+    log("SIM: ChernOS v1.8.0 Simulated Network Layer + Workstation ready.");
 
     function updatePersistBadge() {
       elBadgePers.textContent = "PERSISTENCE: " + (state.persistEnabled ? "ON" : "OFF");
@@ -799,12 +932,13 @@
     }
     updatePersistBadge();
 
-    // ----- Audio Engine (unchanged core + small tweaks) -----
+    // ----- Audio Engine -----
     let audioCtx = null;
     let humNode = null;
     let coolantNode = null;
     let crackNode = null;
     let sirenNode = null;
+    let chamberNode = null;
 
     function ensureAudio() {
       if (audioCtx) return;
@@ -881,6 +1015,18 @@
       sirenNode = { osc, g, iv };
     }
 
+    function startChamberHum() {
+      if (!state.audioOn || !audioCtx || chamberNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 7.5;
+      g.gain.value = 0.02;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+      chamberNode = { osc, g };
+    }
+
     function stopNode(nodeObj, hasInterval) {
       if (!nodeObj) return;
       if (hasInterval && nodeObj.iv) clearInterval(nodeObj.iv);
@@ -892,6 +1038,7 @@
       stopNode(coolantNode, false); coolantNode = null;
       stopNode(crackNode, true); crackNode = null;
       stopNode(sirenNode, true); sirenNode = null;
+      stopNode(chamberNode, false); chamberNode = null;
     }
 
     function applyAudioState() {
@@ -906,6 +1053,7 @@
       startCoolant();
       startCrackle();
       startSiren();
+      if (state.comms.chamber) startChamberHum();
     }
 
     btnAudio.addEventListener("click", () => {
@@ -962,6 +1110,21 @@
       drawGraph(gcNet,   histNet,   "#38bdf8");
     }
 
+    // ----- Operator display -----
+    function roleForLevel(l) {
+      switch (l) {
+        case 3: return "DIRECTOR";
+        case 2: return "ENGINEER";
+        case 1: return "TECHNICIAN";
+        default: return "GUEST";
+      }
+    }
+
+    function renderOperator() {
+      const r = roleForLevel(state.operator.level);
+      opIdentityEl.textContent = `${state.operator.name} / Lvl ${state.operator.level} (${r})`;
+    }
+
     // ----- Rendering -----
     function renderTelemetry() {
       elTemp.textContent = Math.round(state.temp) + "°C";
@@ -973,7 +1136,6 @@
       const p = state.pressure;
       const r = state.rad;
 
-      // temp status
       if (t > 1150) {
         elTempStat.textContent = "Critical overheating (sim)";
         elTempStat.className = "soft crit";
@@ -985,7 +1147,6 @@
         elTempStat.className = "soft ok";
       }
 
-      // pressure
       if (p > 5.8) {
         elPStat.textContent = "Containment strain (sim)";
         elPStat.className = "soft crit";
@@ -997,7 +1158,6 @@
         elPStat.className = "soft ok";
       }
 
-      // radiation
       if (r > 3.0) {
         elRStat.textContent = "Severe release (sim)";
         elRStat.className = "soft crit";
@@ -1009,7 +1169,6 @@
         elRStat.className = "soft ok";
       }
 
-      // overdrive label
       if (!state.overdrive) {
         elOverLbl.textContent = "OVERDRIVE: DISARMED";
       } else if (state.meltdownStage === 0) {
@@ -1018,7 +1177,6 @@
         elOverLbl.textContent = "OVERDRIVE: LOCKED (meltdown sim)";
       }
 
-      // core glow intensity
       const base = state.overdrive ? 1.1 : 0.75;
       const heatFactor = Math.min(1, Math.max(0, (t - 280) / 900));
       const intensity = base + heatFactor * 1.2;
@@ -1035,11 +1193,9 @@
       netRate.textContent  = net.rate.toFixed(0) + " pkt/s";
       netIntegrity.textContent = net.integrity.toFixed(1) + "%";
 
-      // mode styling
       netDot.classList.remove("degraded", "offline");
       if (net.mode === "online") {
         netStatus.textContent = "ONLINE";
-        netDot.classList.remove("degraded","offline");
         elBadgeNet.textContent = "NET: ONLINE";
         elBadgeNet.style.color = "#bbf7d0";
       } else if (net.mode === "degraded") {
@@ -1055,6 +1211,61 @@
       }
     }
 
+    function renderContainment() {
+      const c = state.containment;
+      contAlphaText.textContent = c.alpha ? "ENGAGED" : "OFFLINE";
+      contBetaText.textContent  = c.beta ? "ENGAGED" : "OFFLINE";
+      contGammaText.textContent = c.gamma ? "ENGAGED" : "IDLE";
+
+      contAlphaDot.classList.toggle("offline", !c.alpha);
+      contBetaDot.classList.toggle("offline", !c.beta);
+      contGammaDot.classList.toggle("offline", !c.gamma);
+
+      contLockText.textContent = c.lockdown ? "ON" : "OFF";
+      contProfile.textContent  = c.lockdown ? "Lockdown Shell" : (c.gamma ? "Gamma Reinforced" : "Nominal Shield");
+
+      elBadgeLock.textContent = "LOCKDOWN: " + (c.lockdown ? "ON" : "OFF");
+      elBadgeLock.style.color = c.lockdown ? "#fb7185" : "#9ca3af";
+    }
+
+    function renderComms() {
+      const cc = state.comms;
+
+      comSatText.textContent   = cc.satlink ? "ACTIVE" : "IDLE";
+      comGhostText.textContent = cc.ghost   ? "ACTIVE" : "IDLE";
+      comBCText.textContent    = cc.chamber ? "ONLINE" : "IDLE";
+
+      comSatDot.classList.toggle("offline", !cc.satlink);
+      comGhostDot.classList.toggle("offline", !cc.ghost);
+      comBCDot.classList.toggle("offline", !cc.chamber);
+
+      if (cc.satlink && cc.ghost) {
+        comLinkText.textContent = "SAT+GHOST ROUTING (sim)";
+      } else if (cc.satlink) {
+        comLinkText.textContent = "SATELLITE UPLINK (sim)";
+      } else if (cc.ghost) {
+        comLinkText.textContent = "GHOST MIRROR (sim)";
+      } else {
+        comLinkText.textContent = "LOCAL ONLY";
+      }
+
+      comMacroText.textContent = cc.macroRecording ? "RECORDING" : (cc.macroBuffer.length ? "MACRO READY" : "IDLE");
+
+      bcOverlayEl.style.opacity = cc.chamber ? "0.24" : "0";
+      elBadgeBC.textContent = cc.chamber ? "BC: ACTIVE" : "BC: IDLE";
+      elBadgeBC.style.color = cc.chamber ? "#38bdf8" : "#9ca3af";
+
+      if (!state.audioOn) {
+        stopNode(chamberNode, false);
+        chamberNode = null;
+      } else if (cc.chamber && audioCtx) {
+        startChamberHum();
+      } else if (!cc.chamber && chamberNode) {
+        stopNode(chamberNode, false);
+        chamberNode = null;
+      }
+    }
+
     function renderBadges() {
       elBadgeOver.textContent = "OVERDRIVE: " + (state.overdrive ? "ON" : "OFF");
       elBadgeOver.style.color = state.overdrive ? "#fb7185" : "#9ca3af";
@@ -1064,6 +1275,9 @@
 
       elBadgeSim.textContent = "SIM-CORE ONLINE";
       renderNet();
+      renderContainment();
+      renderComms();
+      renderOperator();
     }
 
     function renderAll() {
@@ -1092,7 +1306,6 @@
         dR *= 1.7;
       }
 
-      // meltdown stages
       if (state.meltdownStage === 0) {
         if (state.temp > 1220 && state.safeguards > 0) {
           state.safeguards -= 1;
@@ -1149,7 +1362,6 @@
     function stepNetSim() {
       const net = state.net;
 
-      // baseline adjustments
       let baseLat   = 12;
       let baseJitter= 1.3;
       let baseLoss  = 0.1;
@@ -1179,13 +1391,11 @@
         baseRate  *= 0.8;
       }
 
-      // small noise
       net.latencyMs = baseLat + (Math.random() - 0.5) * 6;
       net.jitterMs  = baseJitter + (Math.random() - 0.5) * 2;
       net.lossPct   = Math.max(0, baseLoss + (Math.random() - 0.5) * 0.6);
       net.rate      = Math.max(0, baseRate + (Math.random() - 0.5) * 40);
 
-      // integrity ~ function of loss + mode + jitter
       let integrity = 100;
       if (net.mode === "degraded") integrity -= 8;
       if (net.mode === "offline") integrity  = 0;
@@ -1288,6 +1498,60 @@
     btnChaos.addEventListener("click", doChaos);
     btnReset.addEventListener("click", resetSim);
 
+    // ----- Containment actions -----
+    btnContGamma.addEventListener("click", () => {
+      state.containment.gamma = !state.containment.gamma;
+      log("CONTAINMENT (sim): Gamma shield " + (state.containment.gamma ? "engaged." : "idled."));
+      renderContainment();
+    });
+
+    btnLockdown.addEventListener("click", () => {
+      state.containment.lockdown = !state.containment.lockdown;
+      log("CONTAINMENT (sim): Lockdown " + (state.containment.lockdown ? "enabled." : "released."));
+      renderContainment();
+    });
+
+    // ----- Comms / Black Chamber actions -----
+    btnSatLink.addEventListener("click", () => {
+      state.comms.satlink = !state.comms.satlink;
+      log("COMMS (sim): SatLink " + (state.comms.satlink ? "activated." : "idled."));
+      renderComms();
+    });
+
+    btnGhost.addEventListener("click", () => {
+      state.comms.ghost = !state.comms.ghost;
+      log("COMMS (sim): Ghost Mirror " + (state.comms.ghost ? "activated." : "idled."));
+      renderComms();
+    });
+
+    btnBC.addEventListener("click", () => {
+      state.comms.chamber = !state.comms.chamber;
+      log("BC (sim): Black Chamber " + (state.comms.chamber ? "brought online." : "returned to idle."));
+      renderComms();
+    });
+
+    btnMacroRec.addEventListener("click", () => {
+      state.comms.macroRecording = !state.comms.macroRecording;
+      if (state.comms.macroRecording) {
+        state.comms.macroBuffer = [];
+        log("COMMS (sim): Macro recording started.");
+      } else {
+        log("COMMS (sim): Macro recording stopped.");
+      }
+      renderComms();
+    });
+
+    btnMacroPlay.addEventListener("click", () => {
+      if (!state.comms.macroBuffer.length) {
+        log("COMMS (sim): No macro buffered.");
+        return;
+      }
+      log("COMMS (sim): Macro playback (visual only):");
+      state.comms.macroBuffer.forEach((c, idx) => {
+        log(`  [${idx+1}] ${c}`);
+      });
+    });
+
     // ----- Diagnostics toggle -----
     btnDiag.addEventListener("click", () => {
       state.diagnostics = !state.diagnostics;
@@ -1306,6 +1570,10 @@
     btnOver.addEventListener("click", () => {
       if (state.meltdownStage > 0) {
         log("Overdrive: locked (meltdown sim active).");
+        return;
+      }
+      if (state.containment.lockdown) {
+        log("Overdrive: locked by containment lockdown (sim).");
         return;
       }
       state.overdrive = !state.overdrive;
@@ -1329,7 +1597,7 @@
       });
 
       if (themeName === "green") {
-        elTitle.textContent = "Simulated Network Layer Console";
+        elTitle.textContent = "Simulated Network Layer · Operator Workstation";
       } else if (themeName === "amber") {
         elTitle.textContent = "Simulated Network · Amber Core";
       } else if (themeName === "redline") {
@@ -1370,7 +1638,10 @@
       "audio on","audio off","save-log",
       "theme green","theme amber","theme redline","theme 2049",
       "power","coolant","engine status",
-      "net status","net ping","net lookup","net stress","net reset"
+      "containment status","lockdown on","lockdown off",
+      "satlink on","satlink off","ghost on","ghost off","black on","black off",
+      "net status","net ping","net lookup","net stress","net reset",
+      "operator set","operator level"
     ];
 
     function fakePing(host) {
@@ -1406,13 +1677,22 @@
       if (!cmd) return;
       log("> " + cmd);
 
+      // macro record (except macro commands themselves)
+      if (state.comms.macroRecording) {
+        const low = cmd.toLowerCase();
+        if (!low.startsWith("macro ") && low !== "macro rec" && low !== "macro stop" && low !== "macro play") {
+          state.comms.macroBuffer.push(cmd);
+          renderComms();
+        }
+      }
+
       termHistory.unshift(cmd);
       termIndex = -1;
 
       const lower = cmd.toLowerCase();
 
       if (lower === "help") {
-        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <green|amber|redline|2049>, net status, net ping <host>, net lookup <name>, net stress, net reset, engine status, save-log");
+        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <green|amber|redline|2049>, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, net status, net ping <host>, net lookup <name>, net stress, net reset, operator set <name>, operator level <0-3>, engine status, save-log");
         return;
       }
 
@@ -1503,7 +1783,80 @@
         return;
       }
 
-      // network commands
+      if (lower === "containment status") {
+        const c = state.containment;
+        log(`containment: alpha=${c.alpha?"engaged":"offline"}, beta=${c.beta?"engaged":"offline"}, gamma=${c.gamma?"engaged":"idle"}, lockdown=${c.lockdown?"on":"off"}`);
+        return;
+      }
+
+      if (lower === "lockdown on") {
+        if (!state.containment.lockdown) {
+          state.containment.lockdown = true;
+          log("CONTAINMENT (sim): Lockdown enabled by terminal.");
+          renderContainment();
+        }
+        return;
+      }
+      if (lower === "lockdown off") {
+        if (state.containment.lockdown) {
+          state.containment.lockdown = false;
+          log("CONTAINMENT (sim): Lockdown released by terminal.");
+          renderContainment();
+        }
+        return;
+      }
+
+      if (lower === "satlink on") {
+        if (!state.comms.satlink) {
+          state.comms.satlink = true;
+          log("COMMS (sim): SatLink activated via terminal.");
+          renderComms();
+        }
+        return;
+      }
+      if (lower === "satlink off") {
+        if (state.comms.satlink) {
+          state.comms.satlink = false;
+          log("COMMS (sim): SatLink idled via terminal.");
+          renderComms();
+        }
+        return;
+      }
+
+      if (lower === "ghost on") {
+        if (!state.comms.ghost) {
+          state.comms.ghost = true;
+          log("COMMS (sim): Ghost Mirror activated via terminal.");
+          renderComms();
+        }
+        return;
+      }
+      if (lower === "ghost off") {
+        if (state.comms.ghost) {
+          state.comms.ghost = false;
+          log("COMMS (sim): Ghost Mirror idled via terminal.");
+          renderComms();
+        }
+        return;
+      }
+
+      if (lower === "black on") {
+        if (!state.comms.chamber) {
+          state.comms.chamber = true;
+          log("BC (sim): Black Chamber brought online via terminal.");
+          renderComms();
+        }
+        return;
+      }
+      if (lower === "black off") {
+        if (state.comms.chamber) {
+          state.comms.chamber = false;
+          log("BC (sim): Black Chamber returned to idle via terminal.");
+          renderComms();
+        }
+        return;
+      }
+
       if (lower === "net status") {
         const net = state.net;
         log(`net status: mode=${net.mode}, latency=${net.latencyMs.toFixed(1)}ms, jitter=${net.jitterMs.toFixed(1)}ms, loss=${net.lossPct.toFixed(2)}%, rate=${net.rate.toFixed(0)} pkt/s, integrity=${net.integrity.toFixed(1)}%`);
@@ -1529,6 +1882,31 @@
 
       if (lower === "net reset") {
         btnNetReset.click();
+        return;
+      }
+
+      if (lower.startsWith("operator set ")) {
+        const name = raw.slice("operator set".length).trim();
+        const clean = name.replace(/^operator set\s+/i, "").trim();
+        if (clean) {
+          state.operator.name = clean.toUpperCase();
+          log("OP: Operator name set to " + state.operator.name);
+          renderOperator();
+        } else {
+          log("OP: No operator name provided.");
+        }
+        return;
+      }
+
+      if (lower.startsWith("operator level ")) {
+        const n = parseInt(lower.split(/\s+/)[2], 10);
+        if (!isNaN(n) && n >= 0 && n <= 3) {
+          state.operator.level = n;
+          log("OP: Operator level set to " + n + " (" + roleForLevel(n) + ")");
+          renderOperator();
+        } else {
+          log("OP: Invalid operator level (0–3).");
+        }
         return;
       }
 
@@ -1566,6 +1944,42 @@
         const match = commands.find(c => c.startsWith(current));
         if (match) termInput.value = match;
       }
+    });
+
+    // ----- Workspace modes -----
+    const WORKSPACE_KEY = "chernos_v17_workspace";
+
+    function setWorkspaceMode(mode, fromLoad) {
+      state.workspaceMode = mode;
+
+      workspaceButtons.forEach(btn => {
+        const v = btn.getAttribute("data-workspace");
+        if (v === mode) btn.classList.add("active");
+        else btn.classList.remove("active");
+      });
+
+      const panels = document.querySelectorAll("[data-panel]");
+      panels.forEach(el => {
+        const roles = (el.getAttribute("data-panel") || "").split(/\s+/);
+        if (mode === "full" || roles.includes(mode)) {
+          el.classList.remove("dim-panel");
+        } else {
+          el.classList.add("dim-panel");
+        }
+      });
+
+      if (!fromLoad) {
+        try {
+          localStorage.setItem(WORKSPACE_KEY, mode);
+        } catch (e) {}
+      }
+    }
+
+    workspaceButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const m = btn.getAttribute("data-workspace");
+        setWorkspaceMode(m, false);
+      });
     });
 
     // ----- Operator Workstation persistence -----
@@ -1666,6 +2080,16 @@
     renderAll();
     loadNotes();
     loadTasks();
+    renderOperator();
+
+    (function initWorkspace() {
+      let saved = "full";
+      try {
+        const v = localStorage.getItem(WORKSPACE_KEY);
+        if (v) saved = v;
+      } catch (e) {}
+      setWorkspaceMode(saved, true);
+    })();
   </script>
 </body>
 </html>
