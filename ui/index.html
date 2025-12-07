@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>ChernOS v1.7.0 – Operator Workstation</title>
+  <title>ChernOS v1.8.0 – Simulated Network Layer</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -51,14 +51,11 @@
 
     .wrap {
       min-height: 100vh;
-      padding: 18px 24px;
+      padding: 18px 24px 36px 24px;
       display: flex;
       flex-direction: column;
       gap: 10px;
       position: relative;
-      overflow-y: auto;
-      max-height: 100vh;
-      padding-bottom: 40px;
     }
 
     .reactor-glow {
@@ -71,7 +68,6 @@
       mix-blend-mode: screen;
       animation: glowPulse 4s ease-in-out infinite alternate;
       opacity: 0.7;
-      z-index: 1;
     }
 
     body.theme-amber .reactor-glow {
@@ -97,66 +93,6 @@
       100% { opacity: 0.9; filter: blur(1px); }
     }
 
-    .gamma-overlay {
-      position: fixed;
-      inset: -20px;
-      pointer-events: none;
-      background-image:
-        radial-gradient(circle at 0 0, rgba(56,189,248,0.18), transparent 60%),
-        radial-gradient(circle at 100% 0, rgba(59,130,246,0.18), transparent 60%),
-        repeating-linear-gradient(
-          60deg,
-          rgba(56,189,248,0.08),
-          rgba(56,189,248,0.08) 2px,
-          transparent 2px,
-          transparent 6px
-        );
-      mix-blend-mode: screen;
-      opacity: 0;
-      transform: scale(1.02);
-      transition: opacity 0.35s ease-out;
-      z-index: 2;
-    }
-
-    .gamma-overlay.active {
-      opacity: 0.65;
-      animation: gammaSpin 9s linear infinite;
-    }
-
-    @keyframes gammaSpin {
-      0% { transform: scale(1.02) rotate(0deg); }
-      100% { transform: scale(1.02) rotate(360deg); }
-    }
-
-    .black-overlay {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background:
-        radial-gradient(circle at 50% 20%, rgba(0,0,0,0.9), transparent 70%),
-        repeating-linear-gradient(
-          180deg,
-          rgba(15,23,42,0.6),
-          rgba(15,23,42,0.6) 2px,
-          transparent 2px,
-          transparent 4px
-        );
-      mix-blend-mode: multiply;
-      opacity: 0;
-      transition: opacity 0.4s ease-out;
-      z-index: 3;
-    }
-
-    .black-overlay.active {
-      opacity: 0.7;
-      animation: blackScan 7s linear infinite;
-    }
-
-    @keyframes blackScan {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(12px); }
-    }
-
     .card {
       border-radius: 16px;
       border: 1px solid var(--ch-border-soft);
@@ -164,8 +100,6 @@
       padding: 12px 14px;
       backdrop-filter: blur(10px);
       box-shadow: 0 0 24px rgba(0,0,0,0.75);
-      position: relative;
-      z-index: 4;
     }
 
     .label {
@@ -204,12 +138,6 @@
     .btn:hover {
       background: rgba(0,0,0,0.8);
       box-shadow: 0 0 10px var(--ch-accent-soft);
-    }
-
-    .btn-small {
-      padding: 3px 7px;
-      font-size: 10px;
-      border-radius: 999px;
     }
 
     .badge {
@@ -289,7 +217,7 @@
       border-radius: 50%;
       background: radial-gradient(circle, var(--ch-accent), transparent);
       box-shadow: 0 0 18px var(--ch-accent-soft);
-      transition: box-shadow 0.3s ease-out, transform 0.25s ease-out, background 0.2s;
+      transition: box-shadow 0.3s ease-out, transform 0.25s ease-out;
     }
 
     @keyframes ringSpin {
@@ -364,7 +292,7 @@
 
     .graphs {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0,1fr));
+      grid-template-columns: repeat(4, minmax(0,1fr));
       gap: 8px;
       margin-top: 6px;
     }
@@ -386,6 +314,7 @@
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.16em;
+      color: var(--ch-text-main); /* make it visible on dark bg */
     }
 
     .soft {
@@ -423,16 +352,10 @@
       gap: 4px;
       cursor: pointer;
       transition: all 0.16s;
-      color: #ffffff;
     }
     .theme-btn.active {
       border-color: var(--ch-accent-soft);
       box-shadow: 0 0 9px var(--ch-accent-soft);
-    }
-
-    .theme-btn[data-theme="2049"] {
-      border-color: #38bdf8 !important;
-      color: #ffffff !important;
     }
 
     .mute-indicator {
@@ -440,146 +363,99 @@
       color: var(--ch-text-soft);
     }
 
-    .contain-pill {
-      font-size: 9px;
+    .net-pill {
+      font-size: 10px;
       padding: 3px 7px;
       border-radius: 999px;
       border: 1px solid rgba(148,163,184,0.5);
-      background: rgba(15,23,42,0.85);
+      background: rgba(15,23,42,0.8);
       display: inline-flex;
       align-items: center;
       gap: 4px;
-      margin-right: 4px;
+      color: var(--ch-text-soft);
     }
 
-    .contain-pill span.dot {
-      width: 7px;
-      height: 7px;
+    .net-dot {
+      width: 6px;
+      height: 6px;
       border-radius: 999px;
-      background: #4ade80;
-    }
-
-    .contain-pill.alpha span.dot { background: #22c55e; }
-    .contain-pill.beta span.dot  { background: #facc6b; }
-    .contain-pill.gamma span.dot { background: #fb7185; }
-
-    .contain-pill.off span.dot {
-      background: #4b5563;
-    }
-
-    .lockdown-active {
-      box-shadow: 0 0 16px rgba(248,113,113,0.7);
-      border-color: rgba(248,113,113,0.7) !important;
-    }
-
-    .chamber-active {
-      box-shadow: 0 0 16px rgba(15,23,42,0.9);
-      border-color: rgba(15,23,42,0.9) !important;
-      background: rgba(2,6,23,0.95) !important;
-    }
-
-    .comms-pill {
-      font-size: 9px;
-      padding: 3px 7px;
-      border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.6);
-      background: rgba(15,23,42,0.9);
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      margin-right: 4px;
-    }
-
-    .comms-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 999px;
-      background: #4b5563;
-    }
-
-    .comms-dot.on {
       background: #22c55e;
     }
 
-    .comms-dot.ghost {
-      background: #a855f7;
+    .net-dot.degraded {
+      background: #facc6b;
     }
 
-    /* Operator Workstation */
-    .ws-btn {
-      font-size: 10px;
-      padding: 3px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.5);
-      background: rgba(15,23,42,0.9);
-      color: #e5e7eb;
-      cursor: pointer;
-      transition: all 0.16s;
+    .net-dot.offline {
+      background: #fb7185;
     }
 
-    .ws-btn.active {
-      border-color: var(--ch-accent-soft);
-      box-shadow: 0 0 9px var(--ch-accent-soft);
-      background: rgba(2,6,23,0.95);
-      color: #f9fafb;
+    .op-notes {
+      width: 100%;
+      min-height: 80px;
+      max-height: 140px;
+      resize: vertical;
+      background: rgba(0,0,0,0.8);
+      border-radius: 10px;
+      border: 1px solid var(--ch-border-soft);
+      padding: 6px 8px;
+      font-size: 11px;
+      color: var(--ch-text-main);
+      outline: none;
     }
 
-    .workspace-dim {
-      opacity: 0.32;
-      filter: blur(0.3px);
-      transition: opacity 0.2s ease-out, filter 0.2s ease-out;
+    .op-task-input {
+      width: 100%;
+      background: rgba(0,0,0,0.85);
+      border-radius: 7px;
+      border: 1px solid var(--ch-border-soft);
+      padding: 5px 8px;
+      font-size: 11px;
+      color: var(--ch-text-main);
+      outline: none;
     }
 
-    .task-row {
+    .op-task-row {
       display: flex;
       align-items: center;
-      justify-content: space-between;
       gap: 6px;
-      padding: 3px 4px;
-      border-radius: 6px;
-      background: rgba(15,23,42,0.85);
-      border: 1px solid rgba(30,64,175,0.4);
+      font-size: 11px;
+      color: var(--ch-text-main);
     }
 
-    .task-row.done {
+    .op-task-row span.done {
+      text-decoration: line-through;
       opacity: 0.6;
     }
 
-    .task-text.done {
-      text-decoration: line-through;
-      color: #9ca3af;
-    }
-
-    .task-del {
-      font-size: 9px;
+    .op-task-remove {
       border-radius: 999px;
-      padding: 2px 6px;
-      border: 1px solid rgba(148,163,184,0.7);
-      background: transparent;
+      border: 1px solid rgba(148,163,184,0.5);
+      padding: 0 6px;
+      font-size: 10px;
       cursor: pointer;
+      background: rgba(15,23,42,0.9);
     }
   </style>
 </head>
 <body class="theme-green">
   <div class="reactor-glow"></div>
-  <div id="gamma-overlay" class="gamma-overlay"></div>
-  <div id="black-overlay" class="black-overlay"></div>
 
   <div class="wrap">
     <!-- TOP BAR -->
     <div class="card flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <div class="label">ChernOS v1.7.0 – Operator Workstation</div>
+        <div class="label">ChernOS v1.8.0</div>
         <div class="text-2xl font-semibold" id="title-main">
-          Reactor + Containment + Black Chamber Workstation
+          Simulated Network Layer Console
         </div>
         <div class="status-board">
           <div class="status-cell">CORE CHANNELS: SYNCED</div>
           <div class="status-cell">COOLANT GRID: STABLE</div>
-          <div class="status-cell">CONTAINMENT BUS: ARMED</div>
-          <div class="status-cell">BLACK CHAMBER: STANDBY</div>
+          <div class="status-cell">CONTAINMENT: SEALED</div>
+          <div class="status-cell">I/O BUS: GREEN</div>
           <div class="status-cell">DIAGNOSTICS ENGINE: READY</div>
-          <div class="status-cell">WORKSTATION: OPERATOR-DRIVEN</div>
+          <div class="status-cell">OVERDRIVE + NETSIM: ARMED</div>
         </div>
       </div>
 
@@ -588,10 +464,8 @@
           <span class="badge" id="badge-sim">SIM-CORE ONLINE</span>
           <span class="badge" id="badge-overdrive">OVERDRIVE: OFF</span>
           <span class="badge" id="badge-diag">DIAGNOSTICS: OFF</span>
-          <span class="badge" id="badge-contain">CONTAINMENT: STABLE</span>
-          <span class="badge" id="badge-lockdown">LOCKDOWN: OFF</span>
-          <span class="badge" id="badge-satlink">SATLINK: OFF</span>
-          <span class="badge" id="badge-black">BLACK CHAMBER: IDLE</span>
+          <span class="badge" id="badge-persist">PERSISTENCE: OFF</span>
+          <span class="badge" id="badge-net">NET: ONLINE</span>
         </div>
 
         <div class="flex gap-6 items-center">
@@ -609,7 +483,6 @@
               <button class="btn" id="btn-audio-toggle">Toggle Audio</button>
               <span class="mute-indicator" id="audio-state">Audio: ON</span>
             </div>
-
             <div class="flex gap-2 mt-1">
               <button class="theme-btn active" data-theme="green">
                 <span class="theme-dot" style="background:#22c55e;"></span>Green
@@ -620,22 +493,15 @@
               <button class="theme-btn" data-theme="redline">
                 <span class="theme-dot" style="background:#fb7185;"></span>Redline
               </button>
-            </div>
-
-            <div class="mt-2 text-right text-xs text-slate-300">
-              <div id="op-name-line">Operator: ANON / Lvl 1</div>
-              <div id="op-status-line">Clearance: TECHNICIAN</div>
-              <div id="remote-status-line" class="text-[10px] text-slate-400 mt-1">
-                Remote link: LOCAL ONLY
-              </div>
+              <!-- hidden 2049 will be injected dynamically -->
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- TELEMETRY STRIP -->
-    <div class="grid grid-cols-4 gap-2" data-panel="reactor">
+    <!-- TELEMETRY STRIP + NETWORK STRIP -->
+    <div class="grid grid-cols-5 gap-2">
       <div class="card">
         <div class="label">CORE TEMP</div>
         <div class="big" id="read-temp">312°C</div>
@@ -674,115 +540,37 @@
           <span class="pill">CONTAINMENT SEAL</span>
         </div>
       </div>
-    </div>
 
-    <!-- CONTAINMENT PANEL -->
-    <div class="card mt-1" data-panel="containment">
-      <div class="label">CONTAINMENT PROTOCOLS</div>
-      <div class="mt-2 flex flex-wrap gap-2 items-center">
-        <div class="contain-pill alpha" id="pill-alpha">
-          <span class="dot"></span>
-          <span>CFA (Thermal Buffer)</span>
-        </div>
-        <div class="contain-pill beta" id="pill-beta">
-          <span class="dot"></span>
-          <span>CFB (Pressure Latch)</span>
-        </div>
-        <div class="contain-pill gamma" id="pill-gamma">
-          <span class="dot"></span>
-          <span>CFG (Gamma Field)</span>
-        </div>
-      </div>
-      <div class="mt-2 flex flex-wrap gap-2">
-        <button class="btn btn-small" id="btn-cfa-toggle">Toggle Alpha</button>
-        <button class="btn btn-small" id="btn-cfb-reset">Reset Beta Latch</button>
-        <button class="btn btn-small" id="btn-cfg-toggle">Toggle Gamma Field</button>
-        <button class="btn btn-small" id="btn-contain-pulse">Pulse Sweep</button>
-        <button class="btn btn-small" id="btn-lockdown-toggle">Lockdown</button>
-      </div>
-      <div class="mt-2 text-[10px] text-slate-400">
-        Terminal shortcuts:
-        <span class="pill text-[10px]">containment status</span>
-        <span class="pill text-[10px]">lockdown on/off</span>
-        <span class="pill text-[10px]">operator set &lt;name&gt;</span>
-        <span class="pill text-[10px]">operator level &lt;n&gt;</span>
-      </div>
-    </div>
-
-    <!-- COMMS / BLACK CHAMBER PANEL -->
-    <div class="card mt-1" id="comms-card" data-panel="comms">
-      <div class="label">COMMS / BLACK CHAMBER</div>
-      <div class="mt-2 flex flex-wrap gap-2 items-center">
-        <div class="comms-pill" id="pill-satlink">
-          <span class="comms-dot" id="dot-satlink"></span>
-          <span>Satellite Link</span>
-        </div>
-        <div class="comms-pill" id="pill-ghost">
-          <span class="comms-dot" id="dot-ghost"></span>
-          <span>Ghost Mirror</span>
-        </div>
-        <div class="comms-pill" id="pill-black">
-          <span class="comms-dot" id="dot-black"></span>
-          <span>Black Chamber</span>
-        </div>
-      </div>
-      <div class="mt-2 flex flex-wrap gap-2">
-        <button class="btn btn-small" id="btn-satlink-toggle">Toggle SatLink</button>
-        <button class="btn btn-small" id="btn-ghost-toggle">Toggle Ghost Mirror</button>
-        <button class="btn btn-small" id="btn-black-toggle">Toggle Black Chamber</button>
-        <button class="btn btn-small" id="btn-macro-rec">Macro Rec</button>
-        <button class="btn btn-small" id="btn-macro-play">Macro Play</button>
-      </div>
-      <div class="mt-2 text-[10px] text-slate-400">
-        Terminal shortcuts:
-        <span class="pill text-[10px]">satlink on/off</span>
-        <span class="pill text-[10px]">ghost on/off</span>
-        <span class="pill text-[10px]">black on/off</span>
-        <span class="pill text-[10px]">macro rec / stop / play</span>
-      </div>
-    </div>
-
-    <!-- OPERATOR WORKSTATION PANEL -->
-    <div class="card mt-1">
-      <div class="label">OPERATOR WORKSTATION</div>
-      <div class="mt-2 flex flex-wrap gap-2">
-        <button class="ws-btn active" data-ws-mode="full">Full Console</button>
-        <button class="ws-btn" data-ws-mode="reactor">Reactor Focus</button>
-        <button class="ws-btn" data-ws-mode="containment">Containment Focus</button>
-        <button class="ws-btn" data-ws-mode="comms">Comms Focus</button>
-        <button class="ws-btn" data-ws-mode="logs">Logs Focus</button>
-      </div>
-      <div id="ws-status" class="text-[11px] text-slate-400 mt-1">
-        Workspace: Full Console
-      </div>
-
-      <div class="mt-3 grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-3">
-        <div>
-          <div class="text-[11px] text-slate-400 mb-1">Operator Notepad</div>
-          <textarea
-            id="ws-notes"
-            class="w-full h-24 text-[11px] bg-black/70 border border-slate-600/60 rounded-md p-2 outline-none resize-vertical"
-            placeholder="Shift notes, fictional procedures, reminders (local only)."
-          ></textarea>
-        </div>
-        <div>
-          <div class="text-[11px] text-slate-400 mb-1">Tasks</div>
-          <div class="flex gap-1 mb-1">
-            <input
-              id="ws-task-input"
-              class="flex-1 text-[11px] bg-black/70 border border-slate-600/60 rounded-md px-2 py-1 outline-none"
-              placeholder="Add task (sim only)"
-            >
-            <button class="btn btn-small" id="ws-task-add">Add</button>
+      <!-- NETWORK STATUS PANEL -->
+      <div class="card">
+        <div class="label">NETWORK LAYER — SIMULATED</div>
+        <div class="flex justify-between items-center mt-1">
+          <div class="space-y-1">
+            <div class="net-pill">
+              <span class="net-dot" id="net-dot"></span>
+              <span id="net-status-text">ONLINE</span>
+            </div>
+            <div class="text-[10px] text-slate-400">
+              Integrity: <span id="net-integrity">99.3%</span>
+            </div>
           </div>
-          <div id="ws-task-list" class="space-y-1 max-h-24 overflow-y-auto text-[11px]"></div>
+          <div class="text-right text-xs text-slate-400 space-y-1">
+            <div>Latency: <span id="net-lat">12 ms</span></div>
+            <div>Jitter: <span id="net-jitter">1.2 ms</span></div>
+            <div>Loss: <span id="net-loss">0.1%</span></div>
+            <div>Rate: <span id="net-rate">260 pkt/s</span></div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button class="btn" id="btn-net-stress">Net Stress</button>
+          <button class="btn" id="btn-net-reset">Net Reset</button>
         </div>
       </div>
     </div>
 
     <!-- CONTROLS + TERMINAL + LOG -->
-    <div class="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] gap-3" data-panel="reactor logs">
-      <div class="card" data-panel="reactor">
+    <div class="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] gap-3">
+      <div class="card">
         <div class="label">OPERATOR CONTROL SURFACE</div>
         <div class="flex flex-wrap gap-2 mt-2">
           <button class="btn" id="btn-scram">SCRAM</button>
@@ -793,27 +581,26 @@
         </div>
         <div class="flex flex-wrap gap-2 mt-3">
           <span class="pill text-[10px]">
-            Terminal: help · status · containment status · satlink on/off · ghost on/off ·
-            black on/off · macro rec/stop/play
+            Terminal: help · status · net status · net ping &lt;host&gt; · net lookup &lt;name&gt;
           </span>
         </div>
 
         <div class="term-grid">
           <input id="term-input" autocomplete="off"
-            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, diag on/off, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, operator set &lt;name&gt;, operator level &lt;0–3&gt;)">
+            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, diag on/off, audio on/off, theme &lt;green|amber|redline|2049&gt;, net status, net ping &lt;host&gt;, net lookup &lt;name&gt;, net stress, net reset, save-log)">
           <button class="btn" id="term-run">Run</button>
         </div>
       </div>
 
-      <div class="card" data-panel="logs">
+      <div class="card">
         <div class="label">EVENT LOG (SIMULATION)</div>
         <div id="log" class="mt-2"></div>
       </div>
     </div>
 
     <!-- DIAGNOSTICS -->
-    <div class="card mt-1" id="diag-card" style="display:none" data-panel="reactor">
-      <div class="label">DIAGNOSTICS MODE — LIVE TELEMETRY GRAPHS</div>
+    <div class="card mt-1" id="diag-card" style="display:none">
+      <div class="label">DIAGNOSTICS MODE — LIVE TELEMETRY & NETWORK GRAPHS</div>
       <div class="graphs">
         <div>
           <div class="text-[10px] text-slate-400 mb-1">Core Temp</div>
@@ -827,13 +614,50 @@
           <div class="text-[10px] text-slate-400 mb-1">Radiation</div>
           <canvas id="g-rad" width="260" height="60"></canvas>
         </div>
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Network Load</div>
+          <canvas id="g-net" width="260" height="60"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- OPERATOR WORKSTATION -->
+    <div class="card mt-2">
+      <div class="flex justify-between items-center">
+        <div>
+          <div class="label">OPERATOR WORKSTATION</div>
+          <div class="text-xs text-slate-400 mt-1">
+            Local-only tools · notes & tasks persist in this browser
+          </div>
+        </div>
+        <div class="text-xs text-slate-400">
+          Operator: <span id="op-name">UNBOUND</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-[minmax(0,1.2fr)_minmax(0,1.1fr)] gap-3 mt-3">
+        <!-- Notepad -->
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Operator Notepad</div>
+          <textarea id="op-notes" class="op-notes" placeholder="Shift notes, procedures, fake ticket IDs..."></textarea>
+        </div>
+
+        <!-- Tasks -->
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Task List</div>
+          <div class="flex gap-2 mb-2">
+            <input id="task-input" class="op-task-input" placeholder="Add task (Enter to add)">
+            <button class="btn" id="task-add">Add</button>
+          </div>
+          <div id="task-list" class="space-y-1 max-h-120 overflow-y-auto"></div>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
     // ============================================================
-    //   ChernOS v1.7.0 — Operator Workstation (purely fictional)
+    //   ChernOS v1.8.0 — Simulated Network Layer (purely fictional)
     // ============================================================
 
     // ----- DOM Refs -----
@@ -848,31 +672,13 @@
     const elCoreDot   = document.getElementById("core-dot");
     const elBadgeOver = document.getElementById("badge-overdrive");
     const elBadgeDiag = document.getElementById("badge-diag");
+    const elBadgePers = document.getElementById("badge-persist");
     const elBadgeSim  = document.getElementById("badge-sim");
-    const elBadgeContain = document.getElementById("badge-contain");
-    const elBadgeLockdown = document.getElementById("badge-lockdown");
-    const elBadgeSat  = document.getElementById("badge-satlink");
-    const elBadgeBlack= document.getElementById("badge-black");
+    const elBadgeNet  = document.getElementById("badge-net");
     const elAudioState= document.getElementById("audio-state");
     const elDiagCard  = document.getElementById("diag-card");
     const elLog       = document.getElementById("log");
     const elTitle     = document.getElementById("title-main");
-    const elGammaOverlay = document.getElementById("gamma-overlay");
-    const elBlackOverlay = document.getElementById("black-overlay");
-    const elOpNameLine   = document.getElementById("op-name-line");
-    const elOpStatusLine = document.getElementById("op-status-line");
-    const elRemoteStatus = document.getElementById("remote-status-line");
-
-    const pillAlpha  = document.getElementById("pill-alpha");
-    const pillBeta   = document.getElementById("pill-beta");
-    const pillGamma  = document.getElementById("pill-gamma");
-
-    const pillSat    = document.getElementById("pill-satlink");
-    const pillGhost  = document.getElementById("pill-ghost");
-    const pillBlack  = document.getElementById("pill-black");
-    const dotSat     = document.getElementById("dot-satlink");
-    const dotGhost   = document.getElementById("dot-ghost");
-    const dotBlack   = document.getElementById("dot-black");
 
     const leverCore   = document.getElementById("lever-core");
     const leverCool   = document.getElementById("lever-coolant");
@@ -885,43 +691,42 @@
     const btnDiag     = document.getElementById("btn-diag-toggle");
     const btnOver     = document.getElementById("btn-overdrive-toggle");
     const btnAudio    = document.getElementById("btn-audio-toggle");
-    const btnCfa      = document.getElementById("btn-cfa-toggle");
-    const btnCfb      = document.getElementById("btn-cfb-reset");
-    const btnCfg      = document.getElementById("btn-cfg-toggle");
-    const btnPulse    = document.getElementById("btn-contain-pulse");
-    const btnLockdown = document.getElementById("btn-lockdown-toggle");
-
-    const btnSatlink  = document.getElementById("btn-satlink-toggle");
-    const btnGhost    = document.getElementById("btn-ghost-toggle");
-    const btnBlack    = document.getElementById("btn-black-toggle");
-    const btnMacroRec = document.getElementById("btn-macro-rec");
-    const btnMacroPlay= document.getElementById("btn-macro-play");
 
     const termInput   = document.getElementById("term-input");
     const termRun     = document.getElementById("term-run");
 
     const themeButtons = Array.from(document.querySelectorAll(".theme-btn"));
 
-    // Workstation elements
-    const wsButtons   = Array.from(document.querySelectorAll(".ws-btn"));
-    const wsStatus    = document.getElementById("ws-status");
-    const wsNotes     = document.getElementById("ws-notes");
-    const wsTaskInput = document.getElementById("ws-task-input");
-    const wsTaskAdd   = document.getElementById("ws-task-add");
-    const wsTaskList  = document.getElementById("ws-task-list");
+    // Network DOM
+    const netDot      = document.getElementById("net-dot");
+    const netStatus   = document.getElementById("net-status-text");
+    const netIntegrity= document.getElementById("net-integrity");
+    const netLat      = document.getElementById("net-lat");
+    const netJitter   = document.getElementById("net-jitter");
+    const netLoss     = document.getElementById("net-loss");
+    const netRate     = document.getElementById("net-rate");
+    const btnNetStress= document.getElementById("btn-net-stress");
+    const btnNetReset = document.getElementById("btn-net-reset");
 
-    const panelElems  = Array.from(document.querySelectorAll("[data-panel]"));
+    // Operator workstation DOM
+    const opNameEl    = document.getElementById("op-name");
+    const opNotesEl   = document.getElementById("op-notes");
+    const taskInputEl = document.getElementById("task-input");
+    const taskAddBtn  = document.getElementById("task-add");
+    const taskListEl  = document.getElementById("task-list");
 
     // Graph canvases
     const gcCore  = document.getElementById("g-core");
     const gcPress = document.getElementById("g-press");
     const gcRad   = document.getElementById("g-rad");
+    const gcNet   = document.getElementById("g-net");
 
     // ----- Simulation state -----
     const histLen = 90;
     let histTemp  = [];
     let histPress = [];
     let histRad   = [];
+    let histNet   = [];
 
     const state = {
       temp: 312,
@@ -929,61 +734,44 @@
       rad: 0.14,
       safeguards: 3,
       overdrive: false,
-      meltdownStage: 0, // 0..5
+      meltdownStage: 0,
       diagnostics: false,
       audioOn: true,
       theme: "green",
       persistEnabled: false,
       ticks: 0,
       microJitter: 0,
-      lockdown: false,
-      implosionPlayed: false,
-      containment: {
-        alpha: false,
-        betaLatched: false,
-        gamma: false
+      // new: network
+      net: {
+        mode: "online", // online | degraded | offline
+        latencyMs: 12,
+        jitterMs: 1.3,
+        lossPct: 0.1,
+        rate: 260,
+        integrity: 99.3,
+        stressLevel: 0 // 0=none, 1=minor, 2=heavy
       },
-      operatorName: "ANON",
-      operatorLevel: 1,
-      satLink: false,
-      ghostLink: false,
-      blackChamber: false,
-      macroRecording: false,
-      macroBuffer: [],
-      workspaceMode: "full",
-      tasks: []
+      operator: {
+        name: "UNBOUND"
+      }
     };
 
-    // URL params
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("persist") === "1") {
+    // persistence flags from URL
+    if (window.location.search.indexOf("persist=1") !== -1) {
       state.persistEnabled = true;
     }
-    if (params.get("op")) {
-      state.operatorName = decodeURIComponent(params.get("op"));
-    }
-    if (params.get("lvl")) {
-      const lvl = parseInt(params.get("lvl"), 10);
-      if (!isNaN(lvl)) {
-        state.operatorLevel = Math.min(3, Math.max(0, lvl));
+
+    // operator name from URL (?op=NAME)
+    (function initOperatorFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const op = params.get("op");
+      if (op) {
+        state.operator.name = op.toUpperCase();
       }
-    }
+      opNameEl.textContent = state.operator.name;
+    })();
 
-    function levelLabel(lvl) {
-      if (lvl === 0) return "GUEST";
-      if (lvl === 1) return "TECHNICIAN";
-      if (lvl === 2) return "ENGINEER";
-      if (lvl === 3) return "DIRECTOR";
-      return "UNKNOWN";
-    }
-
-    function updateOperatorLines() {
-      elOpNameLine.textContent = `Operator: ${state.operatorName || "ANON"} / Lvl ${state.operatorLevel}`;
-      elOpStatusLine.textContent = `Clearance: ${levelLabel(state.operatorLevel)}`;
-    }
-    updateOperatorLines();
-
-    // ----- Logging & (optional) persistence -----
+    // ----- Logging & persistence -----
     function maybePersist(line) {
       if (!state.persistEnabled) return;
       try {
@@ -1003,16 +791,20 @@
       maybePersist(line + "\n");
     }
 
-    log("SIM: ChernOS v1.7.0 Operator Workstation console ready.");
+    log("SIM: ChernOS v1.8.0 Simulated Network Layer ready.");
 
-    // ----- Audio Engine v3 -----
+    function updatePersistBadge() {
+      elBadgePers.textContent = "PERSISTENCE: " + (state.persistEnabled ? "ON" : "OFF");
+      elBadgePers.style.color = state.persistEnabled ? "#bbf7d0" : "#9ca3af";
+    }
+    updatePersistBadge();
+
+    // ----- Audio Engine (unchanged core + small tweaks) -----
     let audioCtx = null;
     let humNode = null;
     let coolantNode = null;
     let crackNode = null;
     let sirenNode = null;
-    let containNode = null;
-    let gammaNode = null;
 
     function ensureAudio() {
       if (audioCtx) return;
@@ -1089,65 +881,6 @@
       sirenNode = { osc, g, iv };
     }
 
-    function startContainHum() {
-      if (!state.audioOn || !audioCtx || containNode) return;
-      const osc = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = 35;
-      g.gain.value = 0.0;
-      osc.connect(g); g.connect(audioCtx.destination);
-      osc.start();
-      containNode = { osc, g };
-    }
-
-    function updateContainHumGain() {
-      if (!containNode) return;
-      const activeCount =
-        (state.containment.alpha ? 1 : 0) +
-        (state.containment.betaLatched ? 1 : 0) +
-        (state.containment.gamma ? 1 : 0) +
-        (state.blackChamber ? 1 : 0);
-      containNode.g.gain.value = state.audioOn ? Math.min(0.055, activeCount * 0.015) : 0;
-    }
-
-    function startGammaCharge() {
-      if (!state.audioOn || !audioCtx || gammaNode) return;
-      const osc = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      osc.type = "triangle";
-      osc.frequency.value = 260;
-      g.gain.value = 0.0;
-      osc.connect(g); g.connect(audioCtx.destination);
-      osc.start();
-
-      let up = true;
-      const iv = setInterval(() => {
-        if (!state.audioOn || (!state.containment.gamma && !state.blackChamber)) {
-          g.gain.value = 0.0;
-          return;
-        }
-        up = !up;
-        osc.frequency.value = up ? 260 : 320;
-        g.gain.value = up ? 0.03 : 0.01;
-      }, 220);
-
-      gammaNode = { osc, g, iv };
-    }
-
-    function playImplosion() {
-      if (!state.audioOn || !audioCtx) return;
-      const osc = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = 90;
-      g.gain.value = 0.12;
-      osc.connect(g); g.connect(audioCtx.destination);
-      osc.start();
-      setTimeout(() => g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2), 40);
-      setTimeout(() => { try { osc.stop(); } catch (_) {} }, 400);
-    }
-
     function stopNode(nodeObj, hasInterval) {
       if (!nodeObj) return;
       if (hasInterval && nodeObj.iv) clearInterval(nodeObj.iv);
@@ -1159,8 +892,6 @@
       stopNode(coolantNode, false); coolantNode = null;
       stopNode(crackNode, true); crackNode = null;
       stopNode(sirenNode, true); sirenNode = null;
-      stopNode(containNode, false); containNode = null;
-      stopNode(gammaNode, true); gammaNode = null;
     }
 
     function applyAudioState() {
@@ -1175,9 +906,6 @@
       startCoolant();
       startCrackle();
       startSiren();
-      startContainHum();
-      startGammaCharge();
-      updateContainHumGain();
     }
 
     btnAudio.addEventListener("click", () => {
@@ -1207,7 +935,7 @@
       if (data.length < 2) return;
 
       let min = data[0], max = data[0];
-      for (let i=1; i<data.length; i++) {
+      for (let i = 1; i < data.length; i++) {
         if (data[i] < min) min = data[i];
         if (data[i] > max) max = data[i];
       }
@@ -1218,10 +946,10 @@
       ctx.strokeStyle = color;
       ctx.lineWidth = 1;
 
-      for (let i=0; i<data.length; i++) {
+      for (let i = 0; i < data.length; i++) {
         const x = (i / (data.length - 1)) * (w - 4) + 2;
         const y = h - 4 - ((data[i] - min) / span) * (h - 8);
-        if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.stroke();
     }
@@ -1231,6 +959,7 @@
       drawGraph(gcCore,  histTemp,  "#bbf7d0");
       drawGraph(gcPress, histPress, "#86efac");
       drawGraph(gcRad,   histRad,   "#4ade80");
+      drawGraph(gcNet,   histNet,   "#38bdf8");
     }
 
     // ----- Rendering -----
@@ -1244,10 +973,8 @@
       const p = state.pressure;
       const r = state.rad;
 
-      if (t > 1450) {
-        elTempStat.textContent = "Stage 3–4 runaway (sim)";
-        elTempStat.className = "soft crit";
-      } else if (t > 1150) {
+      // temp status
+      if (t > 1150) {
         elTempStat.textContent = "Critical overheating (sim)";
         elTempStat.className = "soft crit";
       } else if (t > 730) {
@@ -1258,7 +985,8 @@
         elTempStat.className = "soft ok";
       }
 
-      if (p > 6.2) {
+      // pressure
+      if (p > 5.8) {
         elPStat.textContent = "Containment strain (sim)";
         elPStat.className = "soft crit";
       } else if (p > 3.3) {
@@ -1269,7 +997,8 @@
         elPStat.className = "soft ok";
       }
 
-      if (r > 4.0) {
+      // radiation
+      if (r > 3.0) {
         elRStat.textContent = "Severe release (sim)";
         elRStat.className = "soft crit";
       } else if (r > 0.8) {
@@ -1280,6 +1009,7 @@
         elRStat.className = "soft ok";
       }
 
+      // overdrive label
       if (!state.overdrive) {
         elOverLbl.textContent = "OVERDRIVE: DISARMED";
       } else if (state.meltdownStage === 0) {
@@ -1288,54 +1018,40 @@
         elOverLbl.textContent = "OVERDRIVE: LOCKED (meltdown sim)";
       }
 
+      // core glow intensity
       const base = state.overdrive ? 1.1 : 0.75;
       const heatFactor = Math.min(1, Math.max(0, (t - 280) / 900));
-      const meltdownBoost = state.meltdownStage > 0 ? 0.3 * state.meltdownStage : 0;
-      const intensity = base + heatFactor * 1.2 + meltdownBoost;
+      const intensity = base + heatFactor * 1.2;
       const glow = 14 + 26 * intensity;
-      const colorShift = state.blackChamber ? "#0f172a" :
-                         state.meltdownStage >= 4 ? "#fb7185" :
-                         state.meltdownStage >= 2 ? "#f97316" :
-                         "var(--ch-accent)";
-      elCoreDot.style.boxShadow = `0 0 ${glow}px rgba(191,249,168,${0.45 + intensity * 0.25})`;
-      elCoreDot.style.transform  = `scale(${0.9 + intensity * 0.22})`;
-      elCoreDot.style.background = `radial-gradient(circle, ${colorShift}, transparent)`;
+      elCoreDot.style.boxShadow = `0 0 ${glow}px rgba(191,249,168,${0.45 + intensity * 0.4})`;
+      elCoreDot.style.transform  = `scale(${0.9 + intensity * 0.25})`;
     }
 
-    function updateContainPills() {
-      function setPill(el, active, crit) {
-        el.classList.remove("off");
-        el.style.borderColor = active ? "rgba(191,249,168,0.6)" : "rgba(148,163,184,0.4)";
-        const dot = el.querySelector("span.dot");
-        if (!dot) return;
-        if (!active) {
-          dot.style.background = "#4b5563";
-        } else if (crit) {
-          dot.style.background = "#fb7185";
-        } else {
-          dot.style.background = "#22c55e";
-        }
-      }
-      setPill(pillAlpha, state.containment.alpha, false);
-      setPill(pillBeta, state.containment.betaLatched, state.containment.betaLatched && state.meltdownStage >= 2);
-      setPill(pillGamma, state.containment.gamma, state.meltdownStage >= 3);
-    }
+    function renderNet() {
+      const net = state.net;
+      netLat.textContent   = net.latencyMs.toFixed(1) + " ms";
+      netJitter.textContent= net.jitterMs.toFixed(1) + " ms";
+      netLoss.textContent  = net.lossPct.toFixed(2) + "%";
+      netRate.textContent  = net.rate.toFixed(0) + " pkt/s";
+      netIntegrity.textContent = net.integrity.toFixed(1) + "%";
 
-    function updateCommsPills() {
-      dotSat.classList.toggle("on", state.satLink);
-      dotGhost.classList.toggle("on", state.ghostLink);
-      dotGhost.classList.toggle("ghost", state.ghostLink);
-      dotBlack.classList.toggle("on", state.blackChamber);
-      pillBlack.classList.toggle("chamber-active", state.blackChamber);
-
-      if (!state.satLink && !state.ghostLink) {
-        elRemoteStatus.textContent = "Remote link: LOCAL ONLY";
-      } else if (state.satLink && !state.ghostLink) {
-        elRemoteStatus.textContent = "Remote link: SATELLITE UPLINK (sim)";
-      } else if (!state.satLink && state.ghostLink) {
-        elRemoteStatus.textContent = "Remote link: GHOST MIRROR (sim)";
+      // mode styling
+      netDot.classList.remove("degraded", "offline");
+      if (net.mode === "online") {
+        netStatus.textContent = "ONLINE";
+        netDot.classList.remove("degraded","offline");
+        elBadgeNet.textContent = "NET: ONLINE";
+        elBadgeNet.style.color = "#bbf7d0";
+      } else if (net.mode === "degraded") {
+        netStatus.textContent = "DEGRADED";
+        netDot.classList.add("degraded");
+        elBadgeNet.textContent = "NET: DEGRADED";
+        elBadgeNet.style.color = "#facc6b";
       } else {
-        elRemoteStatus.textContent = "Remote link: SAT+GHOST ROUTING (sim)";
+        netStatus.textContent = "OFFLINE";
+        netDot.classList.add("offline");
+        elBadgeNet.textContent = "NET: OFFLINE";
+        elBadgeNet.style.color = "#fb7185";
       }
     }
 
@@ -1347,225 +1063,21 @@
       elBadgeDiag.style.color = state.diagnostics ? "#bbf7d0" : "#9ca3af";
 
       elBadgeSim.textContent = "SIM-CORE ONLINE";
-
-      const anyContain = state.containment.alpha || state.containment.betaLatched || state.containment.gamma;
-      elBadgeContain.textContent = "CONTAINMENT: " +
-        (state.meltdownStage >= 4 && !state.containment.gamma ? "BREACH" :
-         state.meltdownStage >= 2 ? "ENGAGED" :
-         anyContain ? "ARMED" : "STABLE");
-      elBadgeContain.style.color =
-        (state.meltdownStage >= 4 && !state.containment.gamma) ? "#fb7185" :
-        (state.meltdownStage >= 2 || anyContain) ? "#facc6b" :
-        "#bbf7d0";
-
-      elBadgeLockdown.textContent = "LOCKDOWN: " + (state.lockdown ? "ON" : "OFF");
-      elBadgeLockdown.style.color = state.lockdown ? "#fb7185" : "#9ca3af";
-
-      elBadgeSat.textContent = "SATLINK: " + (state.satLink ? "ON" : "OFF");
-      elBadgeSat.style.color = state.satLink ? "#bbf7d0" : "#9ca3af";
-
-      elBadgeBlack.textContent = "BLACK CHAMBER: " + (state.blackChamber ? "ACTIVE" : "IDLE");
-      elBadgeBlack.style.color = state.blackChamber ? "#facc6b" : "#9ca3af";
-    }
-
-    function renderGammaOverlay() {
-      if (state.containment.gamma) {
-        elGammaOverlay.classList.add("active");
-      } else {
-        elGammaOverlay.classList.remove("active");
-      }
-    }
-
-    function renderBlackOverlay() {
-      if (state.blackChamber) {
-        elBlackOverlay.classList.add("active");
-      } else {
-        elBlackOverlay.classList.remove("active");
-      }
-    }
-
-    // ----- Workstation: workspace modes -----
-    function applyWorkspaceMode(mode) {
-      state.workspaceMode = mode;
-      try {
-        localStorage.setItem("chernos_ws_mode", mode);
-      } catch (e) {}
-
-      wsButtons.forEach(btn => {
-        const m = btn.getAttribute("data-ws-mode");
-        if (m === mode) btn.classList.add("active");
-        else btn.classList.remove("active");
-      });
-
-      let label = "Full Console";
-      if (mode === "reactor") label = "Reactor Focus";
-      else if (mode === "containment") label = "Containment Focus";
-      else if (mode === "comms") label = "Comms Focus";
-      else if (mode === "logs") label = "Logs Focus";
-
-      wsStatus.textContent = "Workspace: " + label;
-
-      panelElems.forEach(el => {
-        const tags = (el.getAttribute("data-panel") || "").split(/\s+/);
-        if (mode === "full") {
-          el.classList.remove("workspace-dim");
-        } else {
-          if (tags.includes(mode)) {
-            el.classList.remove("workspace-dim");
-          } else {
-            el.classList.add("workspace-dim");
-          }
-        }
-      });
-    }
-
-    wsButtons.forEach(btn => {
-      btn.addEventListener("click", () => {
-        const m = btn.getAttribute("data-ws-mode");
-        applyWorkspaceMode(m);
-      });
-    });
-
-    // ----- Workstation: notes + tasks -----
-    function saveNotes() {
-      try {
-        localStorage.setItem("chernos_ws_notes", wsNotes.value || "");
-      } catch (e) {}
-    }
-
-    wsNotes.addEventListener("input", () => {
-      saveNotes();
-    });
-
-    function saveTasks() {
-      try {
-        localStorage.setItem("chernos_ws_tasks", JSON.stringify(state.tasks || []));
-      } catch (e) {}
-    }
-
-    function renderTasks() {
-      wsTaskList.innerHTML = "";
-      (state.tasks || []).forEach(task => {
-        const row = document.createElement("div");
-        row.className = "task-row" + (task.done ? " done" : "");
-        row.dataset.id = task.id;
-
-        const left = document.createElement("div");
-        left.className = "flex items-center gap-1";
-
-        const cb = document.createElement("input");
-        cb.type = "checkbox";
-        cb.checked = !!task.done;
-        cb.className = "w-3 h-3";
-
-        const txt = document.createElement("span");
-        txt.textContent = task.text;
-        txt.className = "task-text" + (task.done ? " done" : "");
-
-        left.appendChild(cb);
-        left.appendChild(txt);
-
-        const del = document.createElement("button");
-        del.className = "task-del";
-        del.textContent = "×";
-
-        cb.addEventListener("change", () => {
-          task.done = cb.checked;
-          saveTasks();
-          renderTasks();
-        });
-
-        del.addEventListener("click", () => {
-          state.tasks = state.tasks.filter(t => t.id !== task.id);
-          saveTasks();
-          renderTasks();
-        });
-
-        row.appendChild(left);
-        row.appendChild(del);
-        wsTaskList.appendChild(row);
-      });
-    }
-
-    wsTaskAdd.addEventListener("click", () => {
-      const raw = (wsTaskInput.value || "").trim();
-      if (!raw) return;
-      const task = {
-        id: Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6),
-        text: raw,
-        done: false
-      };
-      state.tasks.push(task);
-      wsTaskInput.value = "";
-      saveTasks();
-      renderTasks();
-    });
-
-    wsTaskInput.addEventListener("keydown", e => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        wsTaskAdd.click();
-      }
-    });
-
-    function loadWorkstationState() {
-      try {
-        const notes = localStorage.getItem("chernos_ws_notes");
-        if (notes !== null) wsNotes.value = notes;
-
-        const tasksRaw = localStorage.getItem("chernos_ws_tasks");
-        if (tasksRaw) {
-          try {
-            const arr = JSON.parse(tasksRaw);
-            if (Array.isArray(arr)) state.tasks = arr;
-          } catch (_) {}
-        }
-
-        const mode = localStorage.getItem("chernos_ws_mode");
-        if (mode && ["full","reactor","containment","comms","logs"].includes(mode)) {
-          applyWorkspaceMode(mode);
-        } else {
-          applyWorkspaceMode("full");
-        }
-      } catch (e) {
-        applyWorkspaceMode("full");
-      }
-      renderTasks();
-    }
-
-    // ----- Containment & overlays -----
-    function renderGammaOverlay() {
-      if (state.containment.gamma) {
-        elGammaOverlay.classList.add("active");
-      } else {
-        elGammaOverlay.classList.remove("active");
-      }
-    }
-
-    function renderBlackOverlay() {
-      if (state.blackChamber) {
-        elBlackOverlay.classList.add("active");
-      } else {
-        elBlackOverlay.classList.remove("active");
-      }
+      renderNet();
     }
 
     function renderAll() {
       renderTelemetry();
       renderBadges();
-      renderGammaOverlay();
-      renderBlackOverlay();
-      updateContainPills();
-      updateCommsPills();
       renderGraphs();
     }
 
-    // ----- Simulation Engine (meltdown v2.0) -----
+    // ----- Simulation Engine (reactor) -----
     function stepSim() {
       state.ticks++;
 
-      const drive  = parseInt(leverCore.value, 10)   / 100;
-      const cool   = parseInt(leverCool.value, 10)   / 100;
+      const drive  = parseInt(leverCore.value, 10) / 100;
+      const cool   = parseInt(leverCool.value, 10) / 100;
       const jitter = (Math.random() - 0.5);
 
       state.microJitter = 0.3 * jitter;
@@ -1574,25 +1086,13 @@
       let dP = jitter * 0.07 + (state.temp - 320) / 2600;
       let dR = jitter * 0.02 + Math.max(0, (state.temp - 420)) / 6400;
 
-      if (state.overdrive && state.meltdownStage === 0 && !state.lockdown) {
+      if (state.overdrive && state.meltdownStage === 0) {
         dT *= 1.8;
         dP *= 1.5;
         dR *= 1.7;
       }
 
-      if (state.containment.alpha) {
-        dT *= 0.8;
-      }
-
-      if (state.containment.betaLatched) {
-        dP *= 0.5;
-      }
-
-      if (state.blackChamber) {
-        dR *= 0.9;
-        dP *= 0.95;
-      }
-
+      // meltdown stages
       if (state.meltdownStage === 0) {
         if (state.temp > 1220 && state.safeguards > 0) {
           state.safeguards -= 1;
@@ -1602,58 +1102,30 @@
           log("AUTO-SAFEGUARD (sim): staged insertion + coolant surge.");
         }
 
-        if (state.temp > 1300 && state.pressure > 5.0 && state.safeguards === 0) {
+        if (state.temp > 1300 && state.pressure > 5.4 && state.safeguards === 0) {
           state.meltdownStage = 1;
-          log("MELTDOWN STAGE 1 (sim): Thermal spike detected.");
+          log("MELTDOWN STAGE 1 (sim): Overheat threshold exceeded.");
         }
       } else if (state.meltdownStage === 1) {
-        dT += 12.0;
-        dP += 0.09;
-        dR += 0.14;
-        if (state.temp > 1400) {
+        dT += 16.5;
+        dP += 0.11;
+        dR += 0.24;
+        if (state.temp > 1450) {
           state.meltdownStage = 2;
-          state.containment.betaLatched = true;
-          log("MELTDOWN STAGE 2 (sim): Pressure surge, Beta latch engaged.");
+          log("MELTDOWN STAGE 2 (sim): Pressure runaway engaged.");
         }
       } else if (state.meltdownStage === 2) {
-        dT += 20;
-        dP += 0.05;
-        dR += 0.25;
-        if (state.rad > 1.7) {
+        dT += 28;
+        dP -= 0.15;
+        dR += 0.6;
+        if (state.rad > 4.0) {
           state.meltdownStage = 3;
-          log("MELTDOWN STAGE 3 (sim): Radiation breach indicated.");
+          log("MELTDOWN STAGE 3 (sim): Core collapse visualized.");
         }
       } else if (state.meltdownStage === 3) {
-        dT += 26;
-        dP -= 0.05;
-        dR += 0.4;
-        if (!state.containment.gamma && state.rad > 3.5) {
-          state.meltdownStage = 4;
-          log("MELTDOWN STAGE 4 (sim): Containment failure visualized.");
-        } else if (state.containment.gamma && state.rad > 3.5) {
-          state.meltdownStage = 4;
-          log("MELTDOWN STAGE 4 (sim): Gamma field holding collapse (visual only).");
-        }
-      } else if (state.meltdownStage === 4) {
-        dT += 14;
-        dP = Math.max(0.6, state.pressure - 0.2);
-        dR += 0.18;
-
-        if (!state.containment.gamma && state.rad > 4.2 && !state.lockdown) {
-          state.meltdownStage = 5;
-          log("MELTDOWN STAGE 5 (sim): Core implosion depicted.");
-          if (!state.implosionPlayed) {
-            state.implosionPlayed = true;
-            playImplosion();
-          }
-        } else if (state.containment.gamma) {
-          dT -= 10;
-          dR -= 0.2;
-        }
-      } else if (state.meltdownStage === 5) {
-        dT -= 18;
-        dP = Math.max(0.7, state.pressure - 0.25);
-        dR -= 0.26;
+        dT += 6;
+        dP = Math.max(0.6, state.pressure - 0.25);
+        dR += 0.2;
       }
 
       state.temp     += dT;
@@ -1672,6 +1144,90 @@
     }
 
     setInterval(stepSim, 850);
+
+    // ----- Network Simulation Engine -----
+    function stepNetSim() {
+      const net = state.net;
+
+      // baseline adjustments
+      let baseLat   = 12;
+      let baseJitter= 1.3;
+      let baseLoss  = 0.1;
+      let baseRate  = 260;
+
+      if (net.mode === "degraded") {
+        baseLat   = 48;
+        baseJitter= 9;
+        baseLoss  = 1.5;
+        baseRate  = 190;
+      } else if (net.mode === "offline") {
+        baseLat   = 0;
+        baseJitter= 0;
+        baseLoss  = 100;
+        baseRate  = 0;
+      }
+
+      if (net.stressLevel === 1) {
+        baseLat   *= 1.8;
+        baseJitter*= 1.9;
+        baseLoss  += 2.0;
+        baseRate  *= 1.1;
+      } else if (net.stressLevel === 2) {
+        baseLat   *= 3.5;
+        baseJitter*= 3.0;
+        baseLoss  += 5.0;
+        baseRate  *= 0.8;
+      }
+
+      // small noise
+      net.latencyMs = baseLat + (Math.random() - 0.5) * 6;
+      net.jitterMs  = baseJitter + (Math.random() - 0.5) * 2;
+      net.lossPct   = Math.max(0, baseLoss + (Math.random() - 0.5) * 0.6);
+      net.rate      = Math.max(0, baseRate + (Math.random() - 0.5) * 40);
+
+      // integrity ~ function of loss + mode + jitter
+      let integrity = 100;
+      if (net.mode === "degraded") integrity -= 8;
+      if (net.mode === "offline") integrity  = 0;
+      integrity -= net.lossPct * 1.2;
+      integrity -= net.jitterMs * 0.4;
+      integrity = Math.max(0, Math.min(100, integrity));
+      net.integrity = integrity;
+
+      renderNet();
+      pushHist(histNet, net.rate);
+      renderGraphs();
+    }
+
+    setInterval(stepNetSim, 900);
+
+    btnNetStress.addEventListener("click", () => {
+      if (state.net.mode === "offline") {
+        log("NET (sim): cannot stress, network already offline.");
+        return;
+      }
+      state.net.stressLevel = Math.min(2, state.net.stressLevel + 1);
+      if (state.net.stressLevel === 1) {
+        state.net.mode = "degraded";
+        log("NET (sim): minor stress injected – latency + loss elevated.");
+      } else if (state.net.stressLevel === 2) {
+        state.net.mode = "degraded";
+        log("NET (sim): heavy stress injected – simulated congestion.");
+      }
+      renderNet();
+    });
+
+    btnNetReset.addEventListener("click", () => {
+      state.net.mode = "online";
+      state.net.stressLevel = 0;
+      state.net.latencyMs = 12;
+      state.net.jitterMs = 1.3;
+      state.net.lossPct = 0.1;
+      state.net.rate = 260;
+      state.net.integrity = 99.3;
+      log("NET (sim): network state reset to baseline.");
+      renderNet();
+    });
 
     // ----- Operator actions -----
     function doScram() {
@@ -1718,10 +1274,10 @@
       state.rad = 0.14;
       state.safeguards = 3;
       state.meltdownStage = 0;
-      state.implosionPlayed = false;
       histTemp = [];
       histPress = [];
       histRad = [];
+      histNet = [];
       log("Simulation reset to nominal baseline.");
       renderAll();
     }
@@ -1731,111 +1287,6 @@
     btnStress.addEventListener("click", doStress);
     btnChaos.addEventListener("click", doChaos);
     btnReset.addEventListener("click", resetSim);
-
-    // ----- Containment actions -----
-    btnCfa.addEventListener("click", () => {
-      state.containment.alpha = !state.containment.alpha;
-      log(`Containment Alpha (thermal buffer) ${state.containment.alpha ? "enabled" : "disabled"} (sim).`);
-      updateContainHumGain();
-      renderAll();
-    });
-
-    btnCfb.addEventListener("click", () => {
-      state.containment.betaLatched = false;
-      log("Containment Beta latch reset (sim).");
-      updateContainHumGain();
-      renderAll();
-    });
-
-    btnCfg.addEventListener("click", () => {
-      state.containment.gamma = !state.containment.gamma;
-      log(`Containment Gamma field ${state.containment.gamma ? "engaged" : "disengaged"} (sim).`);
-      updateContainHumGain();
-      renderAll();
-    });
-
-    btnPulse.addEventListener("click", () => {
-      log("Containment pulse sweep triggered (sim).");
-      state.rad = Math.max(0.05, state.rad - 0.6);
-      renderAll();
-    });
-
-    btnLockdown.addEventListener("click", () => {
-      toggleLockdown();
-    });
-
-    function toggleLockdown(forceOn) {
-      const target = (typeof forceOn === "boolean") ? forceOn : !state.lockdown;
-      state.lockdown = target;
-      if (state.lockdown) {
-        log("LOCKDOWN: High-risk controls restricted (sim).");
-        btnLockdown.classList.add("lockdown-active");
-      } else {
-        log("LOCKDOWN: Restrictions lifted (sim).");
-        btnLockdown.classList.remove("lockdown-active");
-      }
-      renderAll();
-    }
-
-    // ----- COMMS / BLACK CHAMBER actions -----
-    btnSatlink.addEventListener("click", () => {
-      state.satLink = !state.satLink;
-      log(`SATLINK ${state.satLink ? "routed to sim uplink" : "disconnected"} (visual only).`);
-      renderAll();
-    });
-
-    btnGhost.addEventListener("click", () => {
-      state.ghostLink = !state.ghostLink;
-      log(`GHOST MIRROR ${state.ghostLink ? "latched (sim)" : "released (sim)"}.`);
-      renderAll();
-    });
-
-    btnBlack.addEventListener("click", () => {
-      toggleBlackChamber();
-    });
-
-    function toggleBlackChamber(forceOn) {
-      const target = (typeof forceOn === "boolean") ? forceOn : !state.blackChamber;
-      state.blackChamber = target;
-      if (state.blackChamber) {
-        log("BLACK CHAMBER engaged (visual dark-mode layer only).");
-      } else {
-        log("BLACK CHAMBER disengaged.");
-      }
-      updateContainHumGain();
-      renderAll();
-    }
-
-    btnMacroRec.addEventListener("click", () => {
-      startMacroRecording();
-    });
-
-    btnMacroPlay.addEventListener("click", () => {
-      playMacro();
-    });
-
-    function startMacroRecording() {
-      state.macroRecording = true;
-      state.macroBuffer = [];
-      log("Macro recording started (sim). Commands will be captured until `macro stop`.");
-    }
-
-    function stopMacroRecording() {
-      state.macroRecording = false;
-      log("Macro recording stopped (sim). Use `macro play` to replay.");
-    }
-
-    function playMacro() {
-      if (state.macroBuffer.length === 0) {
-        log("Macro play: buffer empty.");
-        return;
-      }
-      log(`Macro play: replaying ${state.macroBuffer.length} commands (sim).`);
-      const cmds = state.macroBuffer.slice();
-      for (const cmd of cmds) {
-        runCommand(cmd);
-      }
-    }
 
     // ----- Diagnostics toggle -----
     btnDiag.addEventListener("click", () => {
@@ -1855,10 +1306,6 @@
     btnOver.addEventListener("click", () => {
       if (state.meltdownStage > 0) {
         log("Overdrive: locked (meltdown sim active).");
-        return;
-      }
-      if (state.lockdown) {
-        log("Overdrive blocked by LOCKDOWN (sim).");
         return;
       }
       state.overdrive = !state.overdrive;
@@ -1882,13 +1329,13 @@
       });
 
       if (themeName === "green") {
-        elTitle.textContent = "Reactor + Containment + Black Chamber Workstation";
+        elTitle.textContent = "Simulated Network Layer Console";
       } else if (themeName === "amber") {
-        elTitle.textContent = "Operator Workstation · Amber Core";
+        elTitle.textContent = "Simulated Network · Amber Core";
       } else if (themeName === "redline") {
-        elTitle.textContent = "Operator Workstation · Redline Sim";
+        elTitle.textContent = "Simulated Network · Redline";
       } else if (themeName === "2049") {
-        elTitle.textContent = "Operator Workstation · 2049 Mode (sim)";
+        elTitle.textContent = "Simulated Network · 2049 Mode (sim)";
       }
       log("Theme set: " + themeName);
       renderAll();
@@ -1901,7 +1348,6 @@
       });
     });
 
-    // hidden 2049 mode
     function unlock2049() {
       if (document.querySelector('[data-theme="2049"]')) return;
       const parent = themeButtons[0].parentElement;
@@ -1915,28 +1361,50 @@
       log("Hidden theme unlocked: 2049 (sim aesthetics only).");
     }
 
-    // ----- Terminal v1.7 -----
+    // ----- Terminal v1.8 -----
     const termHistory = [];
     let termIndex = -1;
     const commands = [
       "help","status","scram","relief","stress","chaos","reset",
       "diag on","diag off","overdrive on","overdrive off",
-      "audio on","audio off","save-log","theme green","theme amber",
-      "theme redline","theme 2049","power","coolant","engine status",
-      "unlock 2049","containment status","lockdown on","lockdown off",
-      "operator set","operator level","satlink on","satlink off",
-      "ghost on","ghost off","black on","black off",
-      "macro rec","macro stop","macro play"
+      "audio on","audio off","save-log",
+      "theme green","theme amber","theme redline","theme 2049",
+      "power","coolant","engine status",
+      "net status","net ping","net lookup","net stress","net reset"
     ];
+
+    function fakePing(host) {
+      const net = state.net;
+      if (net.mode === "offline") {
+        log(`net: host '${host}' unreachable (sim offline).`);
+        return;
+      }
+      const base = net.latencyMs;
+      const jitter = net.jitterMs;
+      const rtt = Math.max(1, base + (Math.random() - 0.5) * 2 * jitter);
+      const lossHit = Math.random() < (net.lossPct / 100);
+      if (lossHit) {
+        log(`net: packet to '${host}' dropped (sim).`);
+      } else {
+        log(`net: ping '${host}' = ${rtt.toFixed(1)} ms (sim).`);
+      }
+    }
+
+    function fakeLookup(name) {
+      const net = state.net;
+      if (net.mode === "offline") {
+        log(`net: lookup for '${name}' failed (sim offline).`);
+        return;
+      }
+      const oct = () => Math.floor(20 + Math.random() * 200);
+      const addr = `10.${oct()}.${oct()}.${oct()}`;
+      log(`net: lookup '${name}' -> ${addr} (simulated).`);
+    }
 
     function runCommand(raw) {
       const cmd = String(raw || "").trim();
       if (!cmd) return;
       log("> " + cmd);
-
-      if (state.macroRecording && !cmd.toLowerCase().startsWith("macro ")) {
-        state.macroBuffer.push(cmd);
-      }
 
       termHistory.unshift(cmd);
       termIndex = -1;
@@ -1944,7 +1412,7 @@
       const lower = cmd.toLowerCase();
 
       if (lower === "help") {
-        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <green|amber|redline|2049>, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, operator set <name>, operator level <0-3>, engine status, save-log, unlock 2049");
+        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <green|amber|redline|2049>, net status, net ping <host>, net lookup <name>, net stress, net reset, engine status, save-log");
         return;
       }
 
@@ -1952,13 +1420,7 @@
         log("status: temp=" + Math.round(state.temp) + "C, p=" + state.pressure.toFixed(2) +
             "MPa, rad=" + state.rad.toFixed(2) + "mSv/h, sg=" + state.safeguards +
             ", od=" + (state.overdrive ? "on" : "off") + ", diag=" + (state.diagnostics ? "on" : "off") +
-            ", meltdownStage=" + state.meltdownStage + ", satLink=" + state.satLink +
-            ", black=" + state.blackChamber);
-        return;
-      }
-
-      if (lower === "containment status") {
-        log(`containment: alpha=${state.containment.alpha}, betaLatched=${state.containment.betaLatched}, gamma=${state.containment.gamma}, lockdown=${state.lockdown}`);
+            ", net=" + state.net.mode + ", integrity=" + state.net.integrity.toFixed(1) + "%");
         return;
       }
 
@@ -2031,7 +1493,7 @@
       }
 
       if (lower === "engine status") {
-        log("engine: ticks=" + state.ticks + ", meltdownStage=" + state.meltdownStage + ", overdrive=" + (state.overdrive?"on":"off") + ", lockdown=" + state.lockdown + ", blackChamber=" + state.blackChamber);
+        log("engine: ticks=" + state.ticks + ", meltdownStage=" + state.meltdownStage + ", overdrive=" + (state.overdrive?"on":"off"));
         return;
       }
 
@@ -2041,104 +1503,32 @@
         return;
       }
 
-      if (lower === "unlock 2049") {
-        unlock2049();
+      // network commands
+      if (lower === "net status") {
+        const net = state.net;
+        log(`net status: mode=${net.mode}, latency=${net.latencyMs.toFixed(1)}ms, jitter=${net.jitterMs.toFixed(1)}ms, loss=${net.lossPct.toFixed(2)}%, rate=${net.rate.toFixed(0)} pkt/s, integrity=${net.integrity.toFixed(1)}%`);
         return;
       }
 
-      if (lower === "lockdown on") {
-        if (!state.lockdown) toggleLockdown(true);
+      if (lower.startsWith("net ping ")) {
+        const host = lower.split(/\s+/).slice(2).join(" ") || "sim-target";
+        fakePing(host);
         return;
       }
 
-      if (lower === "lockdown off") {
-        if (state.lockdown) toggleLockdown(false);
+      if (lower.startsWith("net lookup ")) {
+        const name = lower.split(/\s+/).slice(2).join(" ") || "sim-node";
+        fakeLookup(name);
         return;
       }
 
-      if (lower === "satlink on") {
-        if (!state.satLink) {
-          state.satLink = true;
-          log("SATLINK routed to sim uplink (visual only).");
-          renderAll();
-        }
+      if (lower === "net stress") {
+        btnNetStress.click();
         return;
       }
 
-      if (lower === "satlink off") {
-        if (state.satLink) {
-          state.satLink = false;
-          log("SATLINK disconnected (sim).");
-          renderAll();
-        }
-        return;
-      }
-
-      if (lower === "ghost on") {
-        if (!state.ghostLink) {
-          state.ghostLink = true;
-          log("GHOST MIRROR latched (sim).");
-          renderAll();
-        }
-        return;
-      }
-
-      if (lower === "ghost off") {
-        if (state.ghostLink) {
-          state.ghostLink = false;
-          log("GHOST MIRROR released (sim).");
-          renderAll();
-        }
-        return;
-      }
-
-      if (lower === "black on") {
-        if (!state.blackChamber) toggleBlackChamber(true);
-        return;
-      }
-
-      if (lower === "black off") {
-        if (state.blackChamber) toggleBlackChamber(false);
-        return;
-      }
-
-      if (lower === "macro rec") {
-        startMacroRecording();
-        return;
-      }
-
-      if (lower === "macro stop") {
-        if (state.macroRecording) stopMacroRecording();
-        else log("Macro stop: no recording active.");
-        return;
-      }
-
-      if (lower === "macro play") {
-        playMacro();
-        return;
-      }
-
-      if (lower.startsWith("operator set ")) {
-        const name = cmd.slice("operator set ".length).trim();
-        if (!name) {
-          log("operator set: missing name.");
-          return;
-        }
-        state.operatorName = name;
-        updateOperatorLines();
-        log("Operator name set to: " + name);
-        return;
-      }
-
-      if (lower.startsWith("operator level ")) {
-        const n = parseInt(lower.split(/\s+/)[2], 10);
-        if (isNaN(n)) {
-          log("operator level: expected number 0–3.");
-          return;
-        }
-        state.operatorLevel = Math.min(3, Math.max(0, n));
-        updateOperatorLines();
-        log("Operator level set to: " + state.operatorLevel + " (" + levelLabel(state.operatorLevel) + ")");
+      if (lower === "net reset") {
+        btnNetReset.click();
         return;
       }
 
@@ -2178,10 +1568,104 @@
       }
     });
 
+    // ----- Operator Workstation persistence -----
+    const NOTES_KEY = "chernos_v18_notes";
+    const TASKS_KEY = "chernos_v18_tasks";
+
+    function loadNotes() {
+      try {
+        const v = localStorage.getItem(NOTES_KEY);
+        if (v != null) opNotesEl.value = v;
+      } catch (e) {}
+    }
+
+    function saveNotes() {
+      try {
+        localStorage.setItem(NOTES_KEY, opNotesEl.value || "");
+      } catch (e) {}
+    }
+
+    opNotesEl.addEventListener("input", () => {
+      saveNotes();
+    });
+
+    let tasks = [];
+
+    function loadTasks() {
+      try {
+        const raw = localStorage.getItem(TASKS_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) tasks = parsed;
+      } catch (e) {}
+      renderTasks();
+    }
+
+    function saveTasks() {
+      try {
+        localStorage.setItem(TASKS_KEY, JSON.stringify(tasks));
+      } catch (e) {}
+    }
+
+    function renderTasks() {
+      taskListEl.innerHTML = "";
+      tasks.forEach(t => {
+        const row = document.createElement("div");
+        row.className = "op-task-row";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!t.done;
+        cb.addEventListener("change", () => {
+          t.done = cb.checked;
+          saveTasks();
+          renderTasks();
+        });
+        const span = document.createElement("span");
+        span.textContent = t.text;
+        if (t.done) span.classList.add("done");
+
+        const remove = document.createElement("button");
+        remove.className = "op-task-remove";
+        remove.textContent = "×";
+        remove.addEventListener("click", () => {
+          tasks = tasks.filter(x => x.id !== t.id);
+          saveTasks();
+          renderTasks();
+        });
+
+        row.appendChild(cb);
+        row.appendChild(span);
+        row.appendChild(remove);
+        taskListEl.appendChild(row);
+      });
+    }
+
+    function addTaskFromInput() {
+      const text = (taskInputEl.value || "").trim();
+      if (!text) return;
+      tasks.unshift({
+        id: Date.now() + Math.random().toString(16).slice(2),
+        text,
+        done: false
+      });
+      taskInputEl.value = "";
+      saveTasks();
+      renderTasks();
+    }
+
+    taskAddBtn.addEventListener("click", addTaskFromInput);
+    taskInputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        addTaskFromInput();
+      }
+    });
+
     // ----- Init -----
     applyTheme("green");
-    loadWorkstationState();
     renderAll();
+    loadNotes();
+    loadTasks();
   </script>
 </body>
 </html>
