@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { applyTheme } from "./core/themes";
-import { initSimulation, getSimState } from "./core/simulation";
+import { initSimulation } from "./core/simulation";
 import { initAudioSystem } from "./core/audio";
 import { initHotkeys } from "./core/hotkeys";
 import { bus, logLine } from "./core/messageBus";
@@ -11,8 +11,9 @@ import { DiagnosticsApp } from "./apps/DiagnosticsApp";
 import { ContainmentApp } from "./apps/ContainmentApp";
 import { NetworkMonitorApp } from "./apps/NetworkMonitorApp";
 import { LogViewerApp } from "./apps/LogViewerApp";
+import { TerminalApp } from "./apps/TerminalApp";
 
-type AppId = "reactor" | "diag" | "containment" | "net" | "log";
+type AppId = "reactor" | "diag" | "containment" | "net" | "log" | "terminal";
 
 interface WindowDef {
   id: string;
@@ -45,11 +46,10 @@ export const AppShell: React.FC = () => {
       } else if (e.type === "theme:set") {
         setTheme(e.payload.theme as any);
       } else if (e.type === "reactor:update") {
-        // if crisis index high, auto switch theme redline / blackchamber
         const ci = e.payload.reactor.crisisIndex;
         if (ci >= 9.0 && theme !== "blackchamber") {
           setTheme("blackchamber");
-        } else if (ci >= 7.0 && theme !== "redline") {
+        } else if (ci >= 7.0 && ci < 9.0 && theme !== "redline") {
           setTheme("redline");
         }
       }
@@ -59,6 +59,7 @@ export const AppShell: React.FC = () => {
     openWindow("reactor");
     openWindow("diag");
     openWindow("log");
+    openWindow("terminal");
 
     return () => unsub();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -74,11 +75,11 @@ export const AppShell: React.FC = () => {
     setWindows((prev) => [
       ...prev,
       {
-        id: `${appId}-${Date.now()}`,
+        id: `${appId}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
         appId,
         title: appIdToTitle(appId),
         x: 80 + prev.length * 40,
-        y: 60 + prev.length * 30,
+        y: 40 + prev.length * 30,
         z: zCounter++
       }
     ]);
@@ -99,13 +100,15 @@ export const AppShell: React.FC = () => {
       case "reactor":
         return "Reactor Core";
       case "diag":
-        return "Diagnostics";
+        return "Diagnostics Suite";
       case "containment":
         return "Containment Manager";
       case "net":
         return "Network Monitor";
       case "log":
         return "Event Log Analyzer";
+      case "terminal":
+        return "Operator Terminal Mk II";
     }
   }
 
@@ -121,11 +124,17 @@ export const AppShell: React.FC = () => {
         return <NetworkMonitorApp />;
       case "log":
         return <LogViewerApp lines={logs} />;
+      case "terminal":
+        return <TerminalApp />;
     }
   }
 
   return (
     <div className="chernos-root">
+      <div className="background-glow" />
+      <div className="gamma-overlay-ui" />
+      <div className="blackchamber-overlay-ui" />
+
       {/* taskbar */}
       <div className="taskbar">
         <div className="taskbar-left">
@@ -135,8 +144,10 @@ export const AppShell: React.FC = () => {
           <button onClick={() => openWindow("containment")}>Containment</button>
           <button onClick={() => openWindow("net")}>Network</button>
           <button onClick={() => openWindow("log")}>Logs</button>
+          <button onClick={() => openWindow("terminal")}>Terminal</button>
         </div>
         <div className="taskbar-right">
+          <span className="taskbar-indicator">Theme:</span>
           <button onClick={() => setTheme("green")}>G</button>
           <button onClick={() => setTheme("amber")}>A</button>
           <button onClick={() => setTheme("redline")}>R</button>
@@ -144,9 +155,6 @@ export const AppShell: React.FC = () => {
           <button onClick={() => setTheme("blackchamber")}>BC</button>
         </div>
       </div>
-
-      {/* wallpapers / background */}
-      <div className="background-glow" />
 
       {/* windows */}
       {windows.map((w) => (
