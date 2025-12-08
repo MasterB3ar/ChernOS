@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>ChernOS v1.9.2 – Redline Crisis Engine (Override)</title>
+  <title>ChernOS v1.9.3 – Redline Crisis Engine</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -487,6 +487,7 @@
       display: inline-flex;
       align-items: center;
       gap: 4px;
+      margin-right: 4px;
     }
 
     .comms-dot {
@@ -596,7 +597,7 @@
     <!-- TOP BAR -->
     <div class="card flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <div class="label">ChernOS v1.9.2 – Redline Crisis Engine (Override)</div>
+        <div class="label">ChernOS v1.9.3 – Redline Crisis Engine + NetSim</div>
         <div class="text-2xl font-semibold" id="title-main">
           Reactor + Containment + Black Chamber + Network Layer
         </div>
@@ -620,6 +621,23 @@
           <span class="badge" id="badge-satlink">SATLINK: OFF</span>
           <span class="badge" id="badge-black">BLACK CHAMBER: IDLE</span>
           <span class="badge" id="badge-net">NET: ONLINE</span>
+        </div>
+
+        <!-- REDLINE CRISIS ENGINE PANEL -->
+        <div class="mt-1 text-right text-xs text-slate-300 space-y-1" id="crisis-panel">
+          <div class="uppercase tracking-[0.18em] text-[9px] text-slate-400">
+            Redline Crisis Engine
+          </div>
+          <div class="flex items-baseline gap-2 justify-end">
+            <span class="text-[10px] text-slate-400">Mode</span>
+            <span id="crisis-mode" class="text-sm font-semibold">SAFE</span>
+          </div>
+          <div class="text-[11px]">
+            Crisis Index: <span id="crisis-index">0.0</span> / 10
+          </div>
+          <div id="engine-theme-line" class="text-[10px] text-slate-400">
+            Theme: AUTO (Engine)
+          </div>
         </div>
 
         <div class="flex gap-6 items-center">
@@ -848,13 +866,13 @@
         <div class="flex flex-wrap gap-2 mt-3">
           <span class="pill text-[10px]">
             Terminal: help · status · containment status · satlink on/off · ghost on/off ·
-            black on/off · macro rec/stop/play · net status · net ping &lt;host&gt; · net stress/net reset · theme auto
+            black on/off · macro rec/stop/play · net status · net ping &lt;host&gt; · net stress/net reset
           </span>
         </div>
 
         <div class="term-grid">
           <input id="term-input" autocomplete="off"
-            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, diag on/off, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, net status, net ping &lt;host&gt;, net lookup &lt;name&gt;, net stress, net reset, theme &lt;green|amber|redline|2049|auto&gt;, operator set &lt;name&gt;, operator level &lt;0–3&gt;)">
+            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, diag on/off, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, net status, net ping &lt;host&gt;, net lookup &lt;name&gt;, net stress, net reset, operator set &lt;name&gt;, operator level &lt;0–3&gt;, theme auto/green/amber/redline/2049)">
           <button class="btn" id="term-run">Run</button>
         </div>
       </div>
@@ -891,10 +909,9 @@
 
   <script>
     // ============================================================
-    //   ChernOS v1.9.2 — Redline Crisis Engine (Override)
-    //   - Auto crisis theming
-    //   - Manual theme override (buttons + terminal)
-    //   - theme auto -> relinquish override
+    //   ChernOS v1.9.3 — Redline Crisis Engine (fictional)
+    //   Based on v1.9.2, restores Crisis Mode + Index panel
+    //   and keeps AUTO vs OVERRIDE theme control.
     // ============================================================
 
     // ----- DOM Refs -----
@@ -924,6 +941,10 @@
     const elOpNameLine   = document.getElementById("op-name-line");
     const elOpStatusLine = document.getElementById("op-status-line");
     const elRemoteStatus = document.getElementById("remote-status-line");
+
+    const elCrisisMode    = document.getElementById("crisis-mode");
+    const elCrisisIndex   = document.getElementById("crisis-index");
+    const elEngineThemeLine = document.getElementById("engine-theme-line");
 
     const pillAlpha  = document.getElementById("pill-alpha");
     const pillBeta   = document.getElementById("pill-beta");
@@ -1008,7 +1029,10 @@
       diagnostics: false,
       audioOn: true,
       theme: "green",
-      themeOverride: null, // "green" | "amber" | "redline" | "2049" | null
+      themeMode: "auto",      // "auto" (engine) or "manual" (override)
+      themeOverride: null,    // "green" | "amber" | "redline" | "2049" | null
+      crisisIndex: 0,
+      crisisMode: "SAFE",
       persistEnabled: false,
       ticks: 0,
       microJitter: 0,
@@ -1088,7 +1112,7 @@
       maybePersist(line + "\n");
     }
 
-    log("SIM: ChernOS v1.9.2 Redline Crisis Engine (Override) console ready.");
+    log("SIM: ChernOS v1.9.3 Redline Crisis Engine console ready.");
 
     // ----- Audio Engine v3 -----
     let audioCtx = null;
@@ -1319,33 +1343,6 @@
       drawGraph(gcNet,   histNet,   "#38bdf8");
     }
 
-    // ----- Crisis theme helper -----
-    function getCrisisTheme() {
-      const t = state.temp;
-      const p = state.pressure;
-      const r = state.rad;
-      const m = state.meltdownStage;
-
-      // Strong redline
-      if (m >= 2 || t > 980 || r > 1.6) return "redline";
-
-      // Amber warning band
-      if (m === 1 || t > 730 || p > 3.3 || r > 0.8) return "amber";
-
-      // Default nominal
-      return "green";
-    }
-
-    function updateCrisisTheme(force) {
-      // If user has manually chosen a theme, crisis engine respects that
-      if (!force && state.themeOverride) return;
-
-      const desired = getCrisisTheme();
-      if (desired !== state.theme) {
-        applyTheme(desired, {manual: false});
-      }
-    }
-
     // ----- Rendering -----
     function renderTelemetry() {
       elTemp.textContent = Math.round(state.temp) + "°C";
@@ -1413,9 +1410,6 @@
       elCoreDot.style.boxShadow = `0 0 ${glow}px rgba(191,249,168,${0.45 + intensity * 0.25})`;
       elCoreDot.style.transform  = `scale(${0.9 + intensity * 0.22})`;
       elCoreDot.style.background = `radial-gradient(circle, ${colorShift}, transparent)`;
-
-      // Auto crisis-driven theming (respects manual override)
-      updateCrisisTheme(false);
     }
 
     function updateContainPills() {
@@ -1537,6 +1531,85 @@
       updateContainPills();
       updateCommsPills();
       renderGraphs();
+    }
+
+    // ----- Redline Crisis Engine -----
+    function computeCrisisIndex() {
+      const tNorm = Math.max(0, Math.min(1, (state.temp - 280) / 900));
+      const pNorm = Math.max(0, Math.min(1, (state.pressure - 1.0) / 5.0));
+      const rNorm = Math.max(0, Math.min(1, state.rad / 4.0));
+      const mNorm = Math.max(0, Math.min(1, state.meltdownStage / 5.0));
+
+      let score =
+        tNorm * 4.0 +
+        pNorm * 2.5 +
+        rNorm * 2.5 +
+        mNorm * 3.0;
+
+      if (score > 10) score = 10;
+      if (score < 0) score = 0;
+      return score;
+    }
+
+    function updateEngineThemeLine() {
+      if (!elEngineThemeLine) return;
+      if (state.themeMode === "auto") {
+        elEngineThemeLine.textContent = "Theme: AUTO (Engine)";
+      } else {
+        const t = (state.themeOverride || state.theme || "green").toUpperCase();
+        elEngineThemeLine.textContent = `Theme: OVERRIDE (${t})`;
+      }
+    }
+
+    function applyEngineThemeForMode(mode) {
+      if (state.themeMode !== "auto") {
+        updateEngineThemeLine();
+        return;
+      }
+
+      let nextTheme = "green";
+      if (mode === "ELEVATED") nextTheme = "amber";
+      else if (mode === "CRITICAL") nextTheme = "amber";
+      else if (mode === "REDLINE") nextTheme = "redline";
+
+      const prev = state.theme;
+      applyTheme(nextTheme);
+      if (nextTheme !== prev) {
+        log(`Redline Crisis Engine: theme -> ${nextTheme.toUpperCase()} (${mode}).`);
+      }
+      updateEngineThemeLine();
+    }
+
+    function updateCrisisEngine() {
+      const idx = computeCrisisIndex();
+      state.crisisIndex = idx;
+
+      let mode = "SAFE";
+      if (idx >= 2 && idx < 5) mode = "ELEVATED";
+      else if (idx >= 5 && idx < 8) mode = "CRITICAL";
+      else if (idx >= 8) mode = "REDLINE";
+      state.crisisMode = mode;
+
+      if (elCrisisIndex) elCrisisIndex.textContent = idx.toFixed(1);
+      if (elCrisisMode) {
+        elCrisisMode.textContent = mode;
+        let color = "var(--ch-accent)";
+        if (mode === "ELEVATED") color = "#facc6b";
+        else if (mode === "CRITICAL") color = "#f97316";
+        else if (mode === "REDLINE") color = "#fb7185";
+        elCrisisMode.style.color = color;
+        if (elCrisisIndex) elCrisisIndex.style.color = color;
+      }
+
+      applyEngineThemeForMode(mode);
+    }
+
+    function setThemeOverride(themeName) {
+      state.themeMode = "manual";
+      state.themeOverride = themeName;
+      applyTheme(themeName);
+      log(`Theme override: operator set ${themeName.toUpperCase()} (AUTO disabled).`);
+      updateEngineThemeLine();
     }
 
     // ----- Workstation: workspace modes -----
@@ -1699,6 +1772,7 @@
         log("LOCKDOWN: Restrictions lifted (sim).");
         btnLockdown.classList.remove("lockdown-active");
       }
+      updateCrisisEngine();
       renderAll();
     }
 
@@ -1711,6 +1785,7 @@
         log("BLACK CHAMBER disengaged.");
       }
       updateContainHumGain();
+      updateCrisisEngine();
       renderAll();
     }
 
@@ -1718,6 +1793,7 @@
       state.containment.alpha = !state.containment.alpha;
       log(`Containment Alpha (thermal buffer) ${state.containment.alpha ? "enabled" : "disabled"} (sim).`);
       updateContainHumGain();
+      updateCrisisEngine();
       renderAll();
     });
 
@@ -1725,6 +1801,7 @@
       state.containment.betaLatched = false;
       log("Containment Beta latch reset (sim).");
       updateContainHumGain();
+      updateCrisisEngine();
       renderAll();
     });
 
@@ -1732,12 +1809,14 @@
       state.containment.gamma = !state.containment.gamma;
       log(`Containment Gamma field ${state.containment.gamma ? "engaged" : "disengaged"} (sim).`);
       updateContainHumGain();
+      updateCrisisEngine();
       renderAll();
     });
 
     btnPulse.addEventListener("click", () => {
       log("Containment pulse sweep triggered (sim).");
       state.rad = Math.max(0.05, state.rad - 0.6);
+      updateCrisisEngine();
       renderAll();
     });
 
@@ -1749,12 +1828,14 @@
     btnSatlink.addEventListener("click", () => {
       state.satLink = !state.satLink;
       log(`SATLINK ${state.satLink ? "routed to sim uplink" : "disconnected"} (visual only).`);
+      updateCrisisEngine();
       renderAll();
     });
 
     btnGhost.addEventListener("click", () => {
       state.ghostLink = !state.ghostLink;
       log(`GHOST MIRROR ${state.ghostLink ? "latched (sim)" : "released (sim)"}.`);
+      updateCrisisEngine();
       renderAll();
     });
 
@@ -1901,6 +1982,7 @@
       pushHist(histPress, state.pressure);
       pushHist(histRad,   state.rad);
 
+      updateCrisisEngine();
       renderAll();
     }
 
@@ -2001,6 +2083,7 @@
       if (state.meltdownStage > 0) {
         log("SCRAM (sim): meltdown chain remains in visual mode only.");
       }
+      updateCrisisEngine();
       renderAll();
     }
 
@@ -2008,6 +2091,7 @@
       log("OP: Relief valves (sim)");
       state.pressure -= 0.7;
       if (state.pressure < 0.9) state.pressure = 0.9;
+      updateCrisisEngine();
       renderAll();
     }
 
@@ -2016,6 +2100,7 @@
       state.temp += 260;
       state.pressure += 1.4;
       state.rad += 0.45;
+      updateCrisisEngine();
       renderAll();
     }
 
@@ -2025,6 +2110,7 @@
       state.temp = 1250;
       state.pressure = 5.3;
       state.rad = 1.6;
+      updateCrisisEngine();
       renderAll();
     }
 
@@ -2040,8 +2126,7 @@
       histRad = [];
       histNet = [];
       log("Simulation reset to nominal baseline.");
-      // When reset, if no manual override, crisis engine will drive theme back to green
-      updateCrisisTheme(true);
+      updateCrisisEngine();
       renderAll();
     }
 
@@ -2065,10 +2150,11 @@
       renderBadges();
     });
 
-    // ----- Theme handling (with override) -----
-    function setTheme(themeName) {
+    // ----- Theme handling (low-level) -----
+    function applyTheme(themeName) {
       state.theme = themeName;
       document.body.className = `theme-${themeName}`;
+
       themeButtons.forEach(btn => {
         const t = btn.getAttribute("data-theme");
         if (t === themeName) btn.classList.add("active");
@@ -2084,28 +2170,15 @@
       } else if (themeName === "2049") {
         elTitle.textContent = "Operator Workstation · 2049 Mode (sim + net)";
       }
+
       renderAll();
-    }
-
-    function applyTheme(themeName, opts) {
-      opts = opts || {};
-      const manual = !!opts.manual;
-
-      if (manual) {
-        state.themeOverride = themeName;
-        log(`Theme override set: ${themeName}`);
-        setTheme(themeName);
-      } else {
-        // Automatic crisis-driven theme — respect override
-        if (state.themeOverride) return;
-        setTheme(themeName);
-      }
     }
 
     themeButtons.forEach(btn => {
       btn.addEventListener("click", () => {
         const t = btn.getAttribute("data-theme");
-        applyTheme(t, { manual: true });
+        // theme button always means manual override
+        setThemeOverride(t);
       });
     });
 
@@ -2119,7 +2192,7 @@
       btn.innerHTML = '<span class="theme-dot" style="background:#38bdf8;"></span>2049';
       parent.appendChild(btn);
       themeButtons.push(btn);
-      btn.addEventListener("click", () => applyTheme("2049", { manual: true }));
+      btn.addEventListener("click", () => setThemeOverride("2049"));
       log("Hidden theme unlocked: 2049 (sim aesthetics only).");
     }
 
@@ -2152,14 +2225,15 @@
       log(`net: lookup '${name}' -> ${addr} (simulated).`);
     }
 
-    // ----- Terminal v1.9.2 -----
+    // ----- Terminal v1.9.3 -----
     const termHistory = [];
     let termIndex = -1;
     const commands = [
       "help","status","scram","relief","stress","chaos","reset",
       "diag on","diag off","overdrive on","overdrive off",
-      "audio on","audio off","save-log","theme green","theme amber",
-      "theme redline","theme 2049","theme auto","power","coolant","engine status",
+      "audio on","audio off","save-log",
+      "theme auto","theme green","theme amber","theme redline","theme 2049",
+      "power","coolant","engine status",
       "unlock 2049","containment status","lockdown on","lockdown off",
       "operator set","operator level","satlink on","satlink off",
       "ghost on","ghost off","black on","black off",
@@ -2182,7 +2256,7 @@
       const lower = cmd.toLowerCase();
 
       if (lower === "help") {
-        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <green|amber|redline|2049|auto>, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, operator set <name>, operator level <0-3>, engine status, save-log, unlock 2049, net status, net ping <host>, net lookup <name>, net stress, net reset");
+        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <auto|green|amber|redline|2049>, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, operator set <name>, operator level <0-3>, engine status, save-log, unlock 2049, net status, net ping <host>, net lookup <name>, net stress, net reset");
         return;
       }
 
@@ -2192,7 +2266,8 @@
             ", od=" + (state.overdrive ? "on" : "off") + ", diag=" + (state.diagnostics ? "on" : "off") +
             ", meltdownStage=" + state.meltdownStage + ", satLink=" + state.satLink +
             ", black=" + state.blackChamber +
-            ", net=" + state.net.mode + ", netIntegrity=" + state.net.integrity.toFixed(1) + "%");
+            ", net=" + state.net.mode + ", netIntegrity=" + state.net.integrity.toFixed(1) + "%" +
+            ", crisisIndex=" + state.crisisIndex.toFixed(1) + ", crisisMode=" + state.crisisMode);
         return;
       }
 
@@ -2213,6 +2288,8 @@
           let v = Math.min(125, Math.max(40, n));
           leverCore.value = v;
           log("Core drive set via terminal: " + v);
+          updateCrisisEngine();
+          renderAll();
         } else {
           log("Invalid power value.");
         }
@@ -2225,6 +2302,8 @@
           let v = Math.min(145, Math.max(80, n));
           leverCool.value = v;
           log("Coolant bias set via terminal: " + v);
+          updateCrisisEngine();
+          renderAll();
         } else {
           log("Invalid coolant value.");
         }
@@ -2241,30 +2320,11 @@
       }
 
       if (lower === "overdrive on") {
-        if (state.meltdownStage > 0) {
-          log("Overdrive: locked (meltdown sim active).");
-          return;
-        }
-        if (state.lockdown) {
-          log("Overdrive blocked by LOCKDOWN (sim).");
-          return;
-        }
-        if (!state.overdrive) {
-          state.overdrive = true;
-          log("Overdrive mode enabled (physics exaggerated, visual only).");
-          renderBadges();
-          renderTelemetry();
-        }
+        if (!state.overdrive) btnOver.click();
         return;
       }
-
       if (lower === "overdrive off") {
-        if (state.overdrive) {
-          state.overdrive = false;
-          log("Overdrive mode disabled.");
-          renderBadges();
-          renderTelemetry();
-        }
+        if (state.overdrive) btnOver.click();
         return;
       }
 
@@ -2280,22 +2340,33 @@
       if (lower.startsWith("theme ")) {
         const t = lower.split(/\s+/)[1];
         if (t === "auto") {
-          state.themeOverride = null;
-          log("Theme override cleared. Crisis engine now controls theme automatically.");
-          updateCrisisTheme(true);
-          return;
-        }
-        if (["green","amber","redline","2049"].includes(t)) {
+          if (state.themeMode !== "auto") {
+            state.themeMode = "auto";
+            state.themeOverride = null;
+            log("Theme control returned to Redline Crisis Engine (AUTO).");
+            updateCrisisEngine();
+          } else {
+            log("Theme already in AUTO (engine) mode.");
+          }
+        } else if (["green","amber","redline","2049"].includes(t)) {
           if (t === "2049") unlock2049();
-          applyTheme(t, { manual: true });
+          setThemeOverride(t);
         } else {
-          log("Unknown theme. Use: green, amber, redline, 2049, auto");
+          log("Unknown theme. Use: auto, green, amber, redline, 2049");
         }
         return;
       }
 
       if (lower === "engine status") {
-        log("engine: ticks=" + state.ticks + ", meltdownStage=" + state.meltdownStage + ", overdrive=" + (state.overdrive?"on":"off") + ", lockdown=" + state.lockdown + ", blackChamber=" + state.blackChamber + ", themeOverride=" + (state.themeOverride || "none"));
+        log("engine: ticks=" + state.ticks +
+            ", meltdownStage=" + state.meltdownStage +
+            ", overdrive=" + (state.overdrive?"on":"off") +
+            ", lockdown=" + state.lockdown +
+            ", blackChamber=" + state.blackChamber +
+            ", themeMode=" + state.themeMode +
+            ", themeOverride=" + (state.themeOverride || "none") +
+            ", crisisIndex=" + state.crisisIndex.toFixed(1) +
+            ", crisisMode=" + state.crisisMode);
         return;
       }
 
@@ -2324,6 +2395,7 @@
         if (!state.satLink) {
           state.satLink = true;
           log("SATLINK routed to sim uplink (visual only).");
+          updateCrisisEngine();
           renderAll();
         }
         return;
@@ -2333,6 +2405,7 @@
         if (state.satLink) {
           state.satLink = false;
           log("SATLINK disconnected (sim).");
+          updateCrisisEngine();
           renderAll();
         }
         return;
@@ -2342,6 +2415,7 @@
         if (!state.ghostLink) {
           state.ghostLink = true;
           log("GHOST MIRROR latched (sim).");
+          updateCrisisEngine();
           renderAll();
         }
         return;
@@ -2351,6 +2425,7 @@
         if (state.ghostLink) {
           state.ghostLink = false;
           log("GHOST MIRROR released (sim).");
+          updateCrisisEngine();
           renderAll();
         }
         return;
@@ -2471,8 +2546,8 @@
     });
 
     // ----- Init -----
-    // Always start in Green, no override. Crisis engine may change it later.
-    applyTheme("green", { manual: false });
+    // Start in AUTO mode, engine will pick GREEN based on SAFE crisis state.
+    updateCrisisEngine();
     loadWorkstationState();
     renderAll();
   </script>
