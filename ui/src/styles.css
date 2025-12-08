@@ -1,0 +1,219 @@
+:root {
+  --ch-accent: #22c55e;
+  --ch-bg: #020806;
+  --ch-text: #e5f2e8;
+  --ch-soft: #94a3b8;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: var(--ch-bg);
+  color: var(--ch-text);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.chernos-root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.background-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(34,197,94,0.12), transparent 60%),
+    radial-gradient(circle at 80% 100%, rgba(34,197,94,0.12), transparent 70%);
+  filter: blur(1px);
+  pointer-events: none;
+}
+
+.taskbar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  height: 32px;
+  background: rgba(15,23,42,0.96);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  font-size: 12px;
+  border-top: 1px solid rgba(148,163,184,0.4);
+  z-index: 1000;
+}
+
+.taskbar-left button,
+.taskbar-right button {
+  margin-left: 4px;
+  background: transparent;
+  border: 1px solid rgba(148,163,184,0.5);
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--ch-text);
+  cursor: pointer;
+}
+
+.logo {
+  font-weight: 600;
+  color: var(--ch-accent);
+  margin-right: 6px;
+}
+
+/* windows */
+.chernos-window {
+  position: absolute;
+  min-width: 360px;
+  min-height: 200px;
+  background: rgba(15,23,42,0.96);
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.45);
+  box-shadow: 0 0 24px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+}
+
+.window-titlebar {
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+  font-size: 11px;
+  border-bottom: 1px solid rgba(30,64,175,0.5);
+  background: linear-gradient(
+    to right,
+    rgba(15,23,42,0.9),
+    rgba(15,23,42,0.7)
+  );
+}
+
+.window-body {
+  padding: 8px;
+  overflow: auto;
+}
+
+/* panel base */
+.panel .panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ch-soft);
+}
+
+.pill {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,0.5);
+  color: var(--ch-text);
+}
+
+.pill.ok { border-color: #4ade80; color: #bbf7d0; }
+.pill.warn { border-color: #facc6b; color: #facc6b; }
+.pill.crit { border-color: #fb7185; color: #fecaca; }
+
+.btn, .btn-small {
+  border-radius: 8px;
+  border: 1px solid rgba(148,163,184,0.6);
+  background: rgba(15,23,42,0.9);
+  color: var(--ch-text);
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+  margin-right: 4px;
+  margin-top: 4px;
+}
+.btn-small {
+  font-size: 10px;
+  padding: 3px 8px;
+}
+
+/* Reactor core rings */
+.core-visual {
+  position: relative;
+  width: 140px;
+  height: 140px;
+}
+
+.core-visual .ring {
+  position: absolute;
+  border-radius: 999px;
+  border: 1px solid rgba(190,242,100,0.6);
+  animation: ringSpin 12s linear infinite;
+}
+.core-visual .ring.mid {
+  inset: 14px;
+  animation-duration: 9s;
+}
+.core-visual .ring.inner {
+  inset: 28px;
+  animation-duration: 6s;
+}
+
+.core-dot {
+  position: absolute;
+  inset: 42px;
+  border-radius: 999px;
+  background: radial-gradient(circle, var(--ch-accent), transparent);
+  box-shadow: 0 0 22px rgba(34,197,94,0.7);
+}
+
+.core-readout {
+  position: absolute;
+  inset: auto 0 0 0;
+  transform: translateY(110%);
+  font-size: 11px;
+  color: var(--ch-soft);
+  text-align: center;
+}
+
+@keyframes ringSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Diagnostics placeholder graphs */
+.graph-placeholder,
+.topology-placeholder {
+  height: 64px;
+  border-radius: 10px;
+  border: 1px solid rgba(30,64,175,0.7);
+  background: radial-gradient(circle at 0 0, rgba(56,189,248,0.15), transparent 60%),
+              radial-gradient(circle at 100% 100%, rgba(16,185,129,0.15), transparent 60%);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Night / blackchamber theme special overlay via [data-theme] in JS if you want more */
+
+/* Containment chamber fractures */
+.chamber-visual {
+  width: 140px;
+  height: 140px;
+  border-radius: 999px;
+  border: 1px solid rgba(148,163,184,0.7);
+  position: relative;
+  overflow: hidden;
+}
+.fracture-layer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(45deg, rgba(248,113,113,0.5), transparent 20px),
+    repeating-linear-gradient(-45deg, rgba(248,113,113,0.4), transparent 24px);
+  opacity: 0;
+}
+
+/* You can drive opacity via data-int in JS by using inline styles or an extra class */
