@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>ChernOS v1.9.3 – Redline Crisis Engine</title>
+  <title>ChernOS v1.9.4 – Redline Crisis Engine</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -597,7 +597,7 @@
     <!-- TOP BAR -->
     <div class="card flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <div class="label">ChernOS v1.9.3 – Redline Crisis Engine + NetSim</div>
+        <div class="label">ChernOS v1.9.4 – Redline Crisis Engine + NetSim</div>
         <div class="text-2xl font-semibold" id="title-main">
           Reactor + Containment + Black Chamber + Network Layer
         </div>
@@ -909,9 +909,9 @@
 
   <script>
     // ============================================================
-    //   ChernOS v1.9.3 — Redline Crisis Engine (fictional)
-    //   Based on v1.9.2, restores Crisis Mode + Index panel
-    //   and keeps AUTO vs OVERRIDE theme control.
+    //   ChernOS v1.9.4 — Redline Crisis Engine (fictional)
+    //   - Crisis Index can reach 10.0 in full meltdown scenarios
+    //   - Overdrive button fixed (UI + terminal)
     // ============================================================
 
     // ----- DOM Refs -----
@@ -1112,7 +1112,7 @@
       maybePersist(line + "\n");
     }
 
-    log("SIM: ChernOS v1.9.3 Redline Crisis Engine console ready.");
+    log("SIM: ChernOS v1.9.4 Redline Crisis Engine console ready.");
 
     // ----- Audio Engine v3 -----
     let audioCtx = null;
@@ -1540,12 +1540,20 @@
       const rNorm = Math.max(0, Math.min(1, state.rad / 4.0));
       const mNorm = Math.max(0, Math.min(1, state.meltdownStage / 5.0));
 
-      let score =
+      // Base weighted score
+      let base =
         tNorm * 4.0 +
         pNorm * 2.5 +
         rNorm * 2.5 +
         mNorm * 3.0;
 
+      // Ensure full meltdown scenarios can reach a hard 10.0
+      // when temp & radiation are both in the top band and stage is 5.
+      if (state.meltdownStage >= 5 && tNorm > 0.85 && rNorm > 0.85) {
+        return 10.0;
+      }
+
+      let score = base;
       if (score > 10) score = 10;
       if (score < 0) score = 0;
       return score;
@@ -2150,6 +2158,27 @@
       renderBadges();
     });
 
+    // ----- Overdrive toggle (fixed) -----
+    btnOver.addEventListener("click", () => {
+      if (state.meltdownStage > 0) {
+        log("Overdrive: locked (meltdown sim active).");
+        return;
+      }
+      if (state.lockdown) {
+        log("Overdrive blocked by LOCKDOWN (sim).");
+        return;
+      }
+      state.overdrive = !state.overdrive;
+      if (state.overdrive) {
+        log("Overdrive mode enabled (physics exaggerated, visual only).");
+      } else {
+        log("Overdrive mode disabled.");
+      }
+      renderBadges();
+      renderTelemetry();
+      updateCrisisEngine();
+    });
+
     // ----- Theme handling (low-level) -----
     function applyTheme(themeName) {
       state.theme = themeName;
@@ -2177,7 +2206,7 @@
     themeButtons.forEach(btn => {
       btn.addEventListener("click", () => {
         const t = btn.getAttribute("data-theme");
-        // theme button always means manual override
+        // Theme button always means manual override
         setThemeOverride(t);
       });
     });
@@ -2225,7 +2254,7 @@
       log(`net: lookup '${name}' -> ${addr} (simulated).`);
     }
 
-    // ----- Terminal v1.9.3 -----
+    // ----- Terminal v1.9.4 -----
     const termHistory = [];
     let termIndex = -1;
     const commands = [
