@@ -1,207 +1,137 @@
-{ config, pkgs, lib, modulesPath, ... }:
+{ config, pkgs, lib, ... }:
 
 {
+  ########################################
+  # Basic ISO system config
+  ########################################
   imports = [
-    # Graphical live ISO base profile
-    (modulesPath + "/installer/cd-dvd/installation-cd-graphical-base.nix")
+    # You can add extra hardware config or profiles here if needed
   ];
 
-  ########################################
-  ## Basic system identity
-  ########################################
+  # Name of the machine
   networking.hostName = "chernos-iso";
-  time.timeZone = "UTC";
+
+  # Enable flakes and nix-command
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+
+  # Time / locale – adjust if you like
+  time.timeZone = "Europe/Copenhagen";
   i18n.defaultLocale = "en_US.UTF-8";
 
-  console.keyMap = "us";
-
-  # For live media we allow root login on TTY.
-  services.openssh.enable = false;
-
   ########################################
-  ## Users – operator kiosk user
+  # Users / autologin for kiosk
   ########################################
-  users.users.operator = {
+  users.users.chernos = {
     isNormalUser = true;
-    initialPassword = "chernos"; # live-only, change for real installs
-    extraGroups = [ "wheel" "audio" "video" "input" "networkmanager" ];
-    description = "ChernOS Operator";
+    extraGroups = [ "wheel" ];
+    password = "";
   };
 
-  # Autologin to TTY1 as operator
-  services.getty.autologinUser = "operator";
-
-  # Simple sudo for live environment
-  security.sudo.enable = true;
-  security.sudo.wheelNeedsPassword = false;
+  # Auto-login on TTY1, then we can start sway from there
+  services.getty.autologinUser = "chernos";
 
   ########################################
-  ## Networking
-  ########################################
-  networking.networkmanager.enable = true;
-
-  ########################################
-  ## Graphics / Wayland / Sway kiosk
-  ########################################
-  # Wayland stack + Sway
-  programs.sway = {
-    enable = true;
-    wrapperFeatures.gtk = true;
-    extraPackages = with pkgs; [
-      waybar
-      alacritty
-      grim
-      slurp
-      wl-clipboard
-      # Add anything you want available in the session
-    ];
-
-    # Environment for Wayland and software renderer fallback
-    extraSessionCommands = ''
-      export MOZ_ENABLE_WAYLAND=1
-      export XDG_CURRENT_DESKTOP=sway
-      export WLR_RENDERER_ALLOW_SOFTWARE=1
-    '';
-
-    # Kiosk Sway config – NO tiling UI, just your dashboard
-    extraConfig = ''
-      ### ChernOS 2.0 – Sway Kiosk
-
-      # Disable default keybindings that could escape kiosk (tune as needed)
-      bindsym Mod4+Shift+e nop
-      bindsym Mod4+Shift+q nop
-      bindsym Mod4+Return nop
-
-      # Background - solid dark
-      output * bg #020617 solid_color
-
-      # Launch Chromium in kiosk mode pointing at the UI
-      # Adjust the path/URL once your UI build is mounted somewhere:
-      # e.g. file:///home/operator/chernos-2.0/ui/dist/index.html
-      exec_always chromium --kiosk --incognito \
-        --new-window \
-        file:///home/operator/chernos-ui/index.html
-
-      # Optional: terminal accessible with a "hidden" shortcut
-      bindsym $mod+Return exec alacritty
-
-      # Exit shortcut (for development/install only)
-      bindsym $mod+Shift+Esc exec "swaymsg exit"
-    '';
-  };
-
-  # Basic hardware opengl + software rendering fallback
-  hardware.opengl = {
-    enable = true;
-    driSupport = true;
-    driSupport32Bit = true;
-  };
-
-  environment.variables.WLR_RENDERER_ALLOW_SOFTWARE = "1";
-
-  ########################################
-  ## Desktop / sound / fonts
-  ########################################
-  # PipeWire audio (for reactive music system later)
-  sound.enable = true;
-  hardware.pulseaudio.enable = false;
-
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    alsa.support32Bit = true;
-    pulse.enable = true;
-    jack.enable = true;
-  };
-
-  # Basic fonts
-  fonts.packages = with pkgs; [
-    noto-fonts
-    noto-fonts-emoji
-    liberation_ttf
-  ];
-
-  ########################################
-  ## Packages for kiosk + debugging
+  # Console / basic system packages
   ########################################
   environment.systemPackages = with pkgs; [
-    chromium
-    vim
     git
+    vim
+    curl
+    wget
     htop
-    neofetch
-    # For debugging the kiosk environment
+    neovim
+    sway
     alacritty
+    wayland-utils
+    grim slurp
+    chromium
   ];
 
   ########################################
-  ## Boot loader + Plymouth (no custom assets yet)
+  # Wayland + Sway kiosk base
   ########################################
-  # GRUB configuration suitable for ISO / EFI
+
+  # Enable Sway itself (wayland compositor)
+  programs.sway.enable = true;
+
+  # Provide a Sway config as /etc/sway/config
+  environment.etc."sway/config".text = ''
+    ### ChernOS 2.0 – Sway Kiosk Config
+
+    # Use the default config as base if you want:
+    # include /etc/sway/config.d/*
+
+    set $mod Mod4
+
+    # Launch terminal (for debugging / development only)
+    bindsym $mod+Return exec alacritty
+
+    # Close focused window
+    bindsym $mod+Shift+q kill
+
+    # Fullscreen toggle
+    bindsym $mod+f fullscreen
+
+    # Disable common escape keybindings for kiosk-like behavior
+    bindsym $mod+Shift+e nop
+    bindsym $mod+Shift+c nop
+    bindsym $mod+Shift+r nop
+
+    # ChernOS UI (Chromium/Electron) autostart – adjust command as needed
+    exec_always chromium --kiosk --start-fullscreen --app=https://localhost
+
+    # Background color
+    output * bg #020617 solid_color
+
+    # Basic font + gaps
+    font pango:monospace 10
+    gaps inner 5
+  '';
+
+  ########################################
+  # Graphical session autostart
+  ########################################
+
+  # Start sway automatically when 'chernos' logs in on tty1
+  programs.bash.loginShellInit = ''
+    if [ "$(tty)" = "/dev/tty1" ] && [ "$USER" = "chernos" ]; then
+      exec sway
+    fi
+  '';
+
+  ########################################
+  # Plymouth boot splash (placeholder for now)
+  ########################################
+  boot.plymouth.enable = true;
+  boot.plymouth.theme = "spinner"; # you can later replace with a custom nuclear-glow theme
+
+  ########################################
+  # GRUB – ISO will use the generated bootloader
+  ########################################
   boot.loader.grub = {
     enable = true;
     version = 2;
-    efiSupport = true;
-    efiInstallAsRemovable = true;
-    device = "nodev";
-    useOSProber = false;
-
-    # You can later add a splash image or custom theme:
-    # splashImage = /path/to/chernos-grub.png;
-  };
-
-  # Plymouth splash (nuclear glow aesthetics can be custom later)
-  boot.plymouth = {
-    enable = true;
-    theme = "bgrt"; # placeholder – you can package your own theme
-  };
-
-  # ISO image tuning
-  isoImage = {
-    # Name of the ISO file
-    isoName = "chernos-2.0-${config.system.nixos.label}.iso";
+    devices = [ "nodev" ];
   };
 
   ########################################
-  ## Persistence v3 (profiles, states, logs)
-  ## Using impermanence – adjust device/label to your setup
+  # Filesystem + persistence placeholder
   ########################################
-  # Expect a partition with label CHERNOS_PERSIST mounted at /persist
-  # on real installs / live USB with persistence.
-  fileSystems."/persist" = {
-    device = "/dev/disk/by-label/CHERNOS_PERSIST";
-    fsType = "ext4";
-    neededForBoot = false; # for ISO/live; set true on installed system
-    # If the device doesn't exist (plain ISO), this mount will just fail
-    # at boot but system still continues; you can improve this later.
+  # For the ISO, root is ephemeral; real persistence via overlayfs can be added later
+  fileSystems."/" = {
+    device = "tmpfs";
+    fsType = "tmpfs";
+    options = [ "mode=755" ];
   };
 
-  # Impermanence-based persistence
-  environment.persistence."/persist" = {
-    # ChernOS profiles, states, logs:
-    directories = [
-      "/var/log"
-      "/var/lib/nixos"
-      "/var/lib/chernos"      # for your Electron/Chromium app state/logs
-      "/home/operator"        # operator profile, settings, notes, etc.
-    ];
-  };
+  # Allow unfree if you later want e.g. proprietary drivers
+  nixpkgs.config.allowUnfree = true;
 
   ########################################
-  ## Kiosk / hardening tweaks (basic)
+  # Services & misc
   ########################################
-  # Remove unnecessary TTYs to speed boot & limit escape vectors
-  services.getty.helpLine = lib.mkDefault "";
+  services.openssh.enable = false;
 
-  # Optionally reduce number of TTYs:
-  # services.getty.ttyDefaults = lib.mkDefault { };
-
-  # Lock root password on live media (optional)
-  users.users.root.initialHashedPassword = "";
-
-  ########################################
-  ## System version
-  ########################################
-  # Set to the NixOS release you are targeting
-  system.stateVersion = "24.11";
+  # ISO image setup – important for building the actual ISO
+  system.stateVersion = "24.05";
 }
