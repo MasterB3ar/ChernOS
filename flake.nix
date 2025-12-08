@@ -1,48 +1,63 @@
 {
-  description = "ChernOS 2.0 – NixOS ISO + UI (Sway/Chromium kiosk)";
+  description = "ChernOS 2.0 – NixOS ISO + UI";
 
   inputs = {
-    # You can switch to another channel if you want (e.g. nixos-24.11).
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.11";
+    # NixOS 24.05 channel
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
 
-    # For persistence v3 (profiles, states, logs).
+    # Impermanence (we can use later for persistence, but safe to keep here)
     impermanence.url = "github:nix-community/impermanence";
   };
 
   outputs = { self, nixpkgs, impermanence, ... }:
   let
     system = "x86_64-linux";
-    pkgs = import nixpkgs {
+    lib = nixpkgs.lib;
+  in
+  {
+    ########################################
+    ## NixOS configuration for the ISO
+    ########################################
+    nixosConfigurations.chernos-iso = lib.nixosSystem {
       inherit system;
-      config.allowUnfree = true; # Chromium, fonts, etc.
-    };
-  in {
-    # NixOS ISO configuration
-    nixosConfigurations.chernos-iso = nixpkgs.lib.nixosSystem {
-      inherit system;
+
+      # If you want to pass flake inputs into modules later:
       specialArgs = {
-        inherit self;
+        inherit impermanence;
       };
+
       modules = [
         ./hosts/chernos-iso/configuration.nix
-        impermanence.nixosModules.impermanence
       ];
     };
 
-    # Simple dev shell for the UI (inside ui/)
-    devShells.${system}.ui = pkgs.mkShell {
-      name = "chernos-ui-dev";
+    ########################################
+    ## Expose ISO as a flake package
+    ########################################
+    # So you can:
+    #   nix build .#iso
+    # or:
+    #   nix build .#packages.x86_64-linux.iso
+    packages.${system}.iso =
+      self.nixosConfigurations.chernos-iso.config.system.build.isoImage;
 
+    # Optional: make ISO the default package
+    defaultPackage.${system} = self.packages.${system}.iso;
+
+    ########################################
+    ## (Optional) devShell for the UI project
+    ########################################
+    devShells.${system}.default = let
+      pkgs = import nixpkgs { inherit system; };
+    in pkgs.mkShell {
       buildInputs = with pkgs; [
         nodejs_22
         pnpm
         git
       ];
-
       shellHook = ''
-        echo "ChernOS UI dev shell"
-        echo "cd ui/ && pnpm install && pnpm dev"
+        echo "ChernOS UI dev shell – run 'cd ui && pnpm install && pnpm dev'"
       '';
     };
-  };
+  }
 }
