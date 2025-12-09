@@ -16,6 +16,7 @@
     isNormalUser = true;
     password = "chernos";
     extraGroups = [ "wheel" "audio" "video" "networkmanager" ];
+    shell = pkgs.bashInteractive;
   };
 
   security.sudo.enable = true;
@@ -39,7 +40,7 @@
   # Graphics / Wayland / Sway kiosk
   ########################################
 
-  # No Xorg
+  # No Xorg, Wayland-only
   services.xserver.enable = false;
 
   # OpenGL / Mesa
@@ -49,40 +50,37 @@
     driSupport32Bit = true;
   };
 
-  # Sway – only basic wiring; kiosk config is in /etc/chernos-sway.conf
+  # Sway – packages only, autostart via login shell
   programs.sway = {
     enable = true;
     wrapperFeatures.gtk = true;
     extraPackages = with pkgs; [
       chromium         # Frontend
-      foot             # Minimal terminal for debugging
+      foot             # Minimal terminal
     ];
   };
 
   ########################################
-  # greetd – autologin to Sway (+ our config)
+  # TTY autologin + Sway autostart
   ########################################
 
-  services.greetd = {
-    enable = true;
-    settings = {
-      default_session = {
-        # Use our custom sway config
-        command = "${pkgs.sway}/bin/sway -c /etc/chernos-sway.conf";
-        user = "chernos";
-      };
-    };
-  };
+  # Force tty1 to autologin as "chernos"
+  services.getty.autologinUser = lib.mkForce "chernos";
 
-  # NOTE: do NOT override services.getty here – the ISO modules handle it.
+  # When "chernos" logs in on tty1, start sway with our config
+  programs.bash.loginShellInit = ''
+    if [ "$(tty)" = "/dev/tty1" ] && [ -z "$WAYLAND_DISPLAY" ] && [ -z "$DISPLAY" ]; then
+      exec sway -c /etc/chernos-sway.conf
+    fi
+  '';
 
   ########################################
-  # Boot – let the ISO module handle bootloader, we only do Plymouth
+  # Boot – ISO handles bootloader; we only do Plymouth
   ########################################
 
   boot.plymouth = {
     enable = true;
-    theme = "bgrt";  # safe default, you can override with your own later
+    theme = "bgrt";  # safe default, can be replaced later
   };
 
   ########################################
@@ -118,10 +116,9 @@
     ];
   };
 
-  # Make sure runtime dirs exist (and a crashpad dir if needed)
+  # Make sure runtime dirs exist
   systemd.tmpfiles.rules = [
     "d /var/lib/chernos 0755 chernos chernos -"
-    "d /var/lib/chernos/crashpad 0755 chernos chernos -"
   ];
 
   ########################################
@@ -181,24 +178,20 @@
       font monospace 10
     }
 
-    # Launch Chromium in kiosk mode on startup (Wayland)
-    # IMPORTANT: disable crashpad/crash-reporter so chrome_crashpad_handler
-    # is never started without a --database argument.
+    # Launch Chromium in kiosk mode on startup (Wayland, with GPU & crashpad disabled for safety in VMs)
     exec_always env \
       MOZ_ENABLE_WAYLAND=1 \
       QT_QPA_PLATFORM=wayland \
       XDG_CURRENT_DESKTOP=chernos \
-      CHROME_CRASHPAD_DATABASE=/var/lib/chernos/crashpad \
       ${pkgs.chromium}/bin/chromium \
         --kiosk \
         --noerrdialogs \
         --disable-session-crashed-bubble \
         --incognito \
-        --disable-crash-reporter \
-        --no-crashpad \
-        --disable-breakpad \
         --enable-features=UseOzonePlatform \
         --ozone-platform=wayland \
+        --disable-gpu \
+        --disable-breakpad \
         file:///etc/chernos-ui/index.html
   '';
 }
