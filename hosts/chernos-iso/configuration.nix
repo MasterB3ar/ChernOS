@@ -118,9 +118,10 @@
     ];
   };
 
-  # Make sure runtime dirs exist
+  # Make sure runtime dirs exist (and a crashpad dir if needed)
   systemd.tmpfiles.rules = [
     "d /var/lib/chernos 0755 chernos chernos -"
+    "d /var/lib/chernos/crashpad 0755 chernos chernos -"
   ];
 
   ########################################
@@ -176,20 +177,26 @@
     # Simple bar so you see time/status (proves Sway is alive)
     bar {
       position bottom
-      status_command sh -c 'while :; do date "+%H:%M:%S %d-%m-%Y"; sleep 1; done'
+      status_command while true; do date; sleep 1; done
       font monospace 10
     }
 
     # Launch Chromium in kiosk mode on startup (Wayland)
+    # IMPORTANT: disable crashpad/crash-reporter so chrome_crashpad_handler
+    # is never started without a --database argument.
     exec_always env \
       MOZ_ENABLE_WAYLAND=1 \
       QT_QPA_PLATFORM=wayland \
       XDG_CURRENT_DESKTOP=chernos \
+      CHROME_CRASHPAD_DATABASE=/var/lib/chernos/crashpad \
       ${pkgs.chromium}/bin/chromium \
         --kiosk \
         --noerrdialogs \
         --disable-session-crashed-bubble \
         --incognito \
+        --disable-crash-reporter \
+        --no-crashpad \
+        --disable-breakpad \
         --enable-features=UseOzonePlatform \
         --ozone-platform=wayland \
         file:///etc/chernos-ui/index.html
