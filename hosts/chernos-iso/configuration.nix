@@ -1,39 +1,28 @@
-{ config, pkgs, lib, modulesPath, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   ########################################
-  # Base: minimal installer ISO
+  # Basic system identity
   ########################################
 
-  imports = [
-    "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
-  ];
+  networking.hostName = "chernos";
+  system.stateVersion = "24.05";
 
   ########################################
-  # Graphical Desktop: XFCE + LightDM
+  # User & autologin target
   ########################################
 
-  services.xserver = {
-    enable = true;
-
-    # Keyboard (new option names)
-    xkb.layout = "us";
-    xkb.variant = "";
-
-    # Safe drivers for VM
-    videoDrivers = [ "modesetting" "vesa" ];
-
-    # Login manager
-    displayManager = {
-      lightdm.enable = true;
-    };
-
-    # XFCE desktop
-    desktopManager.xfce.enable = true;
+  users.users.chernos = {
+    isNormalUser = true;
+    password = "chernos";
+    extraGroups = [ "wheel" "audio" "video" "networkmanager" ];
   };
 
+  security.sudo.enable = true;
+  security.sudo.wheelNeedsPassword = false;
+
   ########################################
-  # Timezone & Locale
+  # Locale & Timezone
   ########################################
 
   time.timeZone = "Europe/Copenhagen";
@@ -43,36 +32,92 @@
   # Networking
   ########################################
 
-  # DO NOT enable NetworkManager here:
-  # installation-cd-minimal.nix uses networking.wireless.
-  # networking.networkmanager.enable = true;  # must stay disabled
+  networking.networkmanager.enable = true;
+  networking.wireless.enable = false; # avoid NM/wireless conflict warnings
 
   ########################################
-  # Extra packages (on top of default ISO)
+  # Graphics / Wayland / Sway kiosk
   ########################################
 
-  environment.systemPackages = with pkgs; [
-    # Tools
-    vim
-    neofetch
-    git
-    wget
-    curl
-    htop
+  services.xserver.enable = false; # Wayland-only, no Xorg
 
-    # Desktop apps
-    firefox
-    xfce.thunar
+  hardware.graphics.enable = true;
+  hardware.opengl = {
+    enable = true;
+    driSupport = true;
+    driSupport32Bit = true;
+  };
 
-    # Icons / theme helpers
-    papirus-icon-theme
+  programs.sway = {
+    enable = true;
+    wrapperFeatures.gtk = true;
+    extraPackages = with pkgs; [
+      chromium         # Frontend
+      foot             # Minimal terminal for debugging
+    ];
 
-    # For login/startup sound
-    libcanberra-gtk3
-  ];
+    # Environment for Sway session
+    extraSessionCommands = ''
+      export MOZ_ENABLE_WAYLAND=1
+      export QT_QPA_PLATFORM=wayland
+      export XDG_CURRENT_DESKTOP=chernos
+    '';
+
+    # Add our kiosk exec on top of default config
+    extraConfig = ''
+      # ChernOS Sway additions
+      bindsym $mod+Shift+q exec foot
+      # Launch Chromium in kiosk mode on startup
+      exec "${pkgs.chromium}/bin/chromium \
+        --kiosk \
+        --noerrdialogs \
+        --disable-session-crashed-bubble \
+        --incognito \
+        file:///etc/chernos-ui/index.html"
+    '';
+  };
 
   ########################################
-  # Audio (PipeWire stack)
+  # greetd – autologin to Sway
+  ########################################
+
+  services.greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        command = "${pkgs.sway}/bin/sway";
+        user = "chernos";
+      };
+    };
+  };
+
+  # Disable traditional getty spam on tty1
+  services.getty.autologinUser = "";
+  services.getty.helpLine = "";
+
+  ########################################
+  # Bootloader, Plymouth, “nuclear glow”
+  ########################################
+
+  boot.loader.grub.enable = true;
+  boot.loader.grub.version = 2;
+  boot.loader.grub.device = "nodev";
+  boot.loader.timeout = 2;
+
+  # Simple GRUB theme: dark background, green-ish text
+  boot.loader.grub.extraConfig = ''
+    set menu_color_normal=light-green/black
+    set menu_color_highlight=black/light-green
+  '';
+
+  # Plymouth splash
+  boot.plymouth = {
+    enable = true;
+    theme = "bgrt";  # safe default, you can override with your own later
+  };
+
+  ########################################
+  # Audio stack – PipeWire
   ########################################
 
   sound.enable = true;
@@ -81,47 +126,56 @@
   services.pipewire = {
     enable = true;
     alsa.enable = true;
+    alsa.support32Bit = true;
     pulse.enable = true;
-    wireplumber.enable = true;
   };
 
   ########################################
-  # ChernOS Startup Sound (on XFCE session start)
+  # Persistence v3 (profiles, states, logs)
+  # /persist is optional (label CHERNOS_DATA), used if present
   ########################################
 
-  environment.etc."xdg/autostart/chernos-login-sound.desktop".text = ''
-    [Desktop Entry]
-    Type=Application
-    Version=1.0
-    Name=ChernOS Startup Sound
-    Comment=Play ChernOS login sound
-    Exec=canberra-gtk-play -i service-login
-    OnlyShowIn=XFCE;
-    X-GNOME-Autostart-enabled=true
-  '';
+  fileSystems."/persist" = {
+    device = "/dev/disk/by-label/CHERNOS_DATA";
+    fsType = "ext4";
+    options = [ "nofail" ]; # boot even if disk not present
+  };
+
+  environment.persistence."/persist" = {
+    hideMounts = true;
+    directories = [
+      "/var/lib/chernos"                 # reactor state, logs
+      "/home/chernos/.config/chernos"    # UI prefs, profiles
+    ];
+  };
+
+  # Make sure runtime dirs exist
+  systemd.tmpfiles.rules = [
+    "d /var/lib/chernos 0755 chernos chernos -"
+  ];
 
   ########################################
-  # ChernOS Desktop Branding (wallpaper)
+  # System packages – keep it minimal
   ########################################
 
-  environment.etc."xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml".text = ''
-    <?xml version="1.0" encoding="UTF-8"?>
-    <channel name="xfce4-desktop" version="1.0">
-      <property name="backdrop" type="empty">
-        <property name="screen0" type="empty">
-          <property name="monitor0" type="empty">
-            <property name="image-path" type="string"
-                      value="/run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-simple-dark.png"/>
-          </property>
-        </property>
-      </property>
-    </channel>
-  '';
+  environment.systemPackages = with pkgs; [
+    vim
+    git
+    htop
+    chromium
+    foot
+  ];
 
   ########################################
-  # Users & sudo
+  # Ship the ChernOS Reactor UI into /etc/chernos-ui
   ########################################
 
-  # installation-cd-minimal.nix already defines the "nixos" user
-  # with password "nixos" and sudo rights, so we do not override it here.
+  environment.etc."chernos-ui/index.html".source =
+    ../../ui/index.html;
+
+  environment.etc."chernos-ui/main.js".source =
+    ../../ui/main.js;
+
+  environment.etc."chernos-ui/styles/blackchamber.css".source =
+    ../../ui/styles/blackchamber.css;
 }
