@@ -74,16 +74,11 @@
     };
   };
 
-  # Disable traditional getty spam on tty1
-  services.getty.autologinUser = "";
-  services.getty.helpLine = "";
+  # NOTE: do NOT override services.getty here – the ISO modules handle it.
 
   ########################################
   # Boot – let the ISO module handle bootloader, we only do Plymouth
   ########################################
-
-  # Do NOT touch boot.loader.grub.enable here; iso-image.nix sets it.
-  # Just configure Plymouth splash.
 
   boot.plymouth = {
     enable = true;
