@@ -15,7 +15,7 @@
   users.users.chernos = {
     isNormalUser = true;
     password = "chernos";
-    extraGroups = [ "wheel" "audio " "video" "networkmanager" ];
+    extraGroups = [ "wheel" "audio" "video" "networkmanager" ];
   };
 
   security.sudo.enable = true;
@@ -79,21 +79,12 @@
   services.getty.helpLine = "";
 
   ########################################
-  # Bootloader, Plymouth, “nuclear glow”
+  # Boot – let the ISO module handle bootloader, we only do Plymouth
   ########################################
 
-  boot.loader.grub.enable = true;
-  boot.loader.grub.version = 2;
-  boot.loader.grub.device = "nodev";
-  boot.loader.timeout = 2;
+  # Do NOT touch boot.loader.grub.enable here; iso-image.nix sets it.
+  # Just configure Plymouth splash.
 
-  # Simple GRUB theme: dark background, green-ish text
-  boot.loader.grub.extraConfig = ''
-    set menu_color_normal=light-green/black
-    set menu_color_highlight=black/light-green
-  '';
-
-  # Plymouth splash
   boot.plymouth = {
     enable = true;
     theme = "bgrt";  # safe default, you can override with your own later
