@@ -40,7 +40,7 @@
   # Graphics / Wayland / Sway kiosk
   ########################################
 
-  # No Xorg, Wayland-only
+  # No Xorg
   services.xserver.enable = false;
 
   # OpenGL / Mesa
@@ -50,13 +50,13 @@
     driSupport32Bit = true;
   };
 
-  # Sway – packages only, autostart via login shell
+  # Sway – only basic wiring; kiosk config is in /etc/chernos-sway.conf
   programs.sway = {
     enable = true;
     wrapperFeatures.gtk = true;
     extraPackages = with pkgs; [
       chromium         # Frontend
-      foot             # Minimal terminal
+      foot             # Minimal terminal for debugging
     ];
   };
 
@@ -64,10 +64,8 @@
   # TTY autologin + Sway autostart
   ########################################
 
-  # Force tty1 to autologin as "chernos"
   services.getty.autologinUser = lib.mkForce "chernos";
 
-  # When "chernos" logs in on tty1, start sway with our config
   programs.bash.loginShellInit = ''
     if [ "$(tty)" = "/dev/tty1" ] && [ -z "$WAYLAND_DISPLAY" ] && [ -z "$DISPLAY" ]; then
       exec sway -c /etc/chernos-sway.conf
@@ -75,12 +73,12 @@
   '';
 
   ########################################
-  # Boot – ISO handles bootloader; we only do Plymouth
+  # Boot – let the ISO module handle bootloader, we only do Plymouth
   ########################################
 
   boot.plymouth = {
     enable = true;
-    theme = "bgrt";  # safe default, can be replaced later
+    theme = "bgrt";  # safe default, you can override with your own later
   };
 
   ########################################
@@ -178,20 +176,21 @@
       font monospace 10
     }
 
-    # Launch Chromium in kiosk mode on startup (Wayland, with GPU & crashpad disabled for safety in VMs)
-    exec_always env \
-      MOZ_ENABLE_WAYLAND=1 \
-      QT_QPA_PLATFORM=wayland \
-      XDG_CURRENT_DESKTOP=chernos \
-      ${pkgs.chromium}/bin/chromium \
-        --kiosk \
-        --noerrdialogs \
-        --disable-session-crashed-bubble \
-        --incognito \
-        --enable-features=UseOzonePlatform \
-        --ozone-platform=wayland \
-        --disable-gpu \
-        --disable-breakpad \
-        file:///etc/chernos-ui/index.html
+    # Hotkey: Super+C to start Chromium manually if needed
+    bindsym $mod+c exec ${pkgs.chromium}/bin/chromium \
+      --disable-gpu \
+      --incognito \
+      file:///etc/chernos-ui/index.html
+
+    # Autostart Chromium in kiosk mode on login
+    exec_always ${pkgs.chromium}/bin/chromium \
+      --kiosk \
+      --noerrdialogs \
+      --disable-session-crashed-bubble \
+      --incognito \
+      --disable-gpu \
+      --disable-breakpad \
+      file:///etc/chernos-ui/index.html \
+      >/tmp/chernos-chromium.log 2>&1
   '';
 }
