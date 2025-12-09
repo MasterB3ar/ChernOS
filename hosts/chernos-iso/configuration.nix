@@ -51,7 +51,6 @@
 
     desktopManager.xfce = {
       enable = true;
-      enableXfwmCompositor = true;
     };
   };
 
