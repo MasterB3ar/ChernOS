@@ -1,37 +1,36 @@
-name: Build ChernOS 2.0 ISO
+name: Build ChernOS ISO
 
 on:
-  workflow_dispatch:
   push:
-    branches: [ main, master ]
-    paths:
-      - "flake.nix"
-      - "hosts/**"
-      - ".github/workflows/build-iso.yml"
+    branches:
+      - main        # change this if your default branch is not "main"
+  workflow_dispatch: # allows manual runs from the GitHub UI
+
+permissions:
+  contents: read
 
 jobs:
   build-iso:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v27
+        uses: cachix/install-nix-action@v30
         with:
-          nix_path: nixpkgs=channel:nixos-24.05
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Show flake outputs
+      - name: Show flake outputs (debug)
         run: nix flake show
 
-      - name: Build ISO
+      - name: Build ChernOS ISO
         run: |
           nix build .#nixosConfigurations.chernos-iso.config.system.build.isoImage
-          ls -R result
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
-          name: chernos-2.0-iso
+          name: chernos-iso
           path: result/iso/*.iso
