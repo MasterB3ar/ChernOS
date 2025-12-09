@@ -2,10 +2,10 @@
   description = "ChernOS 2.0 – NixOS ISO + UI";
 
   inputs = {
-    # NixOS 24.05 channel
+    # NixOS 24.05 channel (stable base)
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
 
-    # Impermanence (optionally used later for persistence)
+    # Impermanence (optional, for persistence later)
     impermanence.url = "github:nix-community/impermanence";
   };
 
@@ -27,6 +27,10 @@
           };
 
           modules = [
+            # 1) Standard NixOS graphical ISO with Calamares installer
+            "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-graphical-calamares.nix"
+
+            # 2) Your custom ChernOS ISO config
             ./hosts/chernos-iso/configuration.nix
           ];
         };
@@ -35,14 +39,14 @@
       ########################################
       ## Expose ISO as a flake package
       ########################################
-      # You can:
+      # Build with:
       #   nix build .#iso
       # or:
       #   nix build .#packages.x86_64-linux.iso
       packages.${system}.iso =
         self.nixosConfigurations.chernos-iso.config.system.build.isoImage;
 
-      # Optional: make ISO the default package
+      # Optional: makes `nix build .` build the ISO by default
       defaultPackage.${system} = self.packages.${system}.iso;
     };
 }
