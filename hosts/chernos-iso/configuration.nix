@@ -47,7 +47,7 @@
   };
 
   ########################################
-  # Kiosk operator user + autologin
+  # Kiosk operator user
   ########################################
 
   users.users.chernos = {
@@ -56,10 +56,6 @@
     initialPassword = "chernos";
     extraGroups = [ "wheel" "networkmanager" ];
   };
-
-  # Simple, supported autologin configuration.
-  # This is the only thing we rely on from the getty module.
-  services.getty.autologinUser = "chernos";
 
   # Let wheel sudo without password inside the ISO.
   security.sudo.wheelNeedsPassword = false;
