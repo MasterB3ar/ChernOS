@@ -106,15 +106,6 @@
   boot.plymouth.theme = "spinner"; # you can later replace with a custom nuclear-glow theme
 
   ########################################
-  # GRUB – ISO will use the generated bootloader
-  ########################################
-  boot.loader.grub = {
-    enable = true;
-    version = 2;
-    devices = [ "nodev" ];
-  };
-
-  ########################################
   # Filesystem + persistence placeholder
   ########################################
   # For the ISO, root is ephemeral; real persistence via overlayfs can be added later
