@@ -155,19 +155,32 @@
   environment.etc."chernos-sway.conf".text = ''
     ### ChernOS Sway kiosk config
 
-    # Mod key
+    # Use Super (Windows key) as mod
     set $mod Mod4
 
-    # Simple background so we know Sway is alive
+    # Solid black background so we know Sway is alive
     output * bg #000000 solid_color
+
+    # Hide cursor after 5 seconds of inactivity
+    seat * hide_cursor 5000
+
+    # Always start a terminal so there is at least one window
+    exec_always foot
 
     # Debug terminal (Super+Enter)
     bindsym $mod+Return exec foot
 
-    # Exit sway (for debugging only; Super+Shift+Q)
+    # Exit sway completely (Super+Shift+Q)
     bindsym $mod+Shift+q exec "swaymsg exit"
 
-    # Launch Chromium in kiosk mode on startup with reactor env
-    exec_always env MOZ_ENABLE_WAYLAND=1 QT_QPA_PLATFORM=wayland XDG_CURRENT_DESKTOP=chernos ${pkgs.chromium}/bin/chromium --kiosk --noerrdialogs --disable-session-crashed-bubble --incognito file:///etc/chernos-ui/index.html
+    # Simple bar so you see time/status (proves Sway is alive)
+    bar {
+      position bottom
+      status_command while true; do date; sleep 1; done
+      font monospace 10
+    }
+
+    # Launch Chromium in kiosk mode on startup (Wayland)
+    exec_always env MOZ_ENABLE_WAYLAND=1 QT_QPA_PLATFORM=wayland XDG_CURRENT_DESKTOP=chernos ${pkgs.chromium}/bin/chromium --kiosk --noerrdialogs --disable-session-crashed-bubble --incognito --enable-features=UseOzonePlatform --ozone-platform=wayland file:///etc/chernos-ui/index.html
   '';
 }
