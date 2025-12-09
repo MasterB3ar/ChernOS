@@ -50,7 +50,7 @@
     driSupport32Bit = true;
   };
 
-  # Sway – only basic wiring; kiosk config is in /etc/chernos-sway.conf
+  # Sway – basic setup; kiosk config is in /etc/chernos-sway.conf
   programs.sway = {
     enable = true;
     wrapperFeatures.gtk = true;
@@ -67,13 +67,14 @@
   services.getty.autologinUser = lib.mkForce "chernos";
 
   programs.bash.loginShellInit = ''
+    # Only auto-start sway on the first TTY, and only if no Wayland/X is running
     if [ "$(tty)" = "/dev/tty1" ] && [ -z "$WAYLAND_DISPLAY" ] && [ -z "$DISPLAY" ]; then
       exec sway -c /etc/chernos-sway.conf
     fi
   '';
 
   ########################################
-  # Boot – let the ISO module handle bootloader, we only do Plymouth
+  # Boot – let ISO module handle bootloader, we only do Plymouth
   ########################################
 
   boot.plymouth = {
@@ -169,27 +170,25 @@
     # Exit sway completely (Super+Shift+Q)
     bindsym $mod+Shift+q exec "swaymsg exit"
 
-    # Simple bar so you see time/status (proves Sway is alive)
+    # Simple bar so you see time/status
     bar {
       position bottom
       status_command while true; do date; sleep 1; done
       font monospace 10
     }
 
-    # Hotkey: Super+C to start Chromium manually if needed
-    bindsym $mod+c exec ${pkgs.chromium}/bin/chromium \
+    # Hotkey: Super+C to start Chromium manually
+    bindsym $mod+c exec /run/current-system/sw/bin/chromium \
+      --no-sandbox \
       --disable-gpu \
       --incognito \
       file:///etc/chernos-ui/index.html
 
-    # Autostart Chromium in kiosk mode on login
-    exec_always ${pkgs.chromium}/bin/chromium \
-      --kiosk \
-      --noerrdialogs \
-      --disable-session-crashed-bubble \
-      --incognito \
+    # Autostart Chromium at login (same command)
+    exec_always /run/current-system/sw/bin/chromium \
+      --no-sandbox \
       --disable-gpu \
-      --disable-breakpad \
+      --incognito \
       file:///etc/chernos-ui/index.html \
       >/tmp/chernos-chromium.log 2>&1
   '';
