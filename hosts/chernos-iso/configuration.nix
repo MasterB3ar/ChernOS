@@ -121,7 +121,6 @@
   ########################################
   # Services & misc
   ########################################
-  services.openssh.enable = false;
 
   # ISO image setup – important for building the actual ISO
   system.stateVersion = "24.05";
