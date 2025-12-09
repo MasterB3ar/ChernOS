@@ -15,7 +15,7 @@
   users.users.chernos = {
     isNormalUser = true;
     password = "chernos";
-    extraGroups = [ "wheel" "audio" "video" "networkmanager" ];
+    extraGroups = [ "wheel" "audio " "video" "networkmanager" ];
   };
 
   security.sudo.enable = true;
@@ -39,15 +39,17 @@
   # Graphics / Wayland / Sway kiosk
   ########################################
 
-  services.xserver.enable = false; # Wayland-only, no Xorg
+  # No Xorg
+  services.xserver.enable = false;
 
-  # Use the legacy, supported graphics options for this nixpkgs
+  # OpenGL / Mesa
   hardware.opengl = {
     enable = true;
     driSupport = true;
     driSupport32Bit = true;
   };
 
+  # Sway – only basic wiring; kiosk config is in /etc/chernos-sway.conf
   programs.sway = {
     enable = true;
     wrapperFeatures.gtk = true;
@@ -55,37 +57,18 @@
       chromium         # Frontend
       foot             # Minimal terminal for debugging
     ];
-
-    # Environment for Sway session
-    extraSessionCommands = ''
-      export MOZ_ENABLE_WAYLAND=1
-      export QT_QPA_PLATFORM=wayland
-      export XDG_CURRENT_DESKTOP=chernos
-    '';
-
-    # Add our kiosk exec on top of default config
-    extraConfig = ''
-      # ChernOS Sway additions
-      bindsym $mod+Shift+q exec foot
-      # Launch Chromium in kiosk mode on startup
-      exec "${pkgs.chromium}/bin/chromium \
-        --kiosk \
-        --noerrdialogs \
-        --disable-session-crashed-bubble \
-        --incognito \
-        file:///etc/chernos-ui/index.html"
-    '';
   };
 
   ########################################
-  # greetd – autologin to Sway
+  # greetd – autologin to Sway (+ our config)
   ########################################
 
   services.greetd = {
     enable = true;
     settings = {
       default_session = {
-        command = "${pkgs.sway}/bin/sway";
+        # Use our custom sway config
+        command = "${pkgs.sway}/bin/sway -c /etc/chernos-sway.conf";
         user = "chernos";
       };
     };
@@ -178,4 +161,33 @@
 
   environment.etc."chernos-ui/styles/blackchamber.css".source =
     ../../ui/styles/blackchamber.css;
+
+  ########################################
+  # Custom Sway config for ChernOS kiosk
+  ########################################
+
+  environment.etc."chernos-sway.conf".text = ''
+    ### ChernOS Sway kiosk config
+
+    set $mod Mod4
+
+    # Reactor env
+    setenv MOZ_ENABLE_WAYLAND 1
+    setenv QT_QPA_PLATFORM wayland
+    setenv XDG_CURRENT_DESKTOP chernos
+
+    # Debug terminal
+    bindsym $mod+Return exec foot
+
+    # Exit sway (for debugging only)
+    bindsym $mod+Shift+q exec "swaymsg exit"
+
+    # Launch Chromium in kiosk mode on startup
+    exec_always ${pkgs.chromium}/bin/chromium \
+      --kiosk \
+      --noerrdialogs \
+      --disable-session-crashed-bubble \
+      --incognito \
+      file:///etc/chernos-ui/index.html
+  '';
 }
