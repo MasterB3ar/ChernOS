@@ -2,18 +2,39 @@
 
 {
   ########################################
-  # Base: graphical XFCE live ISO
+  # Base: minimal installer ISO
   ########################################
 
-  # This pulls in the official NixOS graphical XFCE installer ISO profile.
-  # It gives you:
-  #  - Live ISO support
-  #  - LightDM login manager
-  #  - XFCE desktop
-  #  - Basic installer tooling
+  # This exists in nixos-24.05 and gives you:
+  #  - bootable ISO
+  #  - installer tooling
   imports = [
-    "${modulesPath}/installer/cd-dvd/installation-cd-graphical-xfce.nix"
+    "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
   ];
+
+  ########################################
+  # Graphical Desktop: XFCE + LightDM
+  ########################################
+
+  services.xserver = {
+    enable = true;
+
+    # Keyboard
+    layout = "us";
+    xkbVariant = "";
+
+    # Safe drivers for VM
+    videoDrivers = [ "modesetting" "vesa" ];
+
+    # Login manager
+    displayManager = {
+      lightdm.enable = true;
+      # No exotic greeter options – only ones that are known to exist.
+    };
+
+    # XFCE desktop
+    desktopManager.xfce.enable = true;
+  };
 
   ########################################
   # Timezone & Locale
@@ -21,6 +42,13 @@
 
   time.timeZone = "Europe/Copenhagen";
   i18n.defaultLocale = "en_US.UTF-8";
+
+  ########################################
+  # Networking
+  ########################################
+
+  # Minimal ISO typically sets this, but forcing true is harmless.
+  networking.networkmanager.enable = true;
 
   ########################################
   # Extra packages (on top of the default ISO)
@@ -47,12 +75,23 @@
   ];
 
   ########################################
+  # Audio (PipeWire stack)
+  ########################################
+
+  sound.enable = true;
+  hardware.pulseaudio.enable = false;
+
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    pulse.enable = true;
+    wireplumber.enable = true;
+  };
+
+  ########################################
   # ChernOS Startup Sound (on XFCE session start)
   ########################################
 
-  # Autostart entry: plays a sound when the XFCE session starts.
-  # The installer profile already sets up a user/session,
-  # so this will run automatically in the live environment.
   environment.etc."xdg/autostart/chernos-login-sound.desktop".text = ''
     [Desktop Entry]
     Type=Application
@@ -68,10 +107,9 @@
   # ChernOS Desktop Branding (wallpaper)
   ########################################
 
-  # We hardcode a wallpaper path string. Nix does NOT need this file at
-  # evaluation time — it is just a string. The default ISO already ships
-  # NixOS wallpapers under /run/current-system/sw/share/backgrounds, so this
-  # path should work. If not, you can later replace the PNG with your own.
+  # This is just a string path; Nix does not need the file during evaluation.
+  # At runtime XFCE will try to load this image. You can later replace it with
+  # your own PNG.
   environment.etc."xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml".text = ''
     <?xml version="1.0" encoding="UTF-8"?>
     <channel name="xfce4-desktop" version="1.0">
@@ -87,36 +125,9 @@
   '';
 
   ########################################
-  # Networking
-  ########################################
-
-  # The installer profile already enables NetworkManager,
-  # but setting this again to true is safe and non-conflicting.
-  networking.networkmanager.enable = true;
-
-  ########################################
-  # Audio (PipeWire stack)
-  ########################################
-
-  # The installer profile already does sensible audio defaults,
-  # but these are safe and match typical modern config.
-  sound.enable = true;
-  hardware.pulseaudio.enable = false;
-
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    pulse.enable = true;
-    wireplumber.enable = true;
-  };
-
-  ########################################
   # Users & sudo
   ########################################
 
-  # The installer ISO profile already provides a "nixos" user with password "nixos"
-  # and sudo rights. To avoid conflicts, we do NOT redefine the user here.
-  # You log in on TTY/LightDM as:
-  #   user: nixos
-  #   pass: nixos
+  # The minimal ISO profile already sets up the "nixos" user with password "nixos"
+  # and sudo rights. We do NOT redefine it here to avoid conflicts.
 }
