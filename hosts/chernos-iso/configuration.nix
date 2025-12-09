@@ -1,62 +1,33 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, modulesPath, ... }:
 
 {
   ########################################
-  # Imports
+  # Base: graphical XFCE live ISO
   ########################################
 
+  # This pulls in the official NixOS graphical XFCE installer ISO profile.
+  # It gives you:
+  #  - Live ISO support
+  #  - LightDM login manager
+  #  - XFCE desktop
+  #  - Basic installer tooling
   imports = [
-    ../common/base.nix
+    "${modulesPath}/installer/cd-dvd/installation-cd-graphical-xfce.nix"
   ];
 
   ########################################
-  # Networking
+  # Timezone & Locale
   ########################################
 
-  networking.networkmanager.enable = true;
+  time.timeZone = "Europe/Copenhagen";
+  i18n.defaultLocale = "en_US.UTF-8";
 
   ########################################
-  # Graphical Desktop: XFCE + LightDM
-  ########################################
-
-  services.xserver = {
-    enable = true;
-
-    # Keyboard layout
-    layout = "us";
-    xkbVariant = "";
-
-    # Safe drivers for VirtualBox
-    videoDrivers = [ "modesetting" "vesa" ];
-
-    displayManager = {
-      # Use LightDM (login screen)
-      lightdm.enable = true;
-      defaultSession = "xfce";
-
-      lightdm.greeters.slick = {
-        enable = true;
-
-        # “ChernOS” dark look using existing themes
-        themeName = "Adwaita-dark";
-        iconThemeName = "Papirus-Dark";
-
-        # NOTE: `background` option is not available in this nixpkgs version,
-        # so we do NOT set it here. Background will come from the theme/greeter.
-      };
-    };
-
-    desktopManager.xfce = {
-      enable = true;
-    };
-  };
-
-  ########################################
-  # System packages (apps & tools)
+  # Extra packages (on top of the default ISO)
   ########################################
 
   environment.systemPackages = with pkgs; [
-    # Basics
+    # Tools
     vim
     neofetch
     git
@@ -68,63 +39,20 @@
     firefox
     thunar
 
-    # Theme & icons
+    # Icons / theme helpers
     papirus-icon-theme
 
-    # Sound helper for startup sound
+    # For login/startup sound
     libcanberra-gtk3
   ];
 
   ########################################
-  # Sound & PipeWire
+  # ChernOS Startup Sound (on XFCE session start)
   ########################################
 
-  sound.enable = true;
-  hardware.pulseaudio.enable = false;
-
-  services.pipewire = {
-    enable = true;
-    alsa.enable = true;
-    pulse.enable = true;
-    wireplumber.enable = true;
-  };
-
-  ########################################
-  # Locale & Timezone
-  ########################################
-
-  time.timeZone = "Europe/Copenhagen";
-  i18n.defaultLocale = "en_US.UTF-8";
-
-  ########################################
-  # User
-  ########################################
-
-  users.users.nixos = {
-    isNormalUser = true;
-    password = "nixos";
-    extraGroups = [ "wheel" "networkmanager" ];
-  };
-
-  security.sudo.enable = true;
-  security.sudo.wheelNeedsPassword = false;
-
-  ########################################
-  # Fonts
-  ########################################
-
-  fonts.packages = with pkgs; [
-    noto-fonts
-    noto-fonts-emoji
-    noto-fonts-cjk
-  ];
-
-  ########################################
-  # ChernOS Startup Sound (on login)
-  ########################################
-
-  # This creates a desktop autostart entry that plays a login sound
-  # when the XFCE session starts.
+  # Autostart entry: plays a sound when the XFCE session starts.
+  # The installer profile already sets up a user/session,
+  # so this will run automatically in the live environment.
   environment.etc."xdg/autostart/chernos-login-sound.desktop".text = ''
     [Desktop Entry]
     Type=Application
@@ -140,9 +68,10 @@
   # ChernOS Desktop Branding (wallpaper)
   ########################################
 
-  # Use a literal path instead of pkgs.nixos-artwork.* so build does not depend
-  # on a specific wallpaper attribute. You can later drop your own image at
-  # /etc/chernos-wallpaper.png if you like.
+  # We hardcode a wallpaper path string. Nix does NOT need this file at
+  # evaluation time — it is just a string. The default ISO already ships
+  # NixOS wallpapers under /run/current-system/sw/share/backgrounds, so this
+  # path should work. If not, you can later replace the PNG with your own.
   environment.etc."xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml".text = ''
     <?xml version="1.0" encoding="UTF-8"?>
     <channel name="xfce4-desktop" version="1.0">
@@ -150,10 +79,44 @@
         <property name="screen0" type="empty">
           <property name="monitor0" type="empty">
             <property name="image-path" type="string"
-                      value="/etc/chernos-wallpaper.png"/>
+                      value="/run/current-system/sw/share/backgrounds/nixos/nix-wallpaper-simple-dark.png"/>
           </property>
         </property>
       </property>
     </channel>
   '';
+
+  ########################################
+  # Networking
+  ########################################
+
+  # The installer profile already enables NetworkManager,
+  # but setting this again to true is safe and non-conflicting.
+  networking.networkmanager.enable = true;
+
+  ########################################
+  # Audio (PipeWire stack)
+  ########################################
+
+  # The installer profile already does sensible audio defaults,
+  # but these are safe and match typical modern config.
+  sound.enable = true;
+  hardware.pulseaudio.enable = false;
+
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    pulse.enable = true;
+    wireplumber.enable = true;
+  };
+
+  ########################################
+  # Users & sudo
+  ########################################
+
+  # The installer ISO profile already provides a "nixos" user with password "nixos"
+  # and sudo rights. To avoid conflicts, we do NOT redefine the user here.
+  # You log in on TTY/LightDM as:
+  #   user: nixos
+  #   pass: nixos
 }
