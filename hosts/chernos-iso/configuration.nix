@@ -5,9 +5,6 @@
   # Base: minimal installer ISO
   ########################################
 
-  # This exists in nixos-24.05 and gives you:
-  #  - bootable ISO
-  #  - installer tooling
   imports = [
     "${modulesPath}/installer/cd-dvd/installation-cd-minimal.nix"
   ];
@@ -19,9 +16,9 @@
   services.xserver = {
     enable = true;
 
-    # Keyboard
-    layout = "us";
-    xkbVariant = "";
+    # Keyboard (new option names)
+    xkb.layout = "us";
+    xkb.variant = "";
 
     # Safe drivers for VM
     videoDrivers = [ "modesetting" "vesa" ];
@@ -29,7 +26,6 @@
     # Login manager
     displayManager = {
       lightdm.enable = true;
-      # No exotic greeter options – only ones that are known to exist.
     };
 
     # XFCE desktop
@@ -47,15 +43,12 @@
   # Networking
   ########################################
 
-  # DO NOT enable NetworkManager here: the installer profile uses
-  # `networking.wireless`, and NixOS asserts that both cannot be active
-  # at the same time.
-  #
-  # So this section is intentionally empty for now.
-  # networking.networkmanager.enable = true;  # <-- removed
+  # DO NOT enable NetworkManager here:
+  # installation-cd-minimal.nix uses networking.wireless.
+  # networking.networkmanager.enable = true;  # must stay disabled
 
   ########################################
-  # Extra packages (on top of the default ISO)
+  # Extra packages (on top of default ISO)
   ########################################
 
   environment.systemPackages = with pkgs; [
@@ -69,7 +62,7 @@
 
     # Desktop apps
     firefox
-    thunar
+    xfce.thunar
 
     # Icons / theme helpers
     papirus-icon-theme
@@ -129,6 +122,6 @@
   # Users & sudo
   ########################################
 
-  # The minimal ISO profile already sets up the "nixos" user with password "nixos"
-  # and sudo rights. We do NOT redefine it here to avoid conflicts.
+  # installation-cd-minimal.nix already defines the "nixos" user
+  # with password "nixos" and sudo rights, so we do not override it here.
 }
