@@ -1,102 +1,161 @@
-{ config, pkgs, lib, modulesPath, ... }:
+{ config, pkgs, lib, ... }:
 
 {
   ########################################
-  # Base ISO profile
+  # Imports
   ########################################
 
-  # Use the standard graphical installation ISO base as a foundation.
   imports = [
-    "${modulesPath}/installer/cd-dvd/installation-cd-graphical-base.nix"
+    ../common/base.nix
   ];
 
-  networking.hostName = "chernos-iso";
-
   ########################################
-  # Locale & console
+  # Networking
   ########################################
 
-  time.timeZone = "Europe/Copenhagen";
-
-  i18n.defaultLocale = "en_US.UTF-8";
-
-  console = {
-    font = "Lat2-Terminus16";
-    keyMap = "us";
-  };
+  networking.networkmanager.enable = true;
 
   ########################################
-  # Disable SSH on ISO (avoids conflict)
+  # Graphical Desktop: XFCE + LightDM
   ########################################
 
-  # The installation ISO profile turns SSH on by default.
-  # For a kiosk-style environment we hard-disable it.
-  services.openssh.enable = lib.mkForce false;
-
-  ########################################
-  # Wayland + Sway kiosk base
-  ########################################
-
-  # We do NOT use X11 here; force it off to avoid conflicts.
-  services.xserver.enable = lib.mkForce false;
-
-  programs.sway = {
+  services.xserver = {
     enable = true;
-    # Enable some extras so apps look normal under Sway.
-    wrapperFeatures.gtk = true;
-  };
 
-  ########################################
-  # Kiosk operator user
-  ########################################
+    # Keyboard layout
+    layout = "us";
+    xkbVariant = "";
 
-  users.users.chernos = {
-    isNormalUser = true;
-    description = "ChernOS Operator";
-    initialPassword = "chernos";
-    extraGroups = [ "wheel" "networkmanager" ];
-  };
+    # Safe drivers for VirtualBox
+    videoDrivers = [ "modesetting" "vesa" ];
 
-  # Let wheel sudo without password inside the ISO.
-  security.sudo.wheelNeedsPassword = false;
+    displayManager = {
+      # Use LightDM (login screen)
+      lightdm.enable = true;
+      defaultSession = "xfce";
 
-  ########################################
-  # Systemd user session – start Sway on login
-  ########################################
+      lightdm.greeters.slick = {
+        enable = true;
 
-  # When user 'chernos' logs in on tty1, their user systemd
-  # default.target starts, which starts this service -> Sway.
-  systemd.user.services."chernos-session" = {
-    description = "ChernOS kiosk session";
-    wantedBy = [ "default.target" ];
+        # “ChernOS” dark look using existing themes
+        themeName = "Adwaita-dark";
+        iconThemeName = "Papirus-Dark";
 
-    serviceConfig = {
-      ExecStart = "${pkgs.sway}/bin/sway";
-      Restart = "on-failure";
+        # Branded background (same dark NixOS wallpaper, but treated as ChernOS branding)
+        background = "${pkgs.nixos-artwork.wallpapers.simple-dark}/share/backgrounds/nixos/nix-wallpaper-simple-dark.png";
+
+        # Optional extra text/logo (shown as session name)
+        # Unfortunately there isn't a simple text label here, so we brand via background + theme.
+      };
+    };
+
+    desktopManager.xfce = {
+      enable = true;
+      enableXfwmCompositor = true;
     };
   };
 
   ########################################
-  # Packages in the ISO
+  # System packages (apps & tools)
   ########################################
 
   environment.systemPackages = with pkgs; [
+    # Basics
     vim
-    wget
+    neofetch
     git
-    sway
-    wayland
-    xwayland
-    grim
-    slurp
-    chromium
+    wget
+    curl
     htop
+
+    # Desktop apps
+    firefox
+    thunar
+
+    # Theme & icons
+    papirus-icon-theme
+
+    # Sound helper for startup sound
+    libcanberra-gtk3
   ];
 
   ########################################
-  # Misc
+  # Sound & PipeWire
   ########################################
 
-  # Needed for NixOS to know how to migrate config later.
-  system.stateVersion = "24.05";
+  sound.enable = true;
+  hardware.pulseaudio.enable = false;
+
+  services.pipewire = {
+    enable = true;
+    alsa.enable = true;
+    pulse.enable = true;
+    wireplumber.enable = true;
+  };
+
+  ########################################
+  # Locale & Timezone
+  ########################################
+
+  time.timeZone = "Europe/Copenhagen";
+  i18n.defaultLocale = "en_US.UTF-8";
+
+  ########################################
+  # User
+  ########################################
+
+  users.users.nixos = {
+    isNormalUser = true;
+    password = "nixos";
+    extraGroups = [ "wheel" "networkmanager" ];
+  };
+
+  security.sudo.enable = true;
+  security.sudo.wheelNeedsPassword = false;
+
+  ########################################
+  # Fonts
+  ########################################
+
+  fonts.packages = with pkgs; [
+    noto-fonts
+    noto-fonts-emoji
+    noto-fonts-cjk
+  ];
+
+  ########################################
+  # ChernOS Startup Sound (on login)
+  ########################################
+
+  # This creates a desktop autostart entry that plays a login sound
+  # when the XFCE session starts.
+  environment.etc."xdg/autostart/chernos-login-sound.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Version=1.0
+    Name=ChernOS Startup Sound
+    Comment=Play ChernOS login sound
+    Exec=canberra-gtk-play -i service-login
+    OnlyShowIn=XFCE;
+    X-GNOME-Autostart-enabled=true
+  '';
+
+  ########################################
+  # ChernOS Desktop Branding (wallpaper)
+  ########################################
+
+  # Force a default wallpaper for XFCE that acts as the “ChernOS” background.
+  environment.etc."xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml".text = ''
+    <?xml version="1.0" encoding="UTF-8"?>
+    <channel name="xfce4-desktop" version="1.0">
+      <property name="backdrop" type="empty">
+        <property name="screen0" type="empty">
+          <property name="monitor0" type="empty">
+            <property name="image-path" type="string"
+                      value="${pkgs.nixos-artwork.wallpapers.simple-dark}/share/backgrounds/nixos/nix-wallpaper-simple-dark.png"/>
+          </property>
+        </property>
+      </property>
+    </channel>
+  '';
 }
