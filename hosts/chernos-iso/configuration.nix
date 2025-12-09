@@ -41,11 +41,8 @@
         themeName = "Adwaita-dark";
         iconThemeName = "Papirus-Dark";
 
-        # Branded background (same dark NixOS wallpaper, but treated as ChernOS branding)
-        background = "${pkgs.nixos-artwork.wallpapers.simple-dark}/share/backgrounds/nixos/nix-wallpaper-simple-dark.png";
-
-        # Optional extra text/logo (shown as session name)
-        # Unfortunately there isn't a simple text label here, so we brand via background + theme.
+        # NOTE: `background` option is not available in this nixpkgs version,
+        # so we do NOT set it here. Background will come from the theme/greeter.
       };
     };
 
@@ -143,7 +140,9 @@
   # ChernOS Desktop Branding (wallpaper)
   ########################################
 
-  # Force a default wallpaper for XFCE that acts as the “ChernOS” background.
+  # Use a literal path instead of pkgs.nixos-artwork.* so build does not depend
+  # on a specific wallpaper attribute. You can later drop your own image at
+  # /etc/chernos-wallpaper.png if you like.
   environment.etc."xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml".text = ''
     <?xml version="1.0" encoding="UTF-8"?>
     <channel name="xfce4-desktop" version="1.0">
@@ -151,7 +150,7 @@
         <property name="screen0" type="empty">
           <property name="monitor0" type="empty">
             <property name="image-path" type="string"
-                      value="${pkgs.nixos-artwork.wallpapers.simple-dark}/share/backgrounds/nixos/nix-wallpaper-simple-dark.png"/>
+                      value="/etc/chernos-wallpaper.png"/>
           </property>
         </property>
       </property>
