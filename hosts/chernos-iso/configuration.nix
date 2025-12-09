@@ -47,8 +47,12 @@
   # Networking
   ########################################
 
-  # Minimal ISO typically sets this, but forcing true is harmless.
-  networking.networkmanager.enable = true;
+  # DO NOT enable NetworkManager here: the installer profile uses
+  # `networking.wireless`, and NixOS asserts that both cannot be active
+  # at the same time.
+  #
+  # So this section is intentionally empty for now.
+  # networking.networkmanager.enable = true;  # <-- removed
 
   ########################################
   # Extra packages (on top of the default ISO)
@@ -107,9 +111,6 @@
   # ChernOS Desktop Branding (wallpaper)
   ########################################
 
-  # This is just a string path; Nix does not need the file during evaluation.
-  # At runtime XFCE will try to load this image. You can later replace it with
-  # your own PNG.
   environment.etc."xdg/xfce4/xfconf/xfce-perchannel-xml/xfce4-desktop.xml".text = ''
     <?xml version="1.0" encoding="UTF-8"?>
     <channel name="xfce4-desktop" version="1.0">
