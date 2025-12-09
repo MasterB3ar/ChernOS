@@ -157,23 +157,22 @@
 
     set $mod Mod4
 
-    # Reactor env
-    setenv MOZ_ENABLE_WAYLAND 1
-    setenv QT_QPA_PLATFORM wayland
-    setenv XDG_CURRENT_DESKTOP chernos
-
     # Debug terminal
     bindsym $mod+Return exec foot
 
     # Exit sway (for debugging only)
     bindsym $mod+Shift+q exec "swaymsg exit"
 
-    # Launch Chromium in kiosk mode on startup
-    exec_always ${pkgs.chromium}/bin/chromium \
-      --kiosk \
-      --noerrdialogs \
-      --disable-session-crashed-bubble \
-      --incognito \
-      file:///etc/chernos-ui/index.html
+    # Launch Chromium in kiosk mode on startup with reactor env
+    exec_always env \
+      MOZ_ENABLE_WAYLAND=1 \
+      QT_QPA_PLATFORM=wayland \
+      XDG_CURRENT_DESKTOP=chernos \
+      ${pkgs.chromium}/bin/chromium \
+        --kiosk \
+        --noerrdialogs \
+        --disable-session-crashed-bubble \
+        --incognito \
+        file:///etc/chernos-ui/index.html
   '';
 }
