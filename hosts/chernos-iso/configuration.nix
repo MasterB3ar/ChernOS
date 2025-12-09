@@ -176,11 +176,22 @@
     # Simple bar so you see time/status (proves Sway is alive)
     bar {
       position bottom
-      status_command while true; do date; sleep 1; done
+      status_command sh -c 'while :; do date "+%H:%M:%S %d-%m-%Y"; sleep 1; done'
       font monospace 10
     }
 
     # Launch Chromium in kiosk mode on startup (Wayland)
-    exec_always env MOZ_ENABLE_WAYLAND=1 QT_QPA_PLATFORM=wayland XDG_CURRENT_DESKTOP=chernos ${pkgs.chromium}/bin/chromium --kiosk --noerrdialogs --disable-session-crashed-bubble --incognito --enable-features=UseOzonePlatform --ozone-platform=wayland file:///etc/chernos-ui/index.html
+    exec_always env \
+      MOZ_ENABLE_WAYLAND=1 \
+      QT_QPA_PLATFORM=wayland \
+      XDG_CURRENT_DESKTOP=chernos \
+      ${pkgs.chromium}/bin/chromium \
+        --kiosk \
+        --noerrdialogs \
+        --disable-session-crashed-bubble \
+        --incognito \
+        --enable-features=UseOzonePlatform \
+        --ozone-platform=wayland \
+        file:///etc/chernos-ui/index.html
   '';
 }
