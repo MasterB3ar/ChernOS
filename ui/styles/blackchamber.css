@@ -1,0 +1,536 @@
+:root {
+  --bc-bg: #020617;
+  --bc-bg-soft: #020819;
+  --bc-border: #1f2937;
+  --bc-accent: #22c55e;
+  --bc-accent-soft: rgba(34, 197, 94, 0.35);
+  --bc-danger: #f97373;
+  --bc-warn: #facc15;
+  --bc-text: #e5e7eb;
+  --bc-muted: #64748b;
+  --bc-glow: #22c55e;
+  --bc-shadow-strong: 0 0 40px rgba(34, 197, 94, 0.33);
+  --bc-radius: 12px;
+  --bc-radius-lg: 18px;
+  --bc-panel-gap: 12px;
+  --bc-font-main: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body.bc-root {
+  background: radial-gradient(circle at top, #020617 0%, #020617 30%, #000 90%);
+  color: var(--bc-text);
+  font-family: var(--bc-font-main);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Background reactor glow */
+.bc-reactor-glow {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(34, 197, 94, 0.12), transparent 60%);
+  animation: bc-glow-pulse 4s infinite ease-in-out;
+  mix-blend-mode: screen;
+  z-index: 0;
+}
+
+@keyframes bc-glow-pulse {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.7; }
+}
+
+/* Topbar */
+
+.bc-topbar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: linear-gradient(to right, #020617, #020617, #020617);
+  border-bottom: 1px solid var(--bc-border);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.bc-topbar-left {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.bc-logo {
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--bc-accent);
+}
+
+.bc-tag {
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--bc-muted);
+}
+
+.bc-topbar-center {
+  display: flex;
+  gap: 8px;
+}
+
+.bc-status-pill {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  border: 1px solid var(--bc-border);
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.bc-status-value {
+  color: var(--bc-accent);
+  margin-left: 4px;
+}
+
+.bc-topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bc-clock {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  color: var(--bc-muted);
+}
+
+/* Buttons */
+
+.bc-btn {
+  border-radius: 999px;
+  border: 1px solid var(--bc-border);
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--bc-text);
+  padding: 6px 12px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.06s ease;
+}
+
+.bc-btn:hover {
+  background: rgba(15, 23, 42, 1);
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.25);
+  transform: translateY(-1px);
+}
+
+.bc-btn-small {
+  padding: 4px 10px;
+  font-size: 10px;
+}
+
+/* Taskbar */
+
+.bc-taskbar {
+  z-index: 9;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px 4px 10px;
+  border-bottom: 1px solid var(--bc-border);
+  background: radial-gradient(circle at left, rgba(34, 197, 94, 0.1), #020617);
+}
+
+.bc-task-btn {
+  border: none;
+  padding: 4px 10px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--bc-muted);
+  background: transparent;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bc-task-btn:hover {
+  background: rgba(15, 23, 42, 0.9);
+  color: var(--bc-accent);
+}
+
+/* Desktop + windows */
+
+.bc-desktop {
+  z-index: 1;
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  padding: 10px;
+  background: radial-gradient(circle at 20% -20%, rgba(34, 197, 94, 0.12), transparent 55%),
+              radial-gradient(circle at 80% 120%, rgba(56, 189, 248, 0.15), transparent 60%);
+}
+
+.bc-window {
+  display: none;
+  border-radius: var(--bc-radius-lg);
+  border: 1px solid var(--bc-border);
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.9);
+  overflow: hidden;
+}
+
+.bc-window-active {
+  display: flex;
+  flex-direction: column;
+}
+
+.bc-window-header {
+  padding: 6px 12px;
+  background: linear-gradient(to right, #020617, #022c22);
+  border-bottom: 1px solid var(--bc-border);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bc-muted);
+}
+
+.bc-window-body {
+  padding: 12px;
+}
+
+.bc-window-grid {
+  display: grid;
+  gap: var(--bc-panel-gap);
+}
+
+@media (min-width: 1024px) {
+  .bc-window-grid {
+    grid-template-columns: 2fr 2fr 2fr;
+  }
+}
+
+/* Panels */
+
+.bc-panel {
+  border-radius: var(--bc-radius);
+  border: 1px solid var(--bc-border);
+  background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), #020617);
+  padding: 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bc-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(34, 197, 94, 0.1);
+  pointer-events: none;
+}
+
+.bc-panel h2 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bc-muted);
+}
+
+.bc-panel h3 {
+  margin: 12px 0 6px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--bc-muted);
+}
+
+/* Rings */
+
+.bc-rings {
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+}
+
+.bc-ring {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 3px solid rgba(34, 197, 94, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.bc-ring::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: inherit;
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+  animation: bc-ring-spin 12s linear infinite;
+  opacity: 0.5;
+}
+
+@keyframes bc-ring-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.bc-ring-label {
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--bc-muted);
+}
+
+.bc-ring-value {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 16px;
+}
+
+/* Flicker status board */
+
+.bc-status-board {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.bc-status-board li {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  border-bottom: 1px dashed rgba(31, 41, 55, 0.7);
+}
+
+.bc-status-label {
+  color: var(--bc-muted);
+}
+
+.bc-status-value-ok {
+  color: var(--bc-accent);
+}
+
+.bc-status-value-warn {
+  color: var(--bc-warn);
+}
+
+.bc-status-value-bad {
+  color: var(--bc-danger);
+}
+
+/* Levers */
+
+.bc-levers {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.bc-lever {
+  flex: 1;
+  border-radius: 999px;
+  border: 1px solid var(--bc-border);
+  background: radial-gradient(circle at top, rgba(34, 197, 94, 0.18), #020617);
+  color: var(--bc-text);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding: 6px 4px;
+  cursor: pointer;
+  transition: transform 0.06s ease, box-shadow 0.1s ease, background 0.1s ease;
+}
+
+.bc-lever:active {
+  transform: translateY(1px);
+  box-shadow: 0 0 16px rgba(34, 197, 94, 0.35);
+  background: radial-gradient(circle at bottom, rgba(34, 197, 94, 0.25), #020617);
+}
+
+/* Safeguards */
+
+.bc-safeguards {
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.bc-safeguard span {
+  color: var(--bc-accent);
+}
+
+/* Simple lists */
+
+.bc-status-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 11px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+.bc-status-list li + li {
+  margin-top: 3px;
+}
+
+/* Network topology / packet stream */
+
+.bc-topology {
+  border-radius: 8px;
+  border: 1px dashed rgba(148, 163, 184, 0.4);
+  height: 170px;
+  position: relative;
+  overflow: hidden;
+}
+
+.bc-node-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.bc-node-list li + li {
+  margin-top: 3px;
+}
+
+.bc-packet-stream {
+  border-radius: 8px;
+  border: 1px solid rgba(31, 41, 55, 0.8);
+  height: 170px;
+  overflow-y: auto;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+}
+
+/* Containment visual */
+
+.bc-containment-visual {
+  border-radius: 50%;
+  width: 180px;
+  height: 180px;
+  margin: 0 auto;
+  border: 3px solid rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 50px rgba(34, 197, 94, 0.4);
+  position: relative;
+  overflow: hidden;
+}
+
+/* States modulated by JS with extra classes:
+   .bc-containment-stressed, .bc-containment-breached */
+
+.bc-containment-visual.bc-containment-stressed {
+  border-color: var(--bc-warn);
+  box-shadow: 0 0 40px rgba(250, 204, 21, 0.6);
+}
+
+.bc-containment-visual.bc-containment-breached {
+  border-color: var(--bc-danger);
+  box-shadow: 0 0 50px rgba(248, 113, 113, 0.9);
+}
+
+/* Logs & console */
+
+.bc-log-output {
+  width: 100%;
+  height: 260px;
+  background: #020617;
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid var(--bc-border);
+  overflow-y: auto;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.bc-console-body {
+  display: flex;
+  flex-direction: column;
+  height: 260px;
+}
+
+.bc-console-output {
+  flex: 1;
+  background: #020617;
+  border-radius: 8px;
+  padding: 8px;
+  border: 1px solid var(--bc-border);
+  overflow-y: auto;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.bc-console-input-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.bc-console-prompt {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--bc-muted);
+}
+
+.bc-console-input {
+  flex: 1;
+  border-radius: 999px;
+  border: 1px solid var(--bc-border);
+  background: rgba(15, 23, 42, 0.95);
+  color: var(--bc-text);
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+/* Night shift mode */
+
+.bc-root.bc-night {
+  background: radial-gradient(circle at top, #000, #000);
+}
+
+.bc-root.bc-night .bc-reactor-glow {
+  background:
+    radial-gradient(circle at 50% 15%, rgba(34, 197, 94, 0.06), transparent 60%);
+}
+
+.bc-root.bc-night .bc-topbar {
+  background: #000;
+}
+
+/* Scrollbars */
+
+.bc-log-output::-webkit-scrollbar,
+.bc-console-output::-webkit-scrollbar,
+.bc-packet-stream::-webkit-scrollbar {
+  width: 6px;
+}
+
+.bc-log-output::-webkit-scrollbar-thumb,
+.bc-console-output::-webkit-scrollbar-thumb,
+.bc-packet-stream::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.5);
+  border-radius: 999px;
+}
