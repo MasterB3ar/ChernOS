@@ -41,7 +41,7 @@
 
   services.xserver.enable = false; # Wayland-only, no Xorg
 
-  hardware.graphics.enable = true;
+  # Use the legacy, supported graphics options for this nixpkgs
   hardware.opengl = {
     enable = true;
     driSupport = true;
