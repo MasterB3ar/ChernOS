@@ -1,238 +1,225 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>ChernOS v2.0.0 – Reactor Shell</title>
+  <meta charset="UTF-8" />
+  <title>ChernOS v2.0.0 – Reactor Control</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="./styles/blackchamber.css" />
+  <link rel="stylesheet" href="styles/blackchamber.css" />
 </head>
-<body class="bc-root bc-theme-blackchamber">
-  <!-- Background pulse glow -->
-  <div class="bc-reactor-glow"></div>
-
-  <!-- Top status bar -->
-  <header class="bc-topbar">
-    <div class="bc-topbar-left">
-      <span class="bc-logo">ChernOS v2.0.0</span>
-      <span class="bc-tag">REACTOR CONTROL SHELL</span>
-    </div>
-    <div class="bc-topbar-center">
-      <div class="bc-status-pill" id="status-core">
-        CORE: <span class="bc-status-value" id="status-core-text">NOMINAL</span>
+<body class="bc-body">
+  <!-- Boot overlay -->
+  <div id="boot-overlay" class="bc-boot-overlay">
+    <div class="bc-boot-frame">
+      <div class="bc-boot-title">CHERNOS V2.0.0</div>
+      <div class="bc-boot-sub">REACTOR CONTROL MATRIX</div>
+      <div class="bc-boot-log" id="boot-log">
+        <div>> BOOTSTRAP: INIT CORE-BUS</div>
+        <div>> LINK: CORE-1 / FLOW-A / SHIELD-X / DIAG-NET / OPS-TOWER</div>
+        <div>> STATUS: STANDBY – HUMAN CONFIRMATION REQUIRED</div>
       </div>
-      <div class="bc-status-pill" id="status-net">
-        NET: <span class="bc-status-value" id="status-net-text">STABLE</span>
-      </div>
-      <div class="bc-status-pill" id="status-containment">
-        CONTAINMENT: <span class="bc-status-value" id="status-containment-text">SEALED</span>
+      <button id="boot-start" class="bc-boot-button">
+        ARM REACTOR CONTROL
+      </button>
+      <div class="bc-boot-hint">
+        Use in a virtual machine. Not a real reactor. <span class="bc-blink">DO NOT TRUST THIS FOR SAFETY.</span>
       </div>
     </div>
-    <div class="bc-topbar-right">
-      <span id="bc-clock" class="bc-clock"></span>
-      <button id="btn-night" class="bc-btn bc-btn-small">NIGHT SHIFT</button>
-      <button id="btn-mute" class="bc-btn bc-btn-small">AUDIO</button>
-    </div>
-  </header>
+  </div>
 
-  <!-- Taskbar -->
-  <nav class="bc-taskbar">
-    <button class="bc-task-btn" data-app="core">CORE</button>
-    <button class="bc-task-btn" data-app="network">NETWORK</button>
-    <button class="bc-task-btn" data-app="containment">CONTAINMENT</button>
-    <button class="bc-task-btn" data-app="logs">LOGS</button>
-    <button class="bc-task-btn" data-app="console">CONSOLE</button>
-    <button class="bc-task-btn" data-app="settings">SETTINGS</button>
-  </nav>
-
-  <!-- Desktop area -->
-  <main class="bc-desktop" id="desktop">
-
-    <!-- CORE APP -->
-    <section class="bc-window bc-window-active" data-app-window="core">
-      <header class="bc-window-header">
-        <span>CORE-1 // PRIMARY REACTOR</span>
-      </header>
-      <div class="bc-window-body bc-window-grid">
-
-        <div class="bc-panel">
-          <h2>POWER RINGS</h2>
-          <div class="bc-rings">
-            <div class="bc-ring" data-ring="temp">
-              <span class="bc-ring-label">TEMP</span>
-              <span class="bc-ring-value" id="ring-temp-value">42%</span>
-            </div>
-            <div class="bc-ring" data-ring="output">
-              <span class="bc-ring-label">OUTPUT</span>
-              <span class="bc-ring-value" id="ring-output-value">61%</span>
-            </div>
-            <div class="bc-ring" data-ring="pressure">
-              <span class="bc-ring-label">PRESS</span>
-              <span class="bc-ring-value" id="ring-pressure-value">31%</span>
-            </div>
-          </div>
+  <div class="bc-shell">
+    <header class="bc-header">
+      <div class="bc-header-left">
+        <div class="bc-logo-glow">CHERNOS</div>
+        <div class="bc-header-meta">
+          v2.0.0 · NODE: REACTOR-CTRL-01 · REGION: BLACKCHAMBER
         </div>
-
-        <div class="bc-panel">
-          <h2>REACTOR STATUS BOARD</h2>
-          <ul id="core-status-board" class="bc-status-board">
-            <!-- Filled by JS with flicker -->
-          </ul>
+      </div>
+      <div class="bc-header-right">
+        <div class="bc-status-pill bc-status-pill--ok" id="pill-reactor">
+          REACTOR · NOMINAL
         </div>
+        <div class="bc-status-pill bc-status-pill--warn" id="pill-shield">
+          SHIELD-X · STANDBY
+        </div>
+        <div class="bc-status-pill bc-status-pill--idle" id="pill-net">
+          DIAG-NET · LINKED
+        </div>
+      </div>
+    </header>
 
-        <div class="bc-panel">
-          <h2>CONTROL LEVERS</h2>
-          <div class="bc-levers">
-            <button class="bc-lever" data-lever="power-up">POWER ↑</button>
-            <button class="bc-lever" data-lever="power-down">POWER ↓</button>
-            <button class="bc-lever" data-lever="scram">SCRAM</button>
-          </div>
-
-          <h3>SAFEGUARDS</h3>
-          <div class="bc-safeguards">
-            <div class="bc-safeguard">
-              SHIELD-X: <span id="shield-x-level">100%</span>
+    <main class="bc-main-grid">
+      <!-- Reactor core -->
+      <section class="bc-panel bc-panel--core">
+        <div class="bc-panel-header">
+          <span>CORE-1 / PRIMARY REACTOR</span>
+          <span id="core-mode">MODE: IDLE</span>
+        </div>
+        <div class="bc-core-layout">
+          <div class="bc-core-ring">
+            <div class="bc-core-ring-outer"></div>
+            <div class="bc-core-ring-inner" id="core-temp-ring">
+              <div class="bc-core-temp-value" id="core-temp-value">275K</div>
+              <div class="bc-core-temp-label">CORE TEMP</div>
             </div>
-            <div class="bc-safeguard">
-              FLOW-A: <span id="flow-a-level">100%</span>
+            <div class="bc-core-power">
+              <div class="bc-core-power-label">OUTPUT</div>
+              <div class="bc-core-power-value" id="core-output">0.42 TW</div>
             </div>
           </div>
-        </div>
+          <div class="bc-core-side">
+            <div class="bc-core-gauge">
+              <div class="bc-gauge-label">PRESSURE</div>
+              <div class="bc-gauge-bar">
+                <div id="gauge-pressure" class="bc-gauge-fill"></div>
+              </div>
+              <div class="bc-gauge-value" id="gauge-pressure-value">1.0 MPa</div>
+            </div>
+            <div class="bc-core-gauge">
+              <div class="bc-gauge-label">COOLANT FLOW</div>
+              <div class="bc-gauge-bar">
+                <div id="gauge-coolant" class="bc-gauge-fill"></div>
+              </div>
+              <div class="bc-gauge-value" id="gauge-coolant-value">62 %</div>
+            </div>
 
-      </div>
-    </section>
+            <div class="bc-lever-block">
+              <div class="bc-lever-label">MANUAL COOLANT ROUTING</div>
+              <div class="bc-lever-row">
+                <button class="bc-lever-btn" id="coolant-minus">- divert</button>
+                <div class="bc-lever-status" id="coolant-manual-state">AUTO</div>
+                <button class="bc-lever-btn" id="coolant-plus">+ inject</button>
+              </div>
+              <div class="bc-lever-hint">
+                Short taps fine-tune; hold to aggressively dump coolant.
+              </div>
+            </div>
 
-    <!-- NETWORK APP -->
-    <section class="bc-window" data-app-window="network">
-      <header class="bc-window-header">
-        <span>NETWORK FABRIC // CORE-1 NODES</span>
-      </header>
-      <div class="bc-window-body bc-window-grid">
-
-        <div class="bc-panel">
-          <h2>TOPOLOGY</h2>
-          <div id="network-topology" class="bc-topology">
-            <!-- nodes + links drawn by JS -->
+            <div class="bc-core-flags">
+              <div class="bc-flag bc-flag--ok" id="flag-containment">
+                SECONDARY CONTAINMENT · SEALED
+              </div>
+              <div class="bc-flag bc-flag--ok" id="flag-safeguard">
+                SAFEGUARD RECHARGE · 100 %
+              </div>
+            </div>
           </div>
         </div>
+      </section>
 
-        <div class="bc-panel">
-          <h2>NODES</h2>
-          <ul id="network-nodes" class="bc-node-list"></ul>
+      <!-- Network topology -->
+      <section class="bc-panel bc-panel--network">
+        <div class="bc-panel-header">
+          <span>NETWORK TOPOLOGY / BLACKCHAMBER GRID</span>
+          <span id="net-mode">MODE: STABLE</span>
+        </div>
+        <div class="bc-network-topology">
+          <div class="bc-net-node" data-node="CORE-1" id="node-core">
+            <div class="bc-net-label">CORE-1</div>
+            <div class="bc-net-role">POWER NODE</div>
+          </div>
+          <div class="bc-net-node" data-node="FLOW-A" id="node-flow">
+            <div class="bc-net-label">FLOW-A</div>
+            <div class="bc-net-role">COOLANT ROUTER</div>
+          </div>
+          <div class="bc-net-node" data-node="SHIELD-X" id="node-shield">
+            <div class="bc-net-label">SHIELD-X</div>
+            <div class="bc-net-role">CONTAINMENT FIELD</div>
+          </div>
+          <div class="bc-net-node" data-node="DIAG-NET" id="node-diag">
+            <div class="bc-net-label">DIAG-NET</div>
+            <div class="bc-net-role">SENSOR MESH</div>
+          </div>
+          <div class="bc-net-node" data-node="OPS-TOWER" id="node-ops">
+            <div class="bc-net-label">OPS-TOWER</div>
+            <div class="bc-net-role">CONTROL PLANE</div>
+          </div>
+
+          <svg class="bc-net-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <line x1="20" y1="50" x2="50" y2="20" class="bc-net-line" />
+            <line x1="20" y1="50" x2="50" y2="80" class="bc-net-line" />
+            <line x1="50" y1="20" x2="80" y2="40" class="bc-net-line" />
+            <line x1="50" y1="80" x2="80" y2="60" class="bc-net-line" />
+            <line x1="80" y1="40" x2="80" y2="60" class="bc-net-line" />
+          </svg>
         </div>
 
-        <div class="bc-panel">
-          <h2>PACKET FLOW</h2>
-          <div id="packet-stream" class="bc-packet-stream">
-            <!-- scrolling log -->
+        <div class="bc-net-footer">
+          <div class="bc-net-packets">
+            PACKETS: <span id="net-packets">0</span> /s
+          </div>
+          <div class="bc-net-latency">
+            LATENCY: <span id="net-latency">2.7</span> ms
+          </div>
+          <div class="bc-net-btns">
+            <button id="btn-simulate-fault" class="bc-small-btn">
+              simulate &lt;fault&gt;
+            </button>
+            <button id="btn-audio-test" class="bc-small-btn">
+              audio test &lt;core-hum&gt;
+            </button>
           </div>
         </div>
+      </section>
 
-      </div>
-    </section>
-
-    <!-- CONTAINMENT APP -->
-    <section class="bc-window" data-app-window="containment">
-      <header class="bc-window-header">
-        <span>SECONDARY CONTAINMENT // STATUS</span>
-      </header>
-      <div class="bc-window-body bc-window-grid">
-
-        <div class="bc-panel">
-          <h2>CHAMBER VISUALIZER</h2>
-          <div id="containment-visual" class="bc-containment-visual">
-            <!-- containment rings / heatmaps via CSS classes -->
+      <!-- Events / fault log -->
+      <section class="bc-panel bc-panel--events">
+        <div class="bc-panel-header">
+          <span>EVENT LOG / FAULTS &amp; MELTDOWN</span>
+          <span id="meltdown-state">MELTDOWN: NOT ACTIVE</span>
+        </div>
+        <div class="bc-events-layout">
+          <div class="bc-events-log" id="event-log">
+            <!-- JS will append entries here -->
+          </div>
+          <div class="bc-events-side">
+            <div class="bc-meltdown-meter">
+              <div class="bc-meltdown-label">MELTDOWN PROGRESSION</div>
+              <div class="bc-meltdown-bar">
+                <div id="meltdown-fill" class="bc-meltdown-fill"></div>
+              </div>
+              <div class="bc-meltdown-value" id="meltdown-value">
+                0 %
+              </div>
+            </div>
+            <div class="bc-toggle-group">
+              <div class="bc-toggle-row">
+                <label>
+                  <input type="checkbox" id="toggle-night" />
+                  Night shift mode
+                </label>
+              </div>
+              <div class="bc-toggle-row">
+                <label>
+                  <input type="checkbox" id="toggle-alarms" checked />
+                  Audio alarms
+                </label>
+              </div>
+              <div class="bc-toggle-row">
+                <label>
+                  <input type="checkbox" id="toggle-autofault" checked />
+                  Auto fault injection
+                </label>
+              </div>
+            </div>
+            <div class="bc-footer-hints">
+              <div>theme blackchamber (full UI style)</div>
+              <div>simulate &lt;fault&gt; · audio test &lt;id&gt;</div>
+            </div>
           </div>
         </div>
+      </section>
+    </main>
 
-        <div class="bc-panel">
-          <h2>COOLANT ROUTING</h2>
-          <div class="bc-routing">
-            <button class="bc-routing-btn" data-route="loop-a">ROUTE LOOP A</button>
-            <button class="bc-routing-btn" data-route="loop-b">ROUTE LOOP B</button>
-            <button class="bc-routing-btn" data-route="balance">BALANCE</button>
-          </div>
-          <ul id="coolant-status" class="bc-status-list"></ul>
-        </div>
-
-        <div class="bc-panel">
-          <h2>FAULT EVENTS</h2>
-          <ul id="containment-faults" class="bc-status-list"></ul>
-        </div>
-
+    <footer class="bc-footer">
+      <div class="bc-footer-left" id="footer-left">
+        INTERNAL BUS: IDLE · PLUGINS: core, net, faults
       </div>
-    </section>
-
-    <!-- LOGS APP -->
-    <section class="bc-window" data-app-window="logs">
-      <header class="bc-window-header">
-        <span>REACTOR LOGS // PERSISTENCE v3</span>
-      </header>
-      <div class="bc-window-body">
-        <pre id="log-output" class="bc-log-output"></pre>
+      <div class="bc-footer-right">
+        HOTKEYS: [Super+Enter] terminal · [Super+Shift+Q] exit Sway
       </div>
-    </section>
+    </footer>
+  </div>
 
-    <!-- CONSOLE APP (commands like audio test / simulate) -->
-    <section class="bc-window" data-app-window="console">
-      <header class="bc-window-header">
-        <span>OPS CONSOLE</span>
-      </header>
-      <div class="bc-window-body bc-console-body">
-        <pre id="console-output" class="bc-console-output"></pre>
-        <div class="bc-console-input-row">
-          <span class="bc-console-prompt">chernos&gt;</span>
-          <input id="console-input" class="bc-console-input" autocomplete="off"
-                 placeholder="audio test alarm | simulate pump-fail | net status ..." />
-        </div>
-      </div>
-    </section>
-
-    <!-- SETTINGS APP -->
-    <section class="bc-window" data-app-window="settings">
-      <header class="bc-window-header">
-        <span>SETTINGS // SOUND & THEME</span>
-      </header>
-      <div class="bc-window-body bc-window-grid">
-        <div class="bc-panel">
-          <h2>AUDIO</h2>
-          <label>Master volume
-            <input type="range" id="volume-master" min="0" max="1" step="0.01" />
-          </label>
-          <label>Music volume
-            <input type="range" id="volume-music" min="0" max="1" step="0.01" />
-          </label>
-          <label>SFX volume
-            <input type="range" id="volume-sfx" min="0" max="1" step="0.01" />
-          </label>
-        </div>
-
-        <div class="bc-panel">
-          <h2>THEME</h2>
-          <p>Active theme: <strong>blackchamber</strong></p>
-          <button id="btn-theme-reload" class="bc-btn">Reload layout</button>
-        </div>
-
-        <div class="bc-panel">
-          <h2>PERSISTENCE</h2>
-          <p id="persist-status">Checking /persist ...</p>
-          <button id="btn-persist-dump" class="bc-btn">Dump state to logs</button>
-        </div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Audio elements (managed by JS reactive music system) -->
-  <audio id="track-normal" loop src=""></audio>
-  <audio id="track-stress" loop src=""></audio>
-  <audio id="track-meltdown" loop src=""></audio>
-
-  <!-- SFX -->
-  <audio id="sfx-click" src=""></audio>
-  <audio id="sfx-lever" src=""></audio>
-  <audio id="sfx-alarm" src=""></audio>
-  <audio id="sfx-startup" src=""></audio>
-
-  <script src="./main.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
