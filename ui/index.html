@@ -1,171 +1,2584 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>ChernOS v2.0.0 – Reactor Control</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="styles/blackchamber.css" />
+  <meta charset="utf-8">
+  <title>ChernOS v1.9.4 – Redline Crisis Engine</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root {
+      --ch-accent: #bff9a8;
+      --ch-accent-soft: rgba(191,249,168,0.5);
+      --ch-bg: #020806;
+      --ch-bg-card: rgba(0,0,0,0.6);
+      --ch-text-main: #cfeecb;
+      --ch-text-soft: #9ca3af;
+      --ch-border-soft: rgba(191,249,168,0.18);
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(0,255,140,0.06), transparent 60%),
+        radial-gradient(circle at 90% 0%, rgba(0,255,140,0.03), transparent 55%),
+        var(--ch-bg);
+      color: var(--ch-text-main);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    body.theme-amber {
+      --ch-accent: #facc6b;
+      --ch-accent-soft: rgba(250,204,107,0.55);
+      --ch-bg: #1a1208;
+      --ch-bg-card: rgba(10,4,0,0.7);
+    }
+
+    body.theme-redline {
+      --ch-accent: #fb7185;
+      --ch-accent-soft: rgba(248,113,113,0.6);
+      --ch-bg: #050009;
+      --ch-bg-card: rgba(8,0,12,0.75);
+    }
+
+    body.theme-2049 {
+      --ch-accent: #38bdf8;
+      --ch-accent-soft: rgba(56,189,248,0.6);
+      --ch-bg: #020617;
+      --ch-bg-card: rgba(2,6,23,0.85);
+    }
+
+    .wrap {
+      min-height: 100vh;
+      padding: 18px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+      overflow-y: auto;
+      max-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    .reactor-glow {
+      position: fixed;
+      inset: -40px;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(0,255,140,0.06), transparent 70%),
+        radial-gradient(circle at 85% -10%, rgba(0,255,140,0.06), transparent 65%);
+      mix-blend-mode: screen;
+      animation: glowPulse 4s ease-in-out infinite alternate;
+      opacity: 0.7;
+      z-index: 1;
+    }
+
+    body.theme-amber .reactor-glow {
+      background:
+        radial-gradient(circle at 15% 10%, rgba(250,204,107,0.1), transparent 70%),
+        radial-gradient(circle at 85% -10%, rgba(250,204,107,0.08), transparent 65%);
+    }
+
+    body.theme-redline .reactor-glow {
+      background:
+        radial-gradient(circle at 10% 0%, rgba(248,113,113,0.12), transparent 70%),
+        radial-gradient(circle at 90% -5%, rgba(239,68,68,0.1), transparent 65%);
+    }
+
+    body.theme-2049 .reactor-glow {
+      background:
+        radial-gradient(circle at 15% 10%, rgba(56,189,248,0.12), transparent 72%),
+        radial-gradient(circle at 85% 0%, rgba(168,85,247,0.08), transparent 68%);
+    }
+
+    @keyframes glowPulse {
+      0% { opacity: 0.4; filter: blur(0); }
+      100% { opacity: 0.9; filter: blur(1px); }
+    }
+
+    .gamma-overlay {
+      position: fixed;
+      inset: -20px;
+      pointer-events: none;
+      background-image:
+        radial-gradient(circle at 0 0, rgba(56,189,248,0.18), transparent 60%),
+        radial-gradient(circle at 100% 0, rgba(59,130,246,0.18), transparent 60%),
+        repeating-linear-gradient(
+          60deg,
+          rgba(56,189,248,0.08),
+          rgba(56,189,248,0.08) 2px,
+          transparent 2px,
+          transparent 6px
+        );
+      mix-blend-mode: screen;
+      opacity: 0;
+      transform: scale(1.02);
+      transition: opacity 0.35s ease-out;
+      z-index: 2;
+    }
+
+    .gamma-overlay.active {
+      opacity: 0.65;
+      animation: gammaSpin 9s linear infinite;
+    }
+
+    @keyframes gammaSpin {
+      0% { transform: scale(1.02) rotate(0deg); }
+      100% { transform: scale(1.02) rotate(360deg); }
+    }
+
+    .black-overlay {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 50% 20%, rgba(0,0,0,0.9), transparent 70%),
+        repeating-linear-gradient(
+          180deg,
+          rgba(15,23,42,0.6),
+          rgba(15,23,42,0.6) 2px,
+          transparent 2px,
+          transparent 4px
+        );
+      mix-blend-mode: multiply;
+      opacity: 0;
+      transition: opacity 0.4s ease-out;
+      z-index: 3;
+    }
+
+    .black-overlay.active {
+      opacity: 0.7;
+      animation: blackScan 7s linear infinite;
+    }
+
+    @keyframes blackScan {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(12px); }
+    }
+
+    .card {
+      border-radius: 16px;
+      border: 1px solid var(--ch-border-soft);
+      background: radial-gradient(circle at top, var(--ch-accent-soft), transparent 110%) var(--ch-bg-card);
+      padding: 12px 14px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 24px rgba(0,0,0,0.75);
+      position: relative;
+      z-index: 4;
+    }
+
+    .label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--ch-text-soft);
+    }
+
+    .big {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--ch-accent);
+    }
+
+    .pill {
+      font-size: 9px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(191,249,168,0.25);
+      border-color: var(--ch-border-soft);
+      color: var(--ch-text-soft);
+    }
+
+    .btn {
+      padding: 4px 9px;
+      border-radius: 7px;
+      border: 1px solid rgba(191,249,168,0.25);
+      border-color: var(--ch-border-soft);
+      font-size: 11px;
+      color: var(--ch-accent);
+      background: transparent;
+      cursor: pointer;
+      transition: all 0.16s ease-out;
+    }
+    .btn:hover {
+      background: rgba(0,0,0,0.8);
+      box-shadow: 0 0 10px var(--ch-accent-soft);
+    }
+
+    .btn-small {
+      padding: 3px 7px;
+      font-size: 10px;
+      border-radius: 999px;
+    }
+
+    .badge {
+      font-size: 9px;
+      padding: 2px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(191,249,168,0.32);
+      border-color: var(--ch-border-soft);
+      color: var(--ch-accent);
+      white-space: nowrap;
+    }
+
+    .status-board {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .status-cell {
+      font-size: 9px;
+      padding: 4px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(191,249,168,0.16);
+      border-color: rgba(191,249,168,0.12);
+      background: rgba(0,0,0,0.7);
+      color: var(--ch-text-soft);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .status-cell::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(191,249,168,0.06), transparent);
+      mix-blend-mode: screen;
+      opacity: 0;
+      animation: flicker 3.4s infinite;
+    }
+
+    @keyframes flicker {
+      0%,82%,100% { opacity: 0; }
+      84% { opacity: 0.2; }
+      87% { opacity: 0.04; }
+      90% { opacity: 0.17; }
+      93% { opacity: 0; }
+    }
+
+    .core-ring-wrap {
+      width: 100px;
+      height: 100px;
+      position: relative;
+    }
+
+    .core-ring {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 2px solid rgba(191,249,168,0.25);
+      border-color: var(--ch-accent-soft);
+      box-shadow: 0 0 14px rgba(0,0,0,0.9);
+      animation: ringSpin 9s linear infinite;
+    }
+
+    .core-ring.inner {
+      inset: 16px;
+      border-width: 2px;
+      animation-duration: 6s;
+      animation-direction: reverse;
+      border-color: rgba(255,255,255,0.35);
+    }
+
+    .core-dot {
+      position: absolute;
+      inset: 32px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--ch-accent), transparent);
+      box-shadow: 0 0 18px var(--ch-accent-soft);
+      transition: box-shadow 0.3s ease-out, transform 0.25s ease-out, background 0.2s;
+    }
+
+    @keyframes ringSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    input[type="range"].lever {
+      width: 130px;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+      outline: none;
+    }
+    input[type="range"].lever::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--ch-accent);
+      box-shadow: 0 0 6px var(--ch-accent-soft);
+      cursor: pointer;
+      border: 1px solid rgba(0,0,0,0.7);
+    }
+    input[type="range"].lever::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--ch-accent);
+      cursor: pointer;
+      border: none;
+    }
+
+    #log {
+      max-height: 190px;
+      overflow-y: auto;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+
+    #log::-webkit-scrollbar {
+      width: 6px;
+    }
+    #log::-webkit-scrollbar-thumb {
+      background: rgba(148,163,184,0.6);
+      border-radius: 999px;
+    }
+
+    .term-grid {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    #term-input {
+      width: 100%;
+      background: rgba(0,0,0,0.85);
+      border-radius: 7px;
+      border: 1px solid var(--ch-border-soft);
+      padding: 6px 8px;
+      font-size: 12px;
+      color: var(--ch-text-main);
+      outline: none;
+    }
+    #term-input:focus {
+      box-shadow: 0 0 9px var(--ch-accent-soft);
+    }
+
+    .graphs {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0,1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 58px;
+      border-radius: 8px;
+      background: rgba(0,0,0,0.65);
+      border: 1px solid rgba(15,23,42,0.9);
+    }
+
+    .diag-active {
+      box-shadow: 0 0 18px var(--ch-accent-soft);
+      border-color: rgba(191,249,168,0.5);
+    }
+
+    .overdrive-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.16em;
+    }
+
+    .soft {
+      color: var(--ch-text-soft);
+      font-size: 11px;
+    }
+
+    .crit {
+      color: #fb7185;
+    }
+
+    .warn {
+      color: #facc6b;
+    }
+
+    .ok {
+      color: #4ade80;
+    }
+
+    .theme-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      margin-right: 4px;
+    }
+
+    .theme-btn {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.75);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      transition: all 0.16s;
+      color: #ffffff;
+    }
+    .theme-btn.active {
+      border-color: var(--ch-accent-soft);
+      box-shadow: 0 0 9px var(--ch-accent-soft);
+    }
+
+    .theme-btn[data-theme="2049"] {
+      border-color: #38bdf8 !important;
+      color: #ffffff !important;
+    }
+
+    .mute-indicator {
+      font-size: 10px;
+      color: var(--ch-text-soft);
+    }
+
+    .contain-pill {
+      font-size: 9px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      background: rgba(15,23,42,0.85);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-right: 4px;
+    }
+
+    .contain-pill span.dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #4ade80;
+    }
+
+    .contain-pill.alpha span.dot { background: #22c55e; }
+    .contain-pill.beta span.dot  { background: #facc6b; }
+    .contain-pill.gamma span.dot { background: #fb7185; }
+
+    .contain-pill.off span.dot {
+      background: #4b5563;
+    }
+
+    .lockdown-active {
+      box-shadow: 0 0 16px rgba(248,113,113,0.7);
+      border-color: rgba(248,113,113,0.7) !important;
+    }
+
+    .chamber-active {
+      box-shadow: 0 0 16px rgba(15,23,42,0.9);
+      border-color: rgba(15,23,42,0.9) !important;
+      background: rgba(2,6,23,0.95) !important;
+    }
+
+    .comms-pill {
+      font-size: 9px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.6);
+      background: rgba(15,23,42,0.9);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-right: 4px;
+    }
+
+    .comms-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #4b5563;
+    }
+
+    .comms-dot.on {
+      background: #22c55e;
+    }
+
+    .comms-dot.ghost {
+      background: #a855f7;
+    }
+
+    /* Operator Workstation */
+    .ws-btn {
+      font-size: 10px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      background: rgba(15,23,42,0.9);
+      color: #e5e7eb;
+      cursor: pointer;
+      transition: all 0.16s;
+    }
+
+    .ws-btn.active {
+      border-color: var(--ch-accent-soft);
+      box-shadow: 0 0 9px var(--ch-accent-soft);
+      background: rgba(2,6,23,0.95);
+      color: #f9fafb;
+    }
+
+    .workspace-dim {
+      opacity: 0.32;
+      filter: blur(0.3px);
+      transition: opacity 0.2s ease-out, filter 0.2s ease-out;
+    }
+
+    .task-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 3px 4px;
+      border-radius: 6px;
+      background: rgba(15,23,42,0.85);
+      border: 1px solid rgba(30,64,175,0.4);
+    }
+
+    .task-row.done {
+      opacity: 0.6;
+    }
+
+    .task-text.done {
+      text-decoration: line-through;
+      color: #9ca3af;
+    }
+
+    .task-del {
+      font-size: 9px;
+      border-radius: 999px;
+      padding: 2px 6px;
+      border: 1px solid rgba(148,163,184,0.7);
+      background: transparent;
+      cursor: pointer;
+    }
+
+    /* NetSim pills */
+    .net-pill {
+      font-size: 10px;
+      padding: 3px 7px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      background: rgba(15,23,42,0.8);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #e5e7eb;
+    }
+
+    .net-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+
+    .net-dot.degraded {
+      background: #facc6b;
+    }
+
+    .net-dot.offline {
+      background: #fb7185;
+    }
+  </style>
 </head>
-<body class="chernos-root">
-  <!-- Boot / intro screen -->
-  <div id="boot-screen" class="boot-screen">
-    <div class="boot-card">
-      <div class="boot-logo-pulse"></div>
-      <h1 class="boot-title">ChernOS v2.0.0</h1>
-      <p class="boot-subtitle">
-        Fictional nuclear reactor control environment. Not connected to any real system.
-      </p>
-      <button id="enter-btn" class="btn-primary">
-        Enter Control Room
-      </button>
-      <p class="boot-footer">
-        SYSTEM ID: <span class="tag">CHERNOS-VM</span>
-        • PROFILE: <span class="tag">BLACKCHAMBER</span>
-      </p>
+<body class="theme-green">
+  <div class="reactor-glow"></div>
+  <div id="gamma-overlay" class="gamma-overlay"></div>
+  <div id="black-overlay" class="black-overlay"></div>
+
+  <div class="wrap">
+    <!-- TOP BAR -->
+    <div class="card flex flex-wrap items-start justify-between gap-4">
+      <div class="space-y-2">
+        <div class="label">ChernOS v1.9.4 – Redline Crisis Engine + NetSim</div>
+        <div class="text-2xl font-semibold" id="title-main">
+          Reactor + Containment + Black Chamber + Network Layer
+        </div>
+        <div class="status-board">
+          <div class="status-cell">CORE CHANNELS: SYNCED</div>
+          <div class="status-cell">COOLANT GRID: STABLE</div>
+          <div class="status-cell">CONTAINMENT BUS: ARMED</div>
+          <div class="status-cell">BLACK CHAMBER: STANDBY</div>
+          <div class="status-cell">DIAGNOSTICS ENGINE: READY</div>
+          <div class="status-cell">NETSIM: ONLINE</div>
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-3 items-end">
+        <div class="flex flex-wrap gap-2 items-center">
+          <span class="badge" id="badge-sim">SIM-CORE ONLINE</span>
+          <span class="badge" id="badge-overdrive">OVERDRIVE: OFF</span>
+          <span class="badge" id="badge-diag">DIAGNOSTICS: OFF</span>
+          <span class="badge" id="badge-contain">CONTAINMENT: STABLE</span>
+          <span class="badge" id="badge-lockdown">LOCKDOWN: OFF</span>
+          <span class="badge" id="badge-satlink">SATLINK: OFF</span>
+          <span class="badge" id="badge-black">BLACK CHAMBER: IDLE</span>
+          <span class="badge" id="badge-net">NET: ONLINE</span>
+        </div>
+
+        <!-- REDLINE CRISIS ENGINE PANEL -->
+        <div class="mt-1 text-right text-xs text-slate-300 space-y-1" id="crisis-panel">
+          <div class="uppercase tracking-[0.18em] text-[9px] text-slate-400">
+            Redline Crisis Engine
+          </div>
+          <div class="flex items-baseline gap-2 justify-end">
+            <span class="text-[10px] text-slate-400">Mode</span>
+            <span id="crisis-mode" class="text-sm font-semibold">SAFE</span>
+          </div>
+          <div class="text-[11px]">
+            Crisis Index: <span id="crisis-index">0.0</span> / 10
+          </div>
+          <div id="engine-theme-line" class="text-[10px] text-slate-400">
+            Theme: AUTO (Engine)
+          </div>
+        </div>
+
+        <div class="flex gap-6 items-center">
+          <div class="core-ring-wrap">
+            <div class="core-ring"></div>
+            <div class="core-ring inner"></div>
+            <div class="core-dot" id="core-dot"></div>
+          </div>
+          <div class="flex flex-col gap-2 items-end">
+            <div class="flex gap-2">
+              <button class="btn" id="btn-diag-toggle">Diagnostics</button>
+              <button class="btn" id="btn-overdrive-toggle">Overdrive</button>
+            </div>
+            <div class="flex gap-2">
+              <button class="btn" id="btn-audio-toggle">Toggle Audio</button>
+              <span class="mute-indicator" id="audio-state">Audio: ON</span>
+            </div>
+
+            <div class="flex gap-2 mt-1">
+              <button class="theme-btn active" data-theme="green">
+                <span class="theme-dot" style="background:#22c55e;"></span>Green
+              </button>
+              <button class="theme-btn" data-theme="amber">
+                <span class="theme-dot" style="background:#facc6b;"></span>Amber
+              </button>
+              <button class="theme-btn" data-theme="redline">
+                <span class="theme-dot" style="background:#fb7185;"></span>Redline
+              </button>
+            </div>
+
+            <div class="mt-2 text-right text-xs text-slate-300">
+              <div id="op-name-line">Operator: ANON / Lvl 1</div>
+              <div id="op-status-line">Clearance: TECHNICIAN</div>
+              <div id="remote-status-line" class="text-[10px] text-slate-400 mt-1">
+                Remote link: LOCAL ONLY
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TELEMETRY STRIP + NETSIM -->
+    <div class="grid grid-cols-5 gap-2" data-panel="reactor">
+      <div class="card">
+        <div class="label">CORE TEMP</div>
+        <div class="big" id="read-temp">312°C</div>
+        <div class="soft mt-1" id="status-temp">Nominal</div>
+      </div>
+
+      <div class="card">
+        <div class="label">PRESSURE COUPLING</div>
+        <div class="big" id="read-pressure">1.30 MPa</div>
+        <div class="soft mt-1" id="status-pressure">Stable</div>
+      </div>
+
+      <div class="card">
+        <div class="label">RADIATION FLUX</div>
+        <div class="big" id="read-rad">0.14 mSv/h</div>
+        <div class="soft mt-1" id="status-rad">Shielded</div>
+      </div>
+
+      <div class="card">
+        <div class="label">SAFEGUARDS & DRIVE</div>
+        <div class="flex justify-between items-center">
+          <div>
+            <div class="text-lg font-semibold" id="read-sg">3 / 3</div>
+            <div class="overdrive-label mt-1" id="overdrive-state-label">OVERDRIVE: DISARMED</div>
+          </div>
+          <div class="flex flex-col gap-1 ml-2">
+            <div class="text-[10px] text-slate-400">Core Drive</div>
+            <input id="lever-core" type="range" min="40" max="125" value="80" class="lever">
+            <div class="text-[10px] text-slate-400 mt-1">Coolant Bias</div>
+            <input id="lever-coolant" type="range" min="80" max="145" value="100" class="lever">
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <span class="pill">SCRAM RODS</span>
+          <span class="pill">COOLANT SURGE</span>
+          <span class="pill">CONTAINMENT SEAL</span>
+        </div>
+      </div>
+
+      <!-- NETSIM CARD -->
+      <div class="card">
+        <div class="label">NETWORK LAYER — SIM</div>
+        <div class="flex justify-between items-start mt-1">
+          <div class="space-y-1">
+            <div class="net-pill">
+              <span class="net-dot" id="net-dot"></span>
+              <span id="net-status">ONLINE</span>
+            </div>
+            <div class="text-[10px] text-slate-400">
+              Integrity: <span id="net-integrity">99.3%</span>
+            </div>
+          </div>
+          <div class="text-right text-[10px] text-slate-400 space-y-1">
+            <div>Latency: <span id="net-lat">12.0 ms</span></div>
+            <div>Jitter: <span id="net-jitter">1.3 ms</span></div>
+            <div>Loss: <span id="net-loss">0.10%</span></div>
+            <div>Rate: <span id="net-rate">260 pkt/s</span></div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button class="btn btn-small" id="btn-net-stress">Net Stress</button>
+          <button class="btn btn-small" id="btn-net-reset">Net Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTAINMENT PANEL -->
+    <div class="card mt-1" data-panel="containment">
+      <div class="label">CONTAINMENT PROTOCOLS</div>
+      <div class="mt-2 flex flex-wrap gap-2 items-center">
+        <div class="contain-pill alpha" id="pill-alpha">
+          <span class="dot"></span>
+          <span>CFA (Thermal Buffer)</span>
+        </div>
+        <div class="contain-pill beta" id="pill-beta">
+          <span class="dot"></span>
+          <span>CFB (Pressure Latch)</span>
+        </div>
+        <div class="contain-pill gamma" id="pill-gamma">
+          <span class="dot"></span>
+          <span>CFG (Gamma Field)</span>
+        </div>
+      </div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button class="btn btn-small" id="btn-cfa-toggle">Toggle Alpha</button>
+        <button class="btn btn-small" id="btn-cfb-reset">Reset Beta Latch</button>
+        <button class="btn btn-small" id="btn-cfg-toggle">Toggle Gamma Field</button>
+        <button class="btn btn-small" id="btn-contain-pulse">Pulse Sweep</button>
+        <button class="btn btn-small" id="btn-lockdown-toggle">Lockdown</button>
+      </div>
+      <div class="mt-2 text-[10px] text-slate-400">
+        Terminal shortcuts:
+        <span class="pill text-[10px]">containment status</span>
+        <span class="pill text-[10px]">lockdown on/off</span>
+        <span class="pill text-[10px]">operator set &lt;name&gt;</span>
+        <span class="pill text-[10px]">operator level &lt;n&gt;</span>
+      </div>
+    </div>
+
+    <!-- COMMS / BLACK CHAMBER PANEL -->
+    <div class="card mt-1" id="comms-card" data-panel="comms">
+      <div class="label">COMMS / BLACK CHAMBER</div>
+      <div class="mt-2 flex flex-wrap gap-2 items-center">
+        <div class="comms-pill" id="pill-satlink">
+          <span class="comms-dot" id="dot-satlink"></span>
+          <span>Satellite Link</span>
+        </div>
+        <div class="comms-pill" id="pill-ghost">
+          <span class="comms-dot" id="dot-ghost"></span>
+          <span>Ghost Mirror</span>
+        </div>
+        <div class="comms-pill" id="pill-black">
+          <span class="comms-dot" id="dot-black"></span>
+          <span>Black Chamber</span>
+        </div>
+      </div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button class="btn btn-small" id="btn-satlink-toggle">Toggle SatLink</button>
+        <button class="btn btn-small" id="btn-ghost-toggle">Toggle Ghost Mirror</button>
+        <button class="btn btn-small" id="btn-black-toggle">Toggle Black Chamber</button>
+        <button class="btn btn-small" id="btn-macro-rec">Macro Rec</button>
+        <button class="btn btn-small" id="btn-macro-play">Macro Play</button>
+      </div>
+      <div class="mt-2 text-[10px] text-slate-400">
+        Terminal shortcuts:
+        <span class="pill text-[10px]">satlink on/off</span>
+        <span class="pill text-[10px]">ghost on/off</span>
+        <span class="pill text-[10px]">black on/off</span>
+        <span class="pill text-[10px]">macro rec / stop / play</span>
+      </div>
+    </div>
+
+    <!-- OPERATOR WORKSTATION PANEL -->
+    <div class="card mt-1">
+      <div class="label">OPERATOR WORKSTATION</div>
+      <div class="mt-2 flex flex-wrap gap-2">
+        <button class="ws-btn active" data-ws-mode="full">Full Console</button>
+        <button class="ws-btn" data-ws-mode="reactor">Reactor Focus</button>
+        <button class="ws-btn" data-ws-mode="containment">Containment Focus</button>
+        <button class="ws-btn" data-ws-mode="comms">Comms Focus</button>
+        <button class="ws-btn" data-ws-mode="logs">Logs Focus</button>
+      </div>
+      <div id="ws-status" class="text-[11px] text-slate-400 mt-1">
+        Workspace: Full Console
+      </div>
+
+      <div class="mt-3 grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-3">
+        <div>
+          <div class="text-[11px] text-slate-400 mb-1">Operator Notepad</div>
+          <textarea
+            id="ws-notes"
+            class="w-full h-24 text-[11px] bg-black/70 border border-slate-600/60 rounded-md p-2 outline-none resize-vertical"
+            placeholder="Shift notes, fictional procedures, reminders (local only)."
+          ></textarea>
+        </div>
+        <div>
+          <div class="text-[11px] text-slate-400 mb-1">Tasks</div>
+          <div class="flex gap-1 mb-1">
+            <input
+              id="ws-task-input"
+              class="flex-1 text-[11px] bg-black/70 border border-slate-600/60 rounded-md px-2 py-1 outline-none"
+              placeholder="Add task (sim only)"
+            >
+            <button class="btn btn-small" id="ws-task-add">Add</button>
+          </div>
+          <div id="ws-task-list" class="space-y-1 max-h-24 overflow-y-auto text-[11px]"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS + TERMINAL + LOG -->
+    <div class="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] gap-3" data-panel="reactor logs">
+      <div class="card" data-panel="reactor">
+        <div class="label">OPERATOR CONTROL SURFACE</div>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button class="btn" id="btn-scram">SCRAM</button>
+          <button class="btn" id="btn-relief">Relief</button>
+          <button class="btn" id="btn-stress">Stress Pulse</button>
+          <button class="btn" id="btn-chaos">Force Failure</button>
+          <button class="btn" id="btn-reset">Reset</button>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <span class="pill text-[10px]">
+            Terminal: help · status · containment status · satlink on/off · ghost on/off ·
+            black on/off · macro rec/stop/play · net status · net ping &lt;host&gt; · net stress/net reset
+          </span>
+        </div>
+
+        <div class="term-grid">
+          <input id="term-input" autocomplete="off"
+            placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, diag on/off, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, net status, net ping &lt;host&gt;, net lookup &lt;name&gt;, net stress, net reset, operator set &lt;name&gt;, operator level &lt;0–3&gt;, theme auto/green/amber/redline/2049)">
+          <button class="btn" id="term-run">Run</button>
+        </div>
+      </div>
+
+      <div class="card" data-panel="logs">
+        <div class="label">EVENT LOG (SIMULATION)</div>
+        <div id="log" class="mt-2"></div>
+      </div>
+    </div>
+
+    <!-- DIAGNOSTICS -->
+    <div class="card mt-1" id="diag-card" style="display:none" data-panel="reactor">
+      <div class="label">DIAGNOSTICS MODE — LIVE TELEMETRY & NET GRAPHS</div>
+      <div class="graphs">
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Core Temp</div>
+          <canvas id="g-core" width="260" height="60"></canvas>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Pressure</div>
+          <canvas id="g-press" width="260" height="60"></canvas>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Radiation</div>
+          <canvas id="g-rad" width="260" height="60"></canvas>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Network Load</div>
+          <canvas id="g-net" width="260" height="60"></canvas>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Main reactor UI -->
-  <div id="app-root" class="app hidden">
-    <header class="app-header">
-      <div class="app-header-left">
-        <div class="app-title">CORE CONTROL – ChernOS</div>
-        <div class="app-subtitle">
-          Reactor status:
-          <span id="reactor-status-label" class="status-pill status-nominal">Nominal</span>
-        </div>
-      </div>
-      <div class="app-header-right">
-        <div class="header-line">
-          <span class="header-label">Time</span>
-          <span id="clock-readout" class="header-value">--:--:--</span>
-        </div>
-        <div class="header-line">
-          <span class="header-label">Profile</span>
-          <span class="header-value">blackchamber</span>
-        </div>
-      </div>
-    </header>
+  <script>
+    // ============================================================
+    //   ChernOS v1.9.4 — Redline Crisis Engine (fictional)
+    //   - Crisis Index can reach 10.0 in full meltdown scenarios
+    //   - Overdrive button fixed (UI + terminal)
+    // ============================================================
 
-    <main class="app-grid">
-      <!-- Core / temperature ring -->
-      <section class="panel core-panel">
-        <h2>Core Envelope</h2>
-        <div class="core-layout">
-          <div class="core-ring">
-            <div class="core-ring-inner">
-              <div class="core-temp-label">CORE TEMP</div>
-              <div id="core-temp" class="core-temp-value">312.4 K</div>
-              <div id="core-load" class="core-load-label">Load: 47%</div>
-            </div>
-          </div>
+    // ----- DOM Refs -----
+    const elTemp      = document.getElementById("read-temp");
+    const elTempStat  = document.getElementById("status-temp");
+    const elP         = document.getElementById("read-pressure");
+    const elPStat     = document.getElementById("status-pressure");
+    const elR         = document.getElementById("read-rad");
+    const elRStat     = document.getElementById("status-rad");
+    const elSG        = document.getElementById("read-sg");
+    const elOverLbl   = document.getElementById("overdrive-state-label");
+    const elCoreDot   = document.getElementById("core-dot");
+    const elBadgeOver = document.getElementById("badge-overdrive");
+    const elBadgeDiag = document.getElementById("badge-diag");
+    const elBadgeSim  = document.getElementById("badge-sim");
+    const elBadgeContain = document.getElementById("badge-contain");
+    const elBadgeLockdown = document.getElementById("badge-lockdown");
+    const elBadgeSat  = document.getElementById("badge-satlink");
+    const elBadgeBlack= document.getElementById("badge-black");
+    const elBadgeNet  = document.getElementById("badge-net");
+    const elAudioState= document.getElementById("audio-state");
+    const elDiagCard  = document.getElementById("diag-card");
+    const elLog       = document.getElementById("log");
+    const elTitle     = document.getElementById("title-main");
+    const elGammaOverlay = document.getElementById("gamma-overlay");
+    const elBlackOverlay = document.getElementById("black-overlay");
+    const elOpNameLine   = document.getElementById("op-name-line");
+    const elOpStatusLine = document.getElementById("op-status-line");
+    const elRemoteStatus = document.getElementById("remote-status-line");
 
-          <div class="core-metrics">
-            <div class="metric-row">
-              <div class="metric-label">Pressure</div>
-              <div id="core-pressure" class="metric-value">87.3 bar</div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label">Coolant Flow</div>
-              <div id="coolant-flow" class="metric-value">72.1 %</div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label">Containment</div>
-              <div id="containment-status" class="metric-value metric-ok">
-                Sealed
-              </div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label">Safeguard Charge</div>
-              <div id="safeguard-charge" class="metric-value">83 %</div>
-            </div>
-          </div>
-        </div>
-      </section>
+    const elCrisisMode    = document.getElementById("crisis-mode");
+    const elCrisisIndex   = document.getElementById("crisis-index");
+    const elEngineThemeLine = document.getElementById("engine-theme-line");
 
-      <!-- Network nodes -->
-      <section class="panel network-panel">
-        <h2>Network Nodes</h2>
-        <ul class="node-list">
-          <li>
-            <span class="node-name">CORE-1</span>
-            <span id="node-core1" class="node-status node-ok">ONLINE</span>
-          </li>
-          <li>
-            <span class="node-name">FLOW-A</span>
-            <span id="node-flowa" class="node-status node-ok">ONLINE</span>
-          </li>
-          <li>
-            <span class="node-name">SHIELD-X</span>
-            <span id="node-shieldx" class="node-status node-ok">ARMED</span>
-          </li>
-          <li>
-            <span class="node-name">DIAG-NET</span>
-            <span id="node-diagnet" class="node-status node-ok">MONITOR</span>
-          </li>
-          <li>
-            <span class="node-name">OPS-TOWER</span>
-            <span id="node-opstower" class="node-status node-ok">LINKED</span>
-          </li>
-        </ul>
-        <p class="panel-footnote">
-          Network simulation only. No real equipment is controlled.
-        </p>
-      </section>
+    const pillAlpha  = document.getElementById("pill-alpha");
+    const pillBeta   = document.getElementById("pill-beta");
+    const pillGamma  = document.getElementById("pill-gamma");
 
-      <!-- Faults / events -->
-      <section class="panel faults-panel">
-        <h2>Fault Events</h2>
-        <ul id="fault-list" class="fault-list">
-          <li class="fault-line fault-empty">
-            No active faults. System is running within nominal envelope.
-          </li>
-        </ul>
-        <div class="fault-controls">
-          <button id="btn-inject-fault" class="btn-secondary">
-            Simulate Fault
-          </button>
-          <button id="btn-clear-faults" class="btn-ghost">
-            Clear Faults
-          </button>
-        </div>
-      </section>
+    const pillSat    = document.getElementById("pill-satlink");
+    const pillGhost  = document.getElementById("pill-ghost");
+    const pillBlack  = document.getElementById("pill-black");
+    const dotSat     = document.getElementById("dot-satlink");
+    const dotGhost   = document.getElementById("dot-ghost");
+    const dotBlack   = document.getElementById("dot-black");
 
-      <!-- Command console -->
-      <section class="panel console-panel">
-        <h2>Command Console</h2>
-        <div class="console-body">
-          <div id="console-log" class="console-log">
-            <div class="log-line log-system">
-              [system] ChernOS v2.0.0 – fictive reactor control UI.
-            </div>
-            <div class="log-line log-system">
-              [system] Type commands like <span class="kbd">audio test 1</span> or
-              <span class="kbd">simulate ghost-rad</span>.
-            </div>
-          </div>
-          <div class="console-input-row">
-            <span class="prompt-label">chernos&gt;</span>
-            <input
-              id="console-input"
-              class="console-input"
-              type="text"
-              autocomplete="off"
-              spellcheck="false"
-              placeholder="audio test 1"
-            />
-          </div>
-        </div>
-      </section>
-    </main>
+    const leverCore   = document.getElementById("lever-core");
+    const leverCool   = document.getElementById("lever-coolant");
 
-    <footer class="app-footer">
-      <span>PROFILE: blackchamber</span>
-      <span>MODE: simulation only – no real-world control</span>
-      <span>© ChernOS – fictional system</span>
-    </footer>
-  </div>
+    const btnScram    = document.getElementById("btn-scram");
+    const btnRelief   = document.getElementById("btn-relief");
+    const btnStress   = document.getElementById("btn-stress");
+    const btnChaos    = document.getElementById("btn-chaos");
+    const btnReset    = document.getElementById("btn-reset");
+    const btnDiag     = document.getElementById("btn-diag-toggle");
+    const btnOver     = document.getElementById("btn-overdrive-toggle");
+    const btnAudio    = document.getElementById("btn-audio-toggle");
+    const btnCfa      = document.getElementById("btn-cfa-toggle");
+    const btnCfb      = document.getElementById("btn-cfb-reset");
+    const btnCfg      = document.getElementById("btn-cfg-toggle");
+    const btnPulse    = document.getElementById("btn-contain-pulse");
+    const btnLockdown = document.getElementById("btn-lockdown-toggle");
 
-  <script src="main.js"></script>
+    const btnSatlink  = document.getElementById("btn-satlink-toggle");
+    const btnGhost    = document.getElementById("btn-ghost-toggle");
+    const btnBlack    = document.getElementById("btn-black-toggle");
+    const btnMacroRec = document.getElementById("btn-macro-rec");
+    const btnMacroPlay= document.getElementById("btn-macro-play");
+
+    const termInput   = document.getElementById("term-input");
+    const termRun     = document.getElementById("term-run");
+
+    const themeButtons = Array.from(document.querySelectorAll(".theme-btn"));
+
+    // Workstation elements
+    const wsButtons   = Array.from(document.querySelectorAll(".ws-btn"));
+    const wsStatus    = document.getElementById("ws-status");
+    const wsNotes     = document.getElementById("ws-notes");
+    const wsTaskInput = document.getElementById("ws-task-input");
+    const wsTaskAdd   = document.getElementById("ws-task-add");
+    const wsTaskList  = document.getElementById("ws-task-list");
+
+    const panelElems  = Array.from(document.querySelectorAll("[data-panel]"));
+
+    // NetSim DOM refs
+    const netDotEl       = document.getElementById("net-dot");
+    const netStatusEl    = document.getElementById("net-status");
+    const netLatEl       = document.getElementById("net-lat");
+    const netJitterEl    = document.getElementById("net-jitter");
+    const netLossEl      = document.getElementById("net-loss");
+    const netRateEl      = document.getElementById("net-rate");
+    const netIntegrityEl = document.getElementById("net-integrity");
+    const btnNetStress   = document.getElementById("btn-net-stress");
+    const btnNetReset    = document.getElementById("btn-net-reset");
+
+    // Graph canvases
+    const gcCore  = document.getElementById("g-core");
+    const gcPress = document.getElementById("g-press");
+    const gcRad   = document.getElementById("g-rad");
+    const gcNet   = document.getElementById("g-net");
+
+    // ----- Simulation state -----
+    const histLen = 90;
+    let histTemp  = [];
+    let histPress = [];
+    let histRad   = [];
+    let histNet   = [];
+
+    const state = {
+      temp: 312,
+      pressure: 1.3,
+      rad: 0.14,
+      safeguards: 3,
+      overdrive: false,
+      meltdownStage: 0, // 0..5
+      diagnostics: false,
+      audioOn: true,
+      theme: "green",
+      themeMode: "auto",      // "auto" (engine) or "manual" (override)
+      themeOverride: null,    // "green" | "amber" | "redline" | "2049" | null
+      crisisIndex: 0,
+      crisisMode: "SAFE",
+      persistEnabled: false,
+      ticks: 0,
+      microJitter: 0,
+      lockdown: false,
+      implosionPlayed: false,
+      containment: {
+        alpha: false,
+        betaLatched: false,
+        gamma: false
+      },
+      operatorName: "ANON",
+      operatorLevel: 1,
+      satLink: false,
+      ghostLink: false,
+      blackChamber: false,
+      macroRecording: false,
+      macroBuffer: [],
+      workspaceMode: "full",
+      tasks: [],
+      net: {
+        mode: "online",
+        latencyMs: 12,
+        jitterMs: 1.3,
+        lossPct: 0.1,
+        rate: 260,
+        integrity: 99.3,
+        stressLevel: 0
+      }
+    };
+
+    // URL params
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("persist") === "1") {
+      state.persistEnabled = true;
+    }
+    if (params.get("op")) {
+      state.operatorName = decodeURIComponent(params.get("op"));
+    }
+    if (params.get("lvl")) {
+      const lvl = parseInt(params.get("lvl"), 10);
+      if (!isNaN(lvl)) {
+        state.operatorLevel = Math.min(3, Math.max(0, lvl));
+      }
+    }
+
+    function levelLabel(lvl) {
+      if (lvl === 0) return "GUEST";
+      if (lvl === 1) return "TECHNICIAN";
+      if (lvl === 2) return "ENGINEER";
+      if (lvl === 3) return "DIRECTOR";
+      return "UNKNOWN";
+    }
+
+    function updateOperatorLines() {
+      elOpNameLine.textContent = `Operator: ${state.operatorName || "ANON"} / Lvl ${state.operatorLevel}`;
+      elOpStatusLine.textContent = `Clearance: ${levelLabel(state.operatorLevel)}`;
+    }
+    updateOperatorLines();
+
+    // ----- Logging & (optional) persistence -----
+    function maybePersist(line) {
+      if (!state.persistEnabled) return;
+      try {
+        if (navigator.sendBeacon) {
+          const blob = new Blob([line], { type: "text/plain" });
+          navigator.sendBeacon("/persist/chernos-logs/log.txt", blob);
+        }
+      } catch (e) {}
+    }
+
+    function log(msg) {
+      const t = new Date().toISOString().slice(11, 19);
+      const line = `[${t}] ${msg}`;
+      const div = document.createElement("div");
+      div.textContent = line;
+      elLog.prepend(div);
+      maybePersist(line + "\n");
+    }
+
+    log("SIM: ChernOS v1.9.4 Redline Crisis Engine console ready.");
+
+    // ----- Audio Engine v3 -----
+    let audioCtx = null;
+    let humNode = null;
+    let coolantNode = null;
+    let crackNode = null;
+    let sirenNode = null;
+    let containNode = null;
+    let gammaNode = null;
+
+    function ensureAudio() {
+      if (audioCtx) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      } catch (e) {
+        audioCtx = null;
+      }
+    }
+
+    function startHum() {
+      if (!state.audioOn || !audioCtx || humNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 50;
+      g.gain.value = 0.03;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+      humNode = { osc, g };
+    }
+
+    function startCoolant() {
+      if (!state.audioOn || !audioCtx || coolantNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = 19;
+      g.gain.value = 0.02;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+      coolantNode = { osc, g };
+    }
+
+    function startCrackle() {
+      if (!state.audioOn || !audioCtx || crackNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.value = 1200;
+      g.gain.value = 0.0;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+      const iv = setInterval(() => {
+        if (!state.audioOn || state.meltdownStage === 0) {
+          g.gain.value = 0.0;
+          return;
+        }
+        g.gain.value = (Math.random() < 0.35 ? 0.03 : 0.0);
+      }, 90);
+      crackNode = { osc, g, iv };
+    }
+
+    function startSiren() {
+      if (!state.audioOn || !audioCtx || sirenNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "sawtooth";
+      g.gain.value = 0.0;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+
+      let up = true;
+      const iv = setInterval(() => {
+        if (!state.audioOn || state.meltdownStage < 2) {
+          g.gain.value = 0.0;
+          return;
+        }
+        up = !up;
+        osc.frequency.value = up ? 720 : 540;
+        g.gain.value = up ? 0.08 : 0.02;
+      }, 280);
+
+      sirenNode = { osc, g, iv };
+    }
+
+    function startContainHum() {
+      if (!state.audioOn || !audioCtx || containNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 35;
+      g.gain.value = 0.0;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+      containNode = { osc, g };
+    }
+
+    function updateContainHumGain() {
+      if (!containNode) return;
+      const activeCount =
+        (state.containment.alpha ? 1 : 0) +
+        (state.containment.betaLatched ? 1 : 0) +
+        (state.containment.gamma ? 1 : 0) +
+        (state.blackChamber ? 1 : 0);
+      containNode.g.gain.value = state.audioOn ? Math.min(0.055, activeCount * 0.015) : 0;
+    }
+
+    function startGammaCharge() {
+      if (!state.audioOn || !audioCtx || gammaNode) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = 260;
+      g.gain.value = 0.0;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+
+      let up = true;
+      const iv = setInterval(() => {
+        if (!state.audioOn || (!state.containment.gamma && !state.blackChamber)) {
+          g.gain.value = 0.0;
+          return;
+        }
+        up = !up;
+        osc.frequency.value = up ? 260 : 320;
+        g.gain.value = up ? 0.03 : 0.01;
+      }, 220);
+
+      gammaNode = { osc, g, iv };
+    }
+
+    function playImplosion() {
+      if (!state.audioOn || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 90;
+      g.gain.value = 0.12;
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.start();
+      setTimeout(() => g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2), 40);
+      setTimeout(() => { try { osc.stop(); } catch (_) {} }, 400);
+    }
+
+    function stopNode(nodeObj, hasInterval) {
+      if (!nodeObj) return;
+      if (hasInterval && nodeObj.iv) clearInterval(nodeObj.iv);
+      try { nodeObj.osc.stop(); } catch (_) {}
+    }
+
+    function stopAllAudio() {
+      stopNode(humNode, false); humNode = null;
+      stopNode(coolantNode, false); coolantNode = null;
+      stopNode(crackNode, true); crackNode = null;
+      stopNode(sirenNode, true); sirenNode = null;
+      stopNode(containNode, false); containNode = null;
+      stopNode(gammaNode, true); gammaNode = null;
+    }
+
+    function applyAudioState() {
+      if (!state.audioOn) {
+        stopAllAudio();
+        elAudioState.textContent = "Audio: OFF";
+        return;
+      }
+      ensureAudio();
+      elAudioState.textContent = "Audio: ON";
+      startHum();
+      startCoolant();
+      startCrackle();
+      startSiren();
+      startContainHum();
+      startGammaCharge();
+      updateContainHumGain();
+    }
+
+    btnAudio.addEventListener("click", () => {
+      state.audioOn = !state.audioOn;
+      applyAudioState();
+    });
+
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        ensureAudio();
+        applyAudioState();
+      }, 400);
+    });
+
+    // ----- Graph helpers -----
+    function pushHist(buf, v) {
+      buf.push(v);
+      if (buf.length > histLen) buf.shift();
+    }
+
+    function drawGraph(canvas, data, color) {
+      if (!canvas || !canvas.getContext) return;
+      const ctx = canvas.getContext("2d");
+      const w = canvas.width;
+      const h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+      if (data.length < 2) return;
+
+      let min = data[0], max = data[0];
+      for (let i=1; i<data.length; i++) {
+        if (data[i] < min) min = data[i];
+        if (data[i] > max) max = data[i];
+      }
+      let span = max - min;
+      if (span === 0) span = 1;
+
+      ctx.beginPath();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+
+      for (let i=0; i<data.length; i++) {
+        const x = (i / (data.length - 1)) * (w - 4) + 2;
+        const y = h - 4 - ((data[i] - min) / span) * (h - 8);
+        if (i === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      }
+      ctx.stroke();
+    }
+
+    function renderGraphs() {
+      if (!state.diagnostics) return;
+      drawGraph(gcCore,  histTemp,  "#bbf7d0");
+      drawGraph(gcPress, histPress, "#86efac");
+      drawGraph(gcRad,   histRad,   "#4ade80");
+      drawGraph(gcNet,   histNet,   "#38bdf8");
+    }
+
+    // ----- Rendering -----
+    function renderTelemetry() {
+      elTemp.textContent = Math.round(state.temp) + "°C";
+      elP.textContent    = state.pressure.toFixed(2) + " MPa";
+      elR.textContent    = state.rad.toFixed(2) + " mSv/h";
+      elSG.textContent   = state.safeguards + " / 3";
+
+      const t = state.temp;
+      const p = state.pressure;
+      const r = state.rad;
+
+      if (t > 1450) {
+        elTempStat.textContent = "Stage 3–4 runaway (sim)";
+        elTempStat.className = "soft crit";
+      } else if (t > 1150) {
+        elTempStat.textContent = "Critical overheating (sim)";
+        elTempStat.className = "soft crit";
+      } else if (t > 730) {
+        elTempStat.textContent = "Approaching redline (sim)";
+        elTempStat.className = "soft warn";
+      } else {
+        elTempStat.textContent = "Nominal";
+        elTempStat.className = "soft ok";
+      }
+
+      if (p > 6.2) {
+        elPStat.textContent = "Containment strain (sim)";
+        elPStat.className = "soft crit";
+      } else if (p > 3.3) {
+        elPStat.textContent = "Elevated coupling (sim)";
+        elPStat.className = "soft warn";
+      } else {
+        elPStat.textContent = "Stable";
+        elPStat.className = "soft ok";
+      }
+
+      if (r > 4.0) {
+        elRStat.textContent = "Severe release (sim)";
+        elRStat.className = "soft crit";
+      } else if (r > 0.8) {
+        elRStat.textContent = "Leak indicated (sim)";
+        elRStat.className = "soft warn";
+      } else {
+        elRStat.textContent = "Shielding effective";
+        elRStat.className = "soft ok";
+      }
+
+      if (!state.overdrive) {
+        elOverLbl.textContent = "OVERDRIVE: DISARMED";
+      } else if (state.meltdownStage === 0) {
+        elOverLbl.textContent = "OVERDRIVE: ACTIVE (sim boost)";
+      } else {
+        elOverLbl.textContent = "OVERDRIVE: LOCKED (meltdown sim)";
+      }
+
+      const base = state.overdrive ? 1.1 : 0.75;
+      const heatFactor = Math.min(1, Math.max(0, (t - 280) / 900));
+      const meltdownBoost = state.meltdownStage > 0 ? 0.3 * state.meltdownStage : 0;
+      const intensity = base + heatFactor * 1.2 + meltdownBoost;
+      const glow = 14 + 26 * intensity;
+      const colorShift = state.blackChamber ? "#0f172a" :
+                         state.meltdownStage >= 4 ? "#fb7185" :
+                         state.meltdownStage >= 2 ? "#f97316" :
+                         "var(--ch-accent)";
+      elCoreDot.style.boxShadow = `0 0 ${glow}px rgba(191,249,168,${0.45 + intensity * 0.25})`;
+      elCoreDot.style.transform  = `scale(${0.9 + intensity * 0.22})`;
+      elCoreDot.style.background = `radial-gradient(circle, ${colorShift}, transparent)`;
+    }
+
+    function updateContainPills() {
+      function setPill(el, active, crit) {
+        el.classList.remove("off");
+        el.style.borderColor = active ? "rgba(191,249,168,0.6)" : "rgba(148,163,184,0.4)";
+        const dot = el.querySelector("span.dot");
+        if (!dot) return;
+        if (!active) {
+          dot.style.background = "#4b5563";
+        } else if (crit) {
+          dot.style.background = "#fb7185";
+        } else {
+          dot.style.background = "#22c55e";
+        }
+      }
+      setPill(pillAlpha, state.containment.alpha, false);
+      setPill(pillBeta, state.containment.betaLatched, state.containment.betaLatched && state.meltdownStage >= 2);
+      setPill(pillGamma, state.containment.gamma, state.meltdownStage >= 3);
+    }
+
+    function updateCommsPills() {
+      dotSat.classList.toggle("on", state.satLink);
+      dotGhost.classList.toggle("on", state.ghostLink);
+      dotGhost.classList.toggle("ghost", state.ghostLink);
+      dotBlack.classList.toggle("on", state.blackChamber);
+      pillBlack.classList.toggle("chamber-active", state.blackChamber);
+
+      if (!state.satLink && !state.ghostLink) {
+        elRemoteStatus.textContent = "Remote link: LOCAL ONLY";
+      } else if (state.satLink && !state.ghostLink) {
+        elRemoteStatus.textContent = "Remote link: SATELLITE UPLINK (sim)";
+      } else if (!state.satLink && state.ghostLink) {
+        elRemoteStatus.textContent = "Remote link: GHOST MIRROR (sim)";
+      } else {
+        elRemoteStatus.textContent = "Remote link: SAT+GHOST ROUTING (sim)";
+      }
+    }
+
+    function renderNet() {
+      const net = state.net;
+      netLatEl.textContent       = net.latencyMs.toFixed(1) + " ms";
+      netJitterEl.textContent    = net.jitterMs.toFixed(1) + " ms";
+      netLossEl.textContent      = net.lossPct.toFixed(2) + "%";
+      netRateEl.textContent      = net.rate.toFixed(0) + " pkt/s";
+      netIntegrityEl.textContent = net.integrity.toFixed(1) + "%";
+
+      netDotEl.classList.remove("degraded","offline");
+
+      if (net.mode === "online") {
+        netStatusEl.textContent = "ONLINE";
+        elBadgeNet.textContent = "NET: ONLINE";
+        elBadgeNet.style.color = "#bbf7d0";
+      } else if (net.mode === "degraded") {
+        netStatusEl.textContent = "DEGRADED";
+        netDotEl.classList.add("degraded");
+        elBadgeNet.textContent = "NET: DEGRADED";
+        elBadgeNet.style.color = "#facc6b";
+      } else {
+        netStatusEl.textContent = "OFFLINE";
+        netDotEl.classList.add("offline");
+        elBadgeNet.textContent = "NET: OFFLINE";
+        elBadgeNet.style.color = "#fb7185";
+      }
+    }
+
+    function renderBadges() {
+      elBadgeOver.textContent = "OVERDRIVE: " + (state.overdrive ? "ON" : "OFF");
+      elBadgeOver.style.color = state.overdrive ? "#fb7185" : "#9ca3af";
+
+      elBadgeDiag.textContent = "DIAGNOSTICS: " + (state.diagnostics ? "ON" : "OFF");
+      elBadgeDiag.style.color = state.diagnostics ? "#bbf7d0" : "#9ca3af";
+
+      elBadgeSim.textContent = "SIM-CORE ONLINE";
+
+      const anyContain = state.containment.alpha || state.containment.betaLatched || state.containment.gamma;
+      elBadgeContain.textContent = "CONTAINMENT: " +
+        (state.meltdownStage >= 4 && !state.containment.gamma ? "BREACH" :
+         state.meltdownStage >= 2 ? "ENGAGED" :
+         anyContain ? "ARMED" : "STABLE");
+      elBadgeContain.style.color =
+        (state.meltdownStage >= 4 && !state.containment.gamma) ? "#fb7185" :
+        (state.meltdownStage >= 2 || anyContain) ? "#facc6b" :
+        "#bbf7d0";
+
+      elBadgeLockdown.textContent = "LOCKDOWN: " + (state.lockdown ? "ON" : "OFF");
+      elBadgeLockdown.style.color = state.lockdown ? "#fb7185" : "#9ca3af";
+
+      elBadgeSat.textContent = "SATLINK: " + (state.satLink ? "ON" : "OFF");
+      elBadgeSat.style.color = state.satLink ? "#bbf7d0" : "#9ca3af";
+
+      elBadgeBlack.textContent = "BLACK CHAMBER: " + (state.blackChamber ? "ACTIVE" : "IDLE");
+      elBadgeBlack.style.color = state.blackChamber ? "#facc6b" : "#9ca3af";
+
+      renderNet();
+    }
+
+    function renderGammaOverlay() {
+      if (state.containment.gamma) {
+        elGammaOverlay.classList.add("active");
+      } else {
+        elGammaOverlay.classList.remove("active");
+      }
+    }
+
+    function renderBlackOverlay() {
+      if (state.blackChamber) {
+        elBlackOverlay.classList.add("active");
+      } else {
+        elBlackOverlay.classList.remove("active");
+      }
+    }
+
+    function renderAll() {
+      renderTelemetry();
+      renderBadges();
+      renderGammaOverlay();
+      renderBlackOverlay();
+      updateContainPills();
+      updateCommsPills();
+      renderGraphs();
+    }
+
+    // ----- Redline Crisis Engine -----
+    function computeCrisisIndex() {
+      const tNorm = Math.max(0, Math.min(1, (state.temp - 280) / 900));
+      const pNorm = Math.max(0, Math.min(1, (state.pressure - 1.0) / 5.0));
+      const rNorm = Math.max(0, Math.min(1, state.rad / 4.0));
+      const mNorm = Math.max(0, Math.min(1, state.meltdownStage / 5.0));
+
+      // Base weighted score
+      let base =
+        tNorm * 4.0 +
+        pNorm * 2.5 +
+        rNorm * 2.5 +
+        mNorm * 3.0;
+
+      // Ensure full meltdown scenarios can reach a hard 10.0
+      // when temp & radiation are both in the top band and stage is 5.
+      if (state.meltdownStage >= 5 && tNorm > 0.85 && rNorm > 0.85) {
+        return 10.0;
+      }
+
+      let score = base;
+      if (score > 10) score = 10;
+      if (score < 0) score = 0;
+      return score;
+    }
+
+    function updateEngineThemeLine() {
+      if (!elEngineThemeLine) return;
+      if (state.themeMode === "auto") {
+        elEngineThemeLine.textContent = "Theme: AUTO (Engine)";
+      } else {
+        const t = (state.themeOverride || state.theme || "green").toUpperCase();
+        elEngineThemeLine.textContent = `Theme: OVERRIDE (${t})`;
+      }
+    }
+
+    function applyEngineThemeForMode(mode) {
+      if (state.themeMode !== "auto") {
+        updateEngineThemeLine();
+        return;
+      }
+
+      let nextTheme = "green";
+      if (mode === "ELEVATED") nextTheme = "amber";
+      else if (mode === "CRITICAL") nextTheme = "amber";
+      else if (mode === "REDLINE") nextTheme = "redline";
+
+      const prev = state.theme;
+      applyTheme(nextTheme);
+      if (nextTheme !== prev) {
+        log(`Redline Crisis Engine: theme -> ${nextTheme.toUpperCase()} (${mode}).`);
+      }
+      updateEngineThemeLine();
+    }
+
+    function updateCrisisEngine() {
+      const idx = computeCrisisIndex();
+      state.crisisIndex = idx;
+
+      let mode = "SAFE";
+      if (idx >= 2 && idx < 5) mode = "ELEVATED";
+      else if (idx >= 5 && idx < 8) mode = "CRITICAL";
+      else if (idx >= 8) mode = "REDLINE";
+      state.crisisMode = mode;
+
+      if (elCrisisIndex) elCrisisIndex.textContent = idx.toFixed(1);
+      if (elCrisisMode) {
+        elCrisisMode.textContent = mode;
+        let color = "var(--ch-accent)";
+        if (mode === "ELEVATED") color = "#facc6b";
+        else if (mode === "CRITICAL") color = "#f97316";
+        else if (mode === "REDLINE") color = "#fb7185";
+        elCrisisMode.style.color = color;
+        if (elCrisisIndex) elCrisisIndex.style.color = color;
+      }
+
+      applyEngineThemeForMode(mode);
+    }
+
+    function setThemeOverride(themeName) {
+      state.themeMode = "manual";
+      state.themeOverride = themeName;
+      applyTheme(themeName);
+      log(`Theme override: operator set ${themeName.toUpperCase()} (AUTO disabled).`);
+      updateEngineThemeLine();
+    }
+
+    // ----- Workstation: workspace modes -----
+    function applyWorkspaceMode(mode) {
+      state.workspaceMode = mode;
+      try {
+        localStorage.setItem("chernos_ws_mode", mode);
+      } catch (e) {}
+
+      wsButtons.forEach(btn => {
+        const m = btn.getAttribute("data-ws-mode");
+        if (m === mode) btn.classList.add("active");
+        else btn.classList.remove("active");
+      });
+
+      let label = "Full Console";
+      if (mode === "reactor") label = "Reactor Focus";
+      else if (mode === "containment") label = "Containment Focus";
+      else if (mode === "comms") label = "Comms Focus";
+      else if (mode === "logs") label = "Logs Focus";
+
+      wsStatus.textContent = "Workspace: " + label;
+
+      panelElems.forEach(el => {
+        const tags = (el.getAttribute("data-panel") || "").split(/\s+/);
+        if (mode === "full") {
+          el.classList.remove("workspace-dim");
+        } else {
+          if (tags.includes(mode)) {
+            el.classList.remove("workspace-dim");
+          } else {
+            el.classList.add("workspace-dim");
+          }
+        }
+      });
+    }
+
+    wsButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const m = btn.getAttribute("data-ws-mode");
+        applyWorkspaceMode(m);
+      });
+    });
+
+    // ----- Workstation: notes + tasks -----
+    function saveNotes() {
+      try {
+        localStorage.setItem("chernos_ws_notes", wsNotes.value || "");
+      } catch (e) {}
+    }
+
+    wsNotes.addEventListener("input", () => {
+      saveNotes();
+    });
+
+    function saveTasks() {
+      try {
+        localStorage.setItem("chernos_ws_tasks", JSON.stringify(state.tasks || []));
+      } catch (e) {}
+    }
+
+    function renderTasks() {
+      wsTaskList.innerHTML = "";
+      (state.tasks || []).forEach(task => {
+        const row = document.createElement("div");
+        row.className = "task-row" + (task.done ? " done" : "");
+        row.dataset.id = task.id;
+
+        const left = document.createElement("div");
+        left.className = "flex items-center gap-1";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!task.done;
+        cb.className = "w-3 h-3";
+
+        const txt = document.createElement("span");
+        txt.textContent = task.text;
+        txt.className = "task-text" + (task.done ? " done" : "");
+
+        left.appendChild(cb);
+        left.appendChild(txt);
+
+        const del = document.createElement("button");
+        del.className = "task-del";
+        del.textContent = "×";
+
+        cb.addEventListener("change", () => {
+          task.done = cb.checked;
+          saveTasks();
+          renderTasks();
+        });
+
+        del.addEventListener("click", () => {
+          state.tasks = state.tasks.filter(t => t.id !== task.id);
+          saveTasks();
+          renderTasks();
+        });
+
+        row.appendChild(left);
+        row.appendChild(del);
+        wsTaskList.appendChild(row);
+      });
+    }
+
+    wsTaskAdd.addEventListener("click", () => {
+      const raw = (wsTaskInput.value || "").trim();
+      if (!raw) return;
+      const task = {
+        id: Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6),
+        text: raw,
+        done: false
+      };
+      state.tasks.push(task);
+      wsTaskInput.value = "";
+      saveTasks();
+      renderTasks();
+    });
+
+    wsTaskInput.addEventListener("keydown", e => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        wsTaskAdd.click();
+      }
+    });
+
+    function loadWorkstationState() {
+      try {
+        const notes = localStorage.getItem("chernos_ws_notes");
+        if (notes !== null) wsNotes.value = notes;
+
+        const tasksRaw = localStorage.getItem("chernos_ws_tasks");
+        if (tasksRaw) {
+          try {
+            const arr = JSON.parse(tasksRaw);
+            if (Array.isArray(arr)) state.tasks = arr;
+          } catch (_) {}
+        }
+
+        const mode = localStorage.getItem("chernos_ws_mode");
+        if (mode && ["full","reactor","containment","comms","logs"].includes(mode)) {
+          applyWorkspaceMode(mode);
+        } else {
+          applyWorkspaceMode("full");
+        }
+      } catch (e) {
+        applyWorkspaceMode("full");
+      }
+      renderTasks();
+    }
+
+    // ----- Containment actions -----
+    function toggleLockdown(forceOn) {
+      const target = (typeof forceOn === "boolean") ? forceOn : !state.lockdown;
+      state.lockdown = target;
+      if (state.lockdown) {
+        log("LOCKDOWN: High-risk controls restricted (sim).");
+        btnLockdown.classList.add("lockdown-active");
+      } else {
+        log("LOCKDOWN: Restrictions lifted (sim).");
+        btnLockdown.classList.remove("lockdown-active");
+      }
+      updateCrisisEngine();
+      renderAll();
+    }
+
+    function toggleBlackChamber(forceOn) {
+      const target = (typeof forceOn === "boolean") ? forceOn : !state.blackChamber;
+      state.blackChamber = target;
+      if (state.blackChamber) {
+        log("BLACK CHAMBER engaged (visual dark-mode layer only).");
+      } else {
+        log("BLACK CHAMBER disengaged.");
+      }
+      updateContainHumGain();
+      updateCrisisEngine();
+      renderAll();
+    }
+
+    btnCfa.addEventListener("click", () => {
+      state.containment.alpha = !state.containment.alpha;
+      log(`Containment Alpha (thermal buffer) ${state.containment.alpha ? "enabled" : "disabled"} (sim).`);
+      updateContainHumGain();
+      updateCrisisEngine();
+      renderAll();
+    });
+
+    btnCfb.addEventListener("click", () => {
+      state.containment.betaLatched = false;
+      log("Containment Beta latch reset (sim).");
+      updateContainHumGain();
+      updateCrisisEngine();
+      renderAll();
+    });
+
+    btnCfg.addEventListener("click", () => {
+      state.containment.gamma = !state.containment.gamma;
+      log(`Containment Gamma field ${state.containment.gamma ? "engaged" : "disengaged"} (sim).`);
+      updateContainHumGain();
+      updateCrisisEngine();
+      renderAll();
+    });
+
+    btnPulse.addEventListener("click", () => {
+      log("Containment pulse sweep triggered (sim).");
+      state.rad = Math.max(0.05, state.rad - 0.6);
+      updateCrisisEngine();
+      renderAll();
+    });
+
+    btnLockdown.addEventListener("click", () => {
+      toggleLockdown();
+    });
+
+    // ----- COMMS / BLACK CHAMBER actions -----
+    btnSatlink.addEventListener("click", () => {
+      state.satLink = !state.satLink;
+      log(`SATLINK ${state.satLink ? "routed to sim uplink" : "disconnected"} (visual only).`);
+      updateCrisisEngine();
+      renderAll();
+    });
+
+    btnGhost.addEventListener("click", () => {
+      state.ghostLink = !state.ghostLink;
+      log(`GHOST MIRROR ${state.ghostLink ? "latched (sim)" : "released (sim)"}.`);
+      updateCrisisEngine();
+      renderAll();
+    });
+
+    btnBlack.addEventListener("click", () => {
+      toggleBlackChamber();
+    });
+
+    btnMacroRec.addEventListener("click", () => {
+      startMacroRecording();
+    });
+
+    btnMacroPlay.addEventListener("click", () => {
+      playMacro();
+    });
+
+    function startMacroRecording() {
+      state.macroRecording = true;
+      state.macroBuffer = [];
+      log("Macro recording started (sim). Commands will be captured until `macro stop`.");
+    }
+
+    function stopMacroRecording() {
+      state.macroRecording = false;
+      log("Macro recording stopped (sim). Use `macro play` to replay.");
+    }
+
+    function playMacro() {
+      if (state.macroBuffer.length === 0) {
+        log("Macro play: buffer empty.");
+        return;
+      }
+      log(`Macro play: replaying ${state.macroBuffer.length} commands (sim).`);
+      const cmds = state.macroBuffer.slice();
+      for (const cmd of cmds) {
+        runCommand(cmd);
+      }
+    }
+
+    // ----- Simulation Engine (meltdown v2.0) -----
+    function stepSim() {
+      state.ticks++;
+
+      const drive  = parseInt(leverCore.value, 10)   / 100;
+      const cool   = parseInt(leverCool.value, 10)   / 100;
+      const jitter = (Math.random() - 0.5);
+
+      state.microJitter = 0.3 * jitter;
+
+      let dT = jitter * 2.2 + (drive - 0.85) * 5.2 - (cool - 1.0) * 3.4;
+      let dP = jitter * 0.07 + (state.temp - 320) / 2600;
+      let dR = jitter * 0.02 + Math.max(0, (state.temp - 420)) / 6400;
+
+      if (state.overdrive && state.meltdownStage === 0 && !state.lockdown) {
+        dT *= 1.8;
+        dP *= 1.5;
+        dR *= 1.7;
+      }
+
+      if (state.containment.alpha) {
+        dT *= 0.8;
+      }
+
+      if (state.containment.betaLatched) {
+        dP *= 0.5;
+      }
+
+      if (state.blackChamber) {
+        dR *= 0.9;
+        dP *= 0.95;
+      }
+
+      if (state.meltdownStage === 0) {
+        if (state.temp > 1220 && state.safeguards > 0) {
+          state.safeguards -= 1;
+          state.temp -= 260;
+          state.pressure -= 0.9;
+          state.rad -= 0.25;
+          log("AUTO-SAFEGUARD (sim): staged insertion + coolant surge.");
+        }
+
+        if (state.temp > 1300 && state.pressure > 5.0 && state.safeguards === 0) {
+          state.meltdownStage = 1;
+          log("MELTDOWN STAGE 1 (sim): Thermal spike detected.");
+        }
+      } else if (state.meltdownStage === 1) {
+        dT += 12.0;
+        dP += 0.09;
+        dR += 0.14;
+        if (state.temp > 1400) {
+          state.meltdownStage = 2;
+          state.containment.betaLatched = true;
+          log("MELTDOWN STAGE 2 (sim): Pressure surge, Beta latch engaged.");
+        }
+      } else if (state.meltdownStage === 2) {
+        dT += 20;
+        dP += 0.05;
+        dR += 0.25;
+        if (state.rad > 1.7) {
+          state.meltdownStage = 3;
+          log("MELTDOWN STAGE 3 (sim): Radiation breach indicated.");
+        }
+      } else if (state.meltdownStage === 3) {
+        dT += 26;
+        dP -= 0.05;
+        dR += 0.4;
+        if (!state.containment.gamma && state.rad > 3.5) {
+          state.meltdownStage = 4;
+          log("MELTDOWN STAGE 4 (sim): Containment failure visualized.");
+        } else if (state.containment.gamma && state.rad > 3.5) {
+          state.meltdownStage = 4;
+          log("MELTDOWN STAGE 4 (sim): Gamma field holding collapse (visual only).");
+        }
+      } else if (state.meltdownStage === 4) {
+        dT += 14;
+        dP = Math.max(0.6, state.pressure - 0.2);
+        dR += 0.18;
+
+        if (!state.containment.gamma && state.rad > 4.2 && !state.lockdown) {
+          state.meltdownStage = 5;
+          log("MELTDOWN STAGE 5 (sim): Core implosion depicted.");
+          if (!state.implosionPlayed) {
+            state.implosionPlayed = true;
+            playImplosion();
+          }
+        } else if (state.containment.gamma) {
+          dT -= 10;
+          dR -= 0.2;
+        }
+      } else if (state.meltdownStage === 5) {
+        dT -= 18;
+        dP = Math.max(0.7, state.pressure - 0.25);
+        dR -= 0.26;
+      }
+
+      state.temp     += dT;
+      state.pressure += dP;
+      state.rad      += dR;
+
+      if (state.temp < 260) state.temp = 260;
+      if (state.pressure < 0.9) state.pressure = 0.9;
+      if (state.rad < 0.05) state.rad = 0.05;
+
+      pushHist(histTemp,  state.temp);
+      pushHist(histPress, state.pressure);
+      pushHist(histRad,   state.rad);
+
+      updateCrisisEngine();
+      renderAll();
+    }
+
+    setInterval(stepSim, 850);
+
+    // ----- NetSim Engine -----
+    function stepNetSim() {
+      const net = state.net;
+
+      let baseLat    = 12;
+      let baseJitter = 1.3;
+      let baseLoss   = 0.1;
+      let baseRate   = 260;
+
+      if (net.mode === "degraded") {
+        baseLat    = 48;
+        baseJitter = 9;
+        baseLoss   = 1.5;
+        baseRate   = 190;
+      } else if (net.mode === "offline") {
+        baseLat    = 0;
+        baseJitter = 0;
+        baseLoss   = 100;
+        baseRate   = 0;
+      }
+
+      if (net.stressLevel === 1) {
+        baseLat   *= 1.8;
+        baseJitter*= 1.9;
+        baseLoss  += 2.0;
+        baseRate  *= 1.1;
+      } else if (net.stressLevel === 2) {
+        baseLat   *= 3.5;
+        baseJitter*= 3.0;
+        baseLoss  += 5.0;
+        baseRate  *= 0.8;
+      }
+
+      net.latencyMs = baseLat + (Math.random() - 0.5) * 6;
+      net.jitterMs  = baseJitter + (Math.random() - 0.5) * 2;
+      net.lossPct   = Math.max(0, baseLoss + (Math.random() - 0.5) * 0.6);
+      net.rate      = Math.max(0, baseRate + (Math.random() - 0.5) * 40);
+
+      let integrity = 100;
+      if (net.mode === "degraded") integrity -= 8;
+      if (net.mode === "offline") integrity  = 0;
+      integrity -= net.lossPct * 1.2;
+      integrity -= net.jitterMs * 0.4;
+      integrity = Math.max(0, Math.min(100, integrity));
+      net.integrity = integrity;
+
+      renderNet();
+      pushHist(histNet, net.rate);
+      renderGraphs();
+    }
+
+    setInterval(stepNetSim, 900);
+
+    btnNetStress.addEventListener("click", () => {
+      const net = state.net;
+      if (net.mode === "offline") {
+        log("NET (sim): cannot stress, network already offline.");
+        return;
+      }
+      net.stressLevel = Math.min(2, net.stressLevel + 1);
+      if (net.stressLevel === 1) {
+        net.mode = "degraded";
+        log("NET (sim): minor stress injected – latency + loss elevated.");
+      } else if (net.stressLevel === 2) {
+        net.mode = "degraded";
+        log("NET (sim): heavy stress injected – simulated congestion.");
+      }
+      renderNet();
+    });
+
+    btnNetReset.addEventListener("click", () => {
+      const net = state.net;
+      net.mode = "online";
+      net.stressLevel = 0;
+      net.latencyMs = 12;
+      net.jitterMs = 1.3;
+      net.lossPct = 0.1;
+      net.rate = 260;
+      net.integrity = 99.3;
+      log("NET (sim): network state reset to baseline.");
+      renderNet();
+    });
+
+    // ----- Operator actions -----
+    function doScram() {
+      log("OP: SCRAM (sim)");
+      state.temp -= 360;
+      state.pressure -= 1.2;
+      state.rad -= 0.35;
+      if (state.temp < 260) state.temp = 260;
+      if (state.pressure < 0.9) state.pressure = 0.9;
+      if (state.rad < 0.05) state.rad = 0.05;
+      if (state.meltdownStage > 0) {
+        log("SCRAM (sim): meltdown chain remains in visual mode only.");
+      }
+      updateCrisisEngine();
+      renderAll();
+    }
+
+    function doRelief() {
+      log("OP: Relief valves (sim)");
+      state.pressure -= 0.7;
+      if (state.pressure < 0.9) state.pressure = 0.9;
+      updateCrisisEngine();
+      renderAll();
+    }
+
+    function doStress() {
+      log("OP: Stress pulse (sim)");
+      state.temp += 260;
+      state.pressure += 1.4;
+      state.rad += 0.45;
+      updateCrisisEngine();
+      renderAll();
+    }
+
+    function doChaos() {
+      log("OP: Forced safeguard bypass (sim)");
+      state.safeguards = 0;
+      state.temp = 1250;
+      state.pressure = 5.3;
+      state.rad = 1.6;
+      updateCrisisEngine();
+      renderAll();
+    }
+
+    function resetSim() {
+      state.temp = 312;
+      state.pressure = 1.3;
+      state.rad = 0.14;
+      state.safeguards = 3;
+      state.meltdownStage = 0;
+      state.implosionPlayed = false;
+      histTemp = [];
+      histPress = [];
+      histRad = [];
+      histNet = [];
+      log("Simulation reset to nominal baseline.");
+      updateCrisisEngine();
+      renderAll();
+    }
+
+    btnScram.addEventListener("click", doScram);
+    btnRelief.addEventListener("click", doRelief);
+    btnStress.addEventListener("click", doStress);
+    btnChaos.addEventListener("click", doChaos);
+    btnReset.addEventListener("click", resetSim);
+
+    // ----- Diagnostics toggle -----
+    btnDiag.addEventListener("click", () => {
+      state.diagnostics = !state.diagnostics;
+      elDiagCard.style.display = state.diagnostics ? "block" : "none";
+      if (state.diagnostics) {
+        elDiagCard.classList.add("diag-active");
+        log("Diagnostics mode enabled (sim).");
+      } else {
+        elDiagCard.classList.remove("diag-active");
+        log("Diagnostics mode disabled (sim).");
+      }
+      renderBadges();
+    });
+
+    // ----- Overdrive toggle (fixed) -----
+    btnOver.addEventListener("click", () => {
+      if (state.meltdownStage > 0) {
+        log("Overdrive: locked (meltdown sim active).");
+        return;
+      }
+      if (state.lockdown) {
+        log("Overdrive blocked by LOCKDOWN (sim).");
+        return;
+      }
+      state.overdrive = !state.overdrive;
+      if (state.overdrive) {
+        log("Overdrive mode enabled (physics exaggerated, visual only).");
+      } else {
+        log("Overdrive mode disabled.");
+      }
+      renderBadges();
+      renderTelemetry();
+      updateCrisisEngine();
+    });
+
+    // ----- Theme handling (low-level) -----
+    function applyTheme(themeName) {
+      state.theme = themeName;
+      document.body.className = `theme-${themeName}`;
+
+      themeButtons.forEach(btn => {
+        const t = btn.getAttribute("data-theme");
+        if (t === themeName) btn.classList.add("active");
+        else btn.classList.remove("active");
+      });
+
+      if (themeName === "green") {
+        elTitle.textContent = "Reactor + Containment + Black Chamber + Network Layer";
+      } else if (themeName === "amber") {
+        elTitle.textContent = "Operator Workstation · Amber Core + NetSim";
+      } else if (themeName === "redline") {
+        elTitle.textContent = "Operator Workstation · Redline Sim + Net";
+      } else if (themeName === "2049") {
+        elTitle.textContent = "Operator Workstation · 2049 Mode (sim + net)";
+      }
+
+      renderAll();
+    }
+
+    themeButtons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        const t = btn.getAttribute("data-theme");
+        // Theme button always means manual override
+        setThemeOverride(t);
+      });
+    });
+
+    // hidden 2049 mode
+    function unlock2049() {
+      if (document.querySelector('[data-theme="2049"]')) return;
+      const parent = themeButtons[0].parentElement;
+      const btn = document.createElement("button");
+      btn.className = "theme-btn";
+      btn.setAttribute("data-theme", "2049");
+      btn.innerHTML = '<span class="theme-dot" style="background:#38bdf8;"></span>2049';
+      parent.appendChild(btn);
+      themeButtons.push(btn);
+      btn.addEventListener("click", () => setThemeOverride("2049"));
+      log("Hidden theme unlocked: 2049 (sim aesthetics only).");
+    }
+
+    // ----- NetSim helpers -----
+    function fakePing(host) {
+      const net = state.net;
+      if (net.mode === "offline") {
+        log(`net: host '${host}' unreachable (sim offline).`);
+        return;
+      }
+      const base = net.latencyMs;
+      const jitter = net.jitterMs;
+      const rtt = Math.max(1, base + (Math.random() - 0.5) * 2 * jitter);
+      const lossHit = Math.random() < (net.lossPct / 100);
+      if (lossHit) {
+        log(`net: packet to '${host}' dropped (sim).`);
+      } else {
+        log(`net: ping '${host}' = ${rtt.toFixed(1)} ms (sim).`);
+      }
+    }
+
+    function fakeLookup(name) {
+      const net = state.net;
+      if (net.mode === "offline") {
+        log(`net: lookup for '${name}' failed (sim offline).`);
+        return;
+      }
+      const oct = () => Math.floor(20 + Math.random() * 200);
+      const addr = `10.${oct()}.${oct()}.${oct()}`;
+      log(`net: lookup '${name}' -> ${addr} (simulated).`);
+    }
+
+    // ----- Terminal v1.9.4 -----
+    const termHistory = [];
+    let termIndex = -1;
+    const commands = [
+      "help","status","scram","relief","stress","chaos","reset",
+      "diag on","diag off","overdrive on","overdrive off",
+      "audio on","audio off","save-log",
+      "theme auto","theme green","theme amber","theme redline","theme 2049",
+      "power","coolant","engine status",
+      "unlock 2049","containment status","lockdown on","lockdown off",
+      "operator set","operator level","satlink on","satlink off",
+      "ghost on","ghost off","black on","black off",
+      "macro rec","macro stop","macro play",
+      "net status","net ping","net lookup","net stress","net reset"
+    ];
+
+    function runCommand(raw) {
+      const cmd = String(raw || "").trim();
+      if (!cmd) return;
+      log("> " + cmd);
+
+      if (state.macroRecording && !cmd.toLowerCase().startsWith("macro ")) {
+        state.macroBuffer.push(cmd);
+      }
+
+      termHistory.unshift(cmd);
+      termIndex = -1;
+
+      const lower = cmd.toLowerCase();
+
+      if (lower === "help") {
+        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <auto|green|amber|redline|2049>, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, operator set <name>, operator level <0-3>, engine status, save-log, unlock 2049, net status, net ping <host>, net lookup <name>, net stress, net reset");
+        return;
+      }
+
+      if (lower === "status") {
+        log("status: temp=" + Math.round(state.temp) + "C, p=" + state.pressure.toFixed(2) +
+            "MPa, rad=" + state.rad.toFixed(2) + "mSv/h, sg=" + state.safeguards +
+            ", od=" + (state.overdrive ? "on" : "off") + ", diag=" + (state.diagnostics ? "on" : "off") +
+            ", meltdownStage=" + state.meltdownStage + ", satLink=" + state.satLink +
+            ", black=" + state.blackChamber +
+            ", net=" + state.net.mode + ", netIntegrity=" + state.net.integrity.toFixed(1) + "%" +
+            ", crisisIndex=" + state.crisisIndex.toFixed(1) + ", crisisMode=" + state.crisisMode);
+        return;
+      }
+
+      if (lower === "containment status") {
+        log(`containment: alpha=${state.containment.alpha}, betaLatched=${state.containment.betaLatched}, gamma=${state.containment.gamma}, lockdown=${state.lockdown}`);
+        return;
+      }
+
+      if (lower === "scram") { doScram(); return; }
+      if (lower === "relief") { doRelief(); return; }
+      if (lower === "stress") { doStress(); return; }
+      if (lower === "chaos") { doChaos(); return; }
+      if (lower === "reset") { resetSim(); return; }
+
+      if (lower.startsWith("power ")) {
+        const n = parseInt(lower.split(/\s+/)[1], 10);
+        if (!isNaN(n)) {
+          let v = Math.min(125, Math.max(40, n));
+          leverCore.value = v;
+          log("Core drive set via terminal: " + v);
+          updateCrisisEngine();
+          renderAll();
+        } else {
+          log("Invalid power value.");
+        }
+        return;
+      }
+
+      if (lower.startsWith("coolant ")) {
+        const n = parseInt(lower.split(/\s+/)[1], 10);
+        if (!isNaN(n)) {
+          let v = Math.min(145, Math.max(80, n));
+          leverCool.value = v;
+          log("Coolant bias set via terminal: " + v);
+          updateCrisisEngine();
+          renderAll();
+        } else {
+          log("Invalid coolant value.");
+        }
+        return;
+      }
+
+      if (lower === "diag on") {
+        if (!state.diagnostics) btnDiag.click();
+        return;
+      }
+      if (lower === "diag off") {
+        if (state.diagnostics) btnDiag.click();
+        return;
+      }
+
+      if (lower === "overdrive on") {
+        if (!state.overdrive) btnOver.click();
+        return;
+      }
+      if (lower === "overdrive off") {
+        if (state.overdrive) btnOver.click();
+        return;
+      }
+
+      if (lower === "audio on") {
+        if (!state.audioOn) { state.audioOn = true; applyAudioState(); }
+        return;
+      }
+      if (lower === "audio off") {
+        if (state.audioOn) { state.audioOn = false; applyAudioState(); }
+        return;
+      }
+
+      if (lower.startsWith("theme ")) {
+        const t = lower.split(/\s+/)[1];
+        if (t === "auto") {
+          if (state.themeMode !== "auto") {
+            state.themeMode = "auto";
+            state.themeOverride = null;
+            log("Theme control returned to Redline Crisis Engine (AUTO).");
+            updateCrisisEngine();
+          } else {
+            log("Theme already in AUTO (engine) mode.");
+          }
+        } else if (["green","amber","redline","2049"].includes(t)) {
+          if (t === "2049") unlock2049();
+          setThemeOverride(t);
+        } else {
+          log("Unknown theme. Use: auto, green, amber, redline, 2049");
+        }
+        return;
+      }
+
+      if (lower === "engine status") {
+        log("engine: ticks=" + state.ticks +
+            ", meltdownStage=" + state.meltdownStage +
+            ", overdrive=" + (state.overdrive?"on":"off") +
+            ", lockdown=" + state.lockdown +
+            ", blackChamber=" + state.blackChamber +
+            ", themeMode=" + state.themeMode +
+            ", themeOverride=" + (state.themeOverride || "none") +
+            ", crisisIndex=" + state.crisisIndex.toFixed(1) +
+            ", crisisMode=" + state.crisisMode);
+        return;
+      }
+
+      if (lower === "save-log") {
+        maybePersist("[manual flush]\\n");
+        log("log flush requested (sim)");
+        return;
+      }
+
+      if (lower === "unlock 2049") {
+        unlock2049();
+        return;
+      }
+
+      if (lower === "lockdown on") {
+        if (!state.lockdown) toggleLockdown(true);
+        return;
+      }
+
+      if (lower === "lockdown off") {
+        if (state.lockdown) toggleLockdown(false);
+        return;
+      }
+
+      if (lower === "satlink on") {
+        if (!state.satLink) {
+          state.satLink = true;
+          log("SATLINK routed to sim uplink (visual only).");
+          updateCrisisEngine();
+          renderAll();
+        }
+        return;
+      }
+
+      if (lower === "satlink off") {
+        if (state.satLink) {
+          state.satLink = false;
+          log("SATLINK disconnected (sim).");
+          updateCrisisEngine();
+          renderAll();
+        }
+        return;
+      }
+
+      if (lower === "ghost on") {
+        if (!state.ghostLink) {
+          state.ghostLink = true;
+          log("GHOST MIRROR latched (sim).");
+          updateCrisisEngine();
+          renderAll();
+        }
+        return;
+      }
+
+      if (lower === "ghost off") {
+        if (state.ghostLink) {
+          state.ghostLink = false;
+          log("GHOST MIRROR released (sim).");
+          updateCrisisEngine();
+          renderAll();
+        }
+        return;
+      }
+
+      if (lower === "black on") {
+        if (!state.blackChamber) toggleBlackChamber(true);
+        return;
+      }
+
+      if (lower === "black off") {
+        if (state.blackChamber) toggleBlackChamber(false);
+        return;
+      }
+
+      if (lower === "macro rec") {
+        startMacroRecording();
+        return;
+      }
+
+      if (lower === "macro stop") {
+        if (state.macroRecording) stopMacroRecording();
+        else log("Macro stop: no recording active.");
+        return;
+      }
+
+      if (lower === "macro play") {
+        playMacro();
+        return;
+      }
+
+      if (lower.startsWith("operator set ")) {
+        const name = cmd.slice("operator set ".length).trim();
+        if (!name) {
+          log("operator set: missing name.");
+          return;
+        }
+        state.operatorName = name;
+        updateOperatorLines();
+        log("Operator name set to: " + name);
+        return;
+      }
+
+      if (lower.startsWith("operator level ")) {
+        const n = parseInt(lower.split(/\s+/)[2], 10);
+        if (isNaN(n)) {
+          log("operator level: expected number 0–3.");
+          return;
+        }
+        state.operatorLevel = Math.min(3, Math.max(0, n));
+        updateOperatorLines();
+        log("Operator level set to: " + state.operatorLevel + " (" + levelLabel(state.operatorLevel) + ")");
+        return;
+      }
+
+      if (lower === "net status") {
+        const net = state.net;
+        log(`net status: mode=${net.mode}, latency=${net.latencyMs.toFixed(1)}ms, jitter=${net.jitterMs.toFixed(1)}ms, loss=${net.lossPct.toFixed(2)}%, rate=${net.rate.toFixed(0)} pkt/s, integrity=${net.integrity.toFixed(1)}%`);
+        return;
+      }
+
+      if (lower.startsWith("net ping ")) {
+        const host = cmd.slice("net ping ".length).trim() || "sim-target";
+        fakePing(host);
+        return;
+      }
+
+      if (lower.startsWith("net lookup ")) {
+        const name = cmd.slice("net lookup ".length).trim() || "sim-node";
+        fakeLookup(name);
+        return;
+      }
+
+      if (lower === "net stress") {
+        btnNetStress.click();
+        return;
+      }
+
+      if (lower === "net reset") {
+        btnNetReset.click();
+        return;
+      }
+
+      log("Unknown command — try `help`.");
+    }
+
+    termRun.addEventListener("click", () => {
+      runCommand(termInput.value);
+      termInput.value = "";
+    });
+
+    termInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        runCommand(termInput.value);
+        termInput.value = "";
+      } else if (e.key === "ArrowUp") {
+        if (termHistory.length === 0) return;
+        e.preventDefault();
+        if (termIndex < termHistory.length - 1) termIndex++;
+        termInput.value = termHistory[termIndex];
+      } else if (e.key === "ArrowDown") {
+        if (termHistory.length === 0) return;
+        e.preventDefault();
+        if (termIndex > 0) {
+          termIndex--;
+          termInput.value = termHistory[termIndex];
+        } else {
+          termIndex = -1;
+          termInput.value = "";
+        }
+      } else if (e.key === "Tab") {
+        e.preventDefault();
+        const current = termInput.value.trim().toLowerCase();
+        if (!current) return;
+        const match = commands.find(c => c.startsWith(current));
+        if (match) termInput.value = match;
+      }
+    });
+
+    // ----- Init -----
+    // Start in AUTO mode, engine will pick GREEN based on SAFE crisis state.
+    updateCrisisEngine();
+    loadWorkstationState();
+    renderAll();
+  </script>
 </body>
 </html>
