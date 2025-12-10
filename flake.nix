@@ -1,30 +1,23 @@
 {
-  description = "ChernOS v2.0.0 – Reactor Shell ISO";
+  description = "ChernOS v2.0.0 – reactor control ISO";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
-    impermanence.url = "github:nix-community/impermanence";
   };
 
-  outputs = { self, nixpkgs, impermanence, ... }:
+  outputs = { self, nixpkgs, ... }:
   let
     system = "x86_64-linux";
     pkgs = import nixpkgs {
       inherit system;
-      config.allowUnfree = true; # chromium
+      config.allowUnfree = true;
     };
   in {
+    # NixOS ISO configuration
     nixosConfigurations.chernos-iso = nixpkgs.lib.nixosSystem {
       inherit system;
       modules = [
-        ({ modulesPath, ... }: {
-          imports = [
-            # NixOS official minimal ISO base
-            (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
-            impermanence.nixosModules.impermanence
-            ./hosts/chernos-iso/configuration.nix
-          ];
-        })
+        ./hosts/chernos-iso/configuration.nix
       ];
     };
 
@@ -32,7 +25,7 @@
     packages.${system}.iso =
       self.nixosConfigurations.chernos-iso.config.system.build.isoImage;
 
-    # nix build
+    # Convenience default: nix build
     defaultPackage.${system} = self.packages.${system}.iso;
   };
 }
