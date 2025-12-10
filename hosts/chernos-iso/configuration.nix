@@ -54,8 +54,8 @@
     enable = true;
     wrapperFeatures.gtk = true;
     extraPackages = with pkgs; [
-      firefox        # Frontend (was chromium)
-      foot           # Minimal terminal for debugging
+      foot             # Minimal terminal for debugging
+      firefox          # Kiosk browser (no crashpad drama)
     ];
   };
 
@@ -131,8 +131,8 @@
     vim
     git
     htop
-    firefox
     foot
+    firefox
   ];
 
   ########################################
@@ -181,13 +181,10 @@
     }
 
     # Launch Firefox in kiosk mode on startup (Wayland)
-    exec_always env \
-      MOZ_ENABLE_WAYLAND=1 \
-      MOZ_WEBRENDER=1 \
-      XDG_CURRENT_DESKTOP=chernos \
-      firefox \
-      --kiosk \
-      --private-window \
-      file:///etc/chernos-ui/index.html
+    exec_always env MOZ_ENABLE_WAYLAND=1 XDG_CURRENT_DESKTOP=chernos \
+      ${pkgs.firefox}/bin/firefox \
+        --kiosk \
+        --private-window \
+        file:///etc/chernos-ui/index.html
   '';
 }
