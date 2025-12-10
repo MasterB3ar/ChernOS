@@ -17,7 +17,7 @@
   system.stateVersion = "24.05";
 
   ########################################
-  # Nix settings (inside the ISO)
+  # Nix inside ISO
   ########################################
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
@@ -71,34 +71,31 @@
     extraPackages = with pkgs; [
       chromium           # Frontend
       foot               # Minimal terminal for debugging
-      jq                 # handy
+      jq
     ];
   };
 
   ########################################
-  # greetd – autologin to Sway (+ our config)
+  # greetd – autologin to Sway
   ########################################
 
   services.greetd = {
     enable = true;
     settings = {
       default_session = {
-        # Use our custom sway config
         command = "${pkgs.sway}/bin/sway -c /etc/chernos-sway.conf";
         user = "chernos";
       };
     };
   };
 
-  # Do not override services.getty – ISO module handles it.
-
   ########################################
-  # Boot – let the ISO module handle bootloader, only add Plymouth
+  # Boot – ISO module handles bootloader; we just add Plymouth
   ########################################
 
   boot.plymouth = {
     enable = true;
-    theme = "bgrt";  # simple, safe
+    theme = "bgrt";
   };
 
   ########################################
@@ -116,7 +113,7 @@
   };
 
   ########################################
-  # System packages – keep it minimal
+  # System packages – minimal
   ########################################
 
   environment.systemPackages = with pkgs; [
@@ -165,34 +162,14 @@
     # Exit sway completely (Super+Shift+Q)
     bindsym $mod+Shift+q exec "swaymsg exit"
 
-    # Simple bar so you see time/status (proves Sway is alive)
+    # Simple status bar (time + version)
     bar {
       position bottom
       status_command while true; do date +"%Y-%m-%d %H:%M:%S ChernOS v2.0.0"; sleep 1; done
       font monospace 10
     }
 
-    # Launch Chromium in kiosk mode on startup
-    # - dedicated profile dir in HOME
-    # - Wayland enabled
-    # - crashpad/crash reporter disabled
-    exec_always sh -c '
-      mkdir -p "$HOME/.config/chernos-chromium" &&
-      exec env \
-        MOZ_ENABLE_WAYLAND=1 \
-        QT_QPA_PLATFORM=wayland \
-        XDG_CURRENT_DESKTOP=chernos \
-        ${pkgs.chromium}/bin/chromium \
-          --user-data-dir="$HOME/.config/chernos-chromium" \
-          --kiosk \
-          --noerrdialogs \
-          --disable-session-crashed-bubble \
-          --incognito \
-          --disable-breakpad \
-          --disable-crash-reporter \
-          --enable-features=UseOzonePlatform \
-          --ozone-platform=wayland \
-          file:///etc/chernos-ui/index.html
-    '
+    # Launch Chromium in kiosk mode on startup – everything on ONE line
+    exec_always env MOZ_ENABLE_WAYLAND=1 QT_QPA_PLATFORM=wayland XDG_CURRENT_DESKTOP=chernos ${pkgs.chromium}/bin/chromium --kiosk --noerrdialogs --disable-session-crashed-bubble --incognito --disable-breakpad --disable-crash-reporter --enable-features=UseOzonePlatform --ozone-platform=wayland file:///etc/chernos-ui/index.html
   '';
 }
