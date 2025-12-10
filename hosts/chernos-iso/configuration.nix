@@ -16,7 +16,6 @@
     isNormalUser = true;
     password = "chernos";
     extraGroups = [ "wheel" "audio" "video" "networkmanager" ];
-    shell = pkgs.bashInteractive;
   };
 
   security.sudo.enable = true;
@@ -50,31 +49,35 @@
     driSupport32Bit = true;
   };
 
-  # Sway – basic setup; kiosk config is in /etc/chernos-sway.conf
+  # Sway – only basic wiring; kiosk config is in /etc/chernos-sway.conf
   programs.sway = {
     enable = true;
     wrapperFeatures.gtk = true;
     extraPackages = with pkgs; [
-      chromium         # Frontend
-      foot             # Minimal terminal for debugging
+      firefox        # Frontend (was chromium)
+      foot           # Minimal terminal for debugging
     ];
   };
 
   ########################################
-  # TTY autologin + Sway autostart
+  # greetd – autologin to Sway (+ our config)
   ########################################
 
-  services.getty.autologinUser = lib.mkForce "chernos";
+  services.greetd = {
+    enable = true;
+    settings = {
+      default_session = {
+        # Use our custom sway config
+        command = "${pkgs.sway}/bin/sway -c /etc/chernos-sway.conf";
+        user = "chernos";
+      };
+    };
+  };
 
-  programs.bash.loginShellInit = ''
-    # Only auto-start sway on the first TTY, and only if no Wayland/X is running
-    if [ "$(tty)" = "/dev/tty1" ] && [ -z "$WAYLAND_DISPLAY" ] && [ -z "$DISPLAY" ]; then
-      exec sway -c /etc/chernos-sway.conf
-    fi
-  '';
+  # NOTE: do NOT override services.getty here – the ISO modules handle it.
 
   ########################################
-  # Boot – let ISO module handle bootloader, we only do Plymouth
+  # Boot – let the ISO module handle bootloader, we only do Plymouth
   ########################################
 
   boot.plymouth = {
@@ -128,7 +131,7 @@
     vim
     git
     htop
-    chromium
+    firefox
     foot
   ];
 
@@ -170,26 +173,21 @@
     # Exit sway completely (Super+Shift+Q)
     bindsym $mod+Shift+q exec "swaymsg exit"
 
-    # Simple bar so you see time/status
+    # Simple bar so you see time/status (proves Sway is alive)
     bar {
       position bottom
       status_command while true; do date; sleep 1; done
       font monospace 10
     }
 
-    # Hotkey: Super+C to start Chromium manually
-    bindsym $mod+c exec /run/current-system/sw/bin/chromium \
-      --no-sandbox \
-      --disable-gpu \
-      --incognito \
+    # Launch Firefox in kiosk mode on startup (Wayland)
+    exec_always env \
+      MOZ_ENABLE_WAYLAND=1 \
+      MOZ_WEBRENDER=1 \
+      XDG_CURRENT_DESKTOP=chernos \
+      firefox \
+      --kiosk \
+      --private-window \
       file:///etc/chernos-ui/index.html
-
-    # Autostart Chromium at login (same command)
-    exec_always /run/current-system/sw/bin/chromium \
-      --no-sandbox \
-      --disable-gpu \
-      --incognito \
-      file:///etc/chernos-ui/index.html \
-      >/tmp/chernos-chromium.log 2>&1
   '';
 }
