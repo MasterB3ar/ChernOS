@@ -6,221 +6,163 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="styles/blackchamber.css" />
 </head>
-<body class="bc-body">
-  <!-- Boot overlay -->
-  <div id="boot-overlay" class="bc-boot-overlay">
-    <div class="bc-boot-frame">
-      <div class="bc-boot-title">CHERNOS V2.0.0</div>
-      <div class="bc-boot-sub">REACTOR CONTROL MATRIX</div>
-      <div class="bc-boot-log" id="boot-log">
-        <div>> BOOTSTRAP: INIT CORE-BUS</div>
-        <div>> LINK: CORE-1 / FLOW-A / SHIELD-X / DIAG-NET / OPS-TOWER</div>
-        <div>> STATUS: STANDBY – HUMAN CONFIRMATION REQUIRED</div>
-      </div>
-      <button
-        id="boot-start"
-        class="bc-boot-button"
-        onclick="document.getElementById('boot-overlay').classList.add('bc-boot-overlay--hidden');"
-      >
-        ARM REACTOR CONTROL
+<body class="chernos-root">
+  <!-- Boot / intro screen -->
+  <div id="boot-screen" class="boot-screen">
+    <div class="boot-card">
+      <div class="boot-logo-pulse"></div>
+      <h1 class="boot-title">ChernOS v2.0.0</h1>
+      <p class="boot-subtitle">
+        Fictional nuclear reactor control environment. Not connected to any real system.
+      </p>
+      <button id="enter-btn" class="btn-primary">
+        Enter Control Room
       </button>
-      <div class="bc-boot-hint">
-        Use in a virtual machine. Not a real reactor. <span class="bc-blink">DO NOT TRUST THIS FOR SAFETY.</span>
-      </div>
+      <p class="boot-footer">
+        SYSTEM ID: <span class="tag">CHERNOS-VM</span>
+        • PROFILE: <span class="tag">BLACKCHAMBER</span>
+      </p>
     </div>
   </div>
 
-  <div class="bc-shell">
-    <header class="bc-header">
-      <div class="bc-header-left">
-        <div class="bc-logo-glow">CHERNOS</div>
-        <div class="bc-header-meta">
-          v2.0.0 · NODE: REACTOR-CTRL-01 · REGION: BLACKCHAMBER
+  <!-- Main reactor UI -->
+  <div id="app-root" class="app hidden">
+    <header class="app-header">
+      <div class="app-header-left">
+        <div class="app-title">CORE CONTROL – ChernOS</div>
+        <div class="app-subtitle">
+          Reactor status:
+          <span id="reactor-status-label" class="status-pill status-nominal">Nominal</span>
         </div>
       </div>
-      <div class="bc-header-right">
-        <div class="bc-status-pill bc-status-pill--ok" id="pill-reactor">
-          REACTOR · NOMINAL
+      <div class="app-header-right">
+        <div class="header-line">
+          <span class="header-label">Time</span>
+          <span id="clock-readout" class="header-value">--:--:--</span>
         </div>
-        <div class="bc-status-pill bc-status-pill--warn" id="pill-shield">
-          SHIELD-X · STANDBY
-        </div>
-        <div class="bc-status-pill bc-status-pill--idle" id="pill-net">
-          DIAG-NET · LINKED
+        <div class="header-line">
+          <span class="header-label">Profile</span>
+          <span class="header-value">blackchamber</span>
         </div>
       </div>
     </header>
 
-    <main class="bc-main-grid">
-      <!-- Reactor core -->
-      <section class="bc-panel bc-panel--core">
-        <div class="bc-panel-header">
-          <span>CORE-1 / PRIMARY REACTOR</span>
-          <span id="core-mode">MODE: IDLE</span>
-        </div>
-        <div class="bc-core-layout">
-          <div class="bc-core-ring">
-            <div class="bc-core-ring-outer"></div>
-            <div class="bc-core-ring-inner" id="core-temp-ring">
-              <div class="bc-core-temp-value" id="core-temp-value">275K</div>
-              <div class="bc-core-temp-label">CORE TEMP</div>
-            </div>
-            <div class="bc-core-power">
-              <div class="bc-core-power-label">OUTPUT</div>
-              <div class="bc-core-power-value" id="core-output">0.42 TW</div>
+    <main class="app-grid">
+      <!-- Core / temperature ring -->
+      <section class="panel core-panel">
+        <h2>Core Envelope</h2>
+        <div class="core-layout">
+          <div class="core-ring">
+            <div class="core-ring-inner">
+              <div class="core-temp-label">CORE TEMP</div>
+              <div id="core-temp" class="core-temp-value">312.4 K</div>
+              <div id="core-load" class="core-load-label">Load: 47%</div>
             </div>
           </div>
-          <div class="bc-core-side">
-            <div class="bc-core-gauge">
-              <div class="bc-gauge-label">PRESSURE</div>
-              <div class="bc-gauge-bar">
-                <div id="gauge-pressure" class="bc-gauge-fill"></div>
-              </div>
-              <div class="bc-gauge-value" id="gauge-pressure-value">1.0 MPa</div>
-            </div>
-            <div class="bc-core-gauge">
-              <div class="bc-gauge-label">COOLANT FLOW</div>
-              <div class="bc-gauge-bar">
-                <div id="gauge-coolant" class="bc-gauge-fill"></div>
-              </div>
-              <div class="bc-gauge-value" id="gauge-coolant-value">62 %</div>
-            </div>
 
-            <div class="bc-lever-block">
-              <div class="bc-lever-label">MANUAL COOLANT ROUTING</div>
-              <div class="bc-lever-row">
-                <button class="bc-lever-btn" id="coolant-minus">- divert</button>
-                <div class="bc-lever-status" id="coolant-manual-state">AUTO</div>
-                <button class="bc-lever-btn" id="coolant-plus">+ inject</button>
-              </div>
-              <div class="bc-lever-hint">
-                Short taps fine-tune; hold to aggressively dump coolant.
+          <div class="core-metrics">
+            <div class="metric-row">
+              <div class="metric-label">Pressure</div>
+              <div id="core-pressure" class="metric-value">87.3 bar</div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-label">Coolant Flow</div>
+              <div id="coolant-flow" class="metric-value">72.1 %</div>
+            </div>
+            <div class="metric-row">
+              <div class="metric-label">Containment</div>
+              <div id="containment-status" class="metric-value metric-ok">
+                Sealed
               </div>
             </div>
-
-            <div class="bc-core-flags">
-              <div class="bc-flag bc-flag--ok" id="flag-containment">
-                SECONDARY CONTAINMENT · SEALED
-              </div>
-              <div class="bc-flag bc-flag--ok" id="flag-safeguard">
-                SAFEGUARD RECHARGE · 100 %
-              </div>
+            <div class="metric-row">
+              <div class="metric-label">Safeguard Charge</div>
+              <div id="safeguard-charge" class="metric-value">83 %</div>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Network topology -->
-      <section class="bc-panel bc-panel--network">
-        <div class="bc-panel-header">
-          <span>NETWORK TOPOLOGY / BLACKCHAMBER GRID</span>
-          <span id="net-mode">MODE: STABLE</span>
-        </div>
-        <div class="bc-network-topology">
-          <div class="bc-net-node" data-node="CORE-1" id="node-core">
-            <div class="bc-net-label">CORE-1</div>
-            <div class="bc-net-role">POWER NODE</div>
-          </div>
-          <div class="bc-net-node" data-node="FLOW-A" id="node-flow">
-            <div class="bc-net-label">FLOW-A</div>
-            <div class="bc-net-role">COOLANT ROUTER</div>
-          </div>
-          <div class="bc-net-node" data-node="SHIELD-X" id="node-shield">
-            <div class="bc-net-label">SHIELD-X</div>
-            <div class="bc-net-role">CONTAINMENT FIELD</div>
-          </div>
-          <div class="bc-net-node" data-node="DIAG-NET" id="node-diag">
-            <div class="bc-net-label">DIAG-NET</div>
-            <div class="bc-net-role">SENSOR MESH</div>
-          </div>
-          <div class="bc-net-node" data-node="OPS-TOWER" id="node-ops">
-            <div class="bc-net-label">OPS-TOWER</div>
-            <div class="bc-net-role">CONTROL PLANE</div>
-          </div>
+      <!-- Network nodes -->
+      <section class="panel network-panel">
+        <h2>Network Nodes</h2>
+        <ul class="node-list">
+          <li>
+            <span class="node-name">CORE-1</span>
+            <span id="node-core1" class="node-status node-ok">ONLINE</span>
+          </li>
+          <li>
+            <span class="node-name">FLOW-A</span>
+            <span id="node-flowa" class="node-status node-ok">ONLINE</span>
+          </li>
+          <li>
+            <span class="node-name">SHIELD-X</span>
+            <span id="node-shieldx" class="node-status node-ok">ARMED</span>
+          </li>
+          <li>
+            <span class="node-name">DIAG-NET</span>
+            <span id="node-diagnet" class="node-status node-ok">MONITOR</span>
+          </li>
+          <li>
+            <span class="node-name">OPS-TOWER</span>
+            <span id="node-opstower" class="node-status node-ok">LINKED</span>
+          </li>
+        </ul>
+        <p class="panel-footnote">
+          Network simulation only. No real equipment is controlled.
+        </p>
+      </section>
 
-          <svg class="bc-net-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <line x1="20" y1="50" x2="50" y2="20" class="bc-net-line" />
-            <line x1="20" y1="50" x2="50" y2="80" class="bc-net-line" />
-            <line x1="50" y1="20" x2="80" y2="40" class="bc-net-line" />
-            <line x1="50" y1="80" x2="80" y2="60" class="bc-net-line" />
-            <line x1="80" y1="40" x2="80" y2="60" class="bc-net-line" />
-          </svg>
-        </div>
-
-        <div class="bc-net-footer">
-          <div class="bc-net-packets">
-            PACKETS: <span id="net-packets">0</span> /s
-          </div>
-          <div class="bc-net-latency">
-            LATENCY: <span id="net-latency">2.7</span> ms
-          </div>
-          <div class="bc-net-btns">
-            <button id="btn-simulate-fault" class="bc-small-btn">
-              simulate &lt;fault&gt;
-            </button>
-            <button id="btn-audio-test" class="bc-small-btn">
-              audio test &lt;core-hum&gt;
-            </button>
-          </div>
+      <!-- Faults / events -->
+      <section class="panel faults-panel">
+        <h2>Fault Events</h2>
+        <ul id="fault-list" class="fault-list">
+          <li class="fault-line fault-empty">
+            No active faults. System is running within nominal envelope.
+          </li>
+        </ul>
+        <div class="fault-controls">
+          <button id="btn-inject-fault" class="btn-secondary">
+            Simulate Fault
+          </button>
+          <button id="btn-clear-faults" class="btn-ghost">
+            Clear Faults
+          </button>
         </div>
       </section>
 
-      <!-- Events / fault log -->
-      <section class="bc-panel bc-panel--events">
-        <div class="bc-panel-header">
-          <span>EVENT LOG / FAULTS &amp; MELTDOWN</span>
-          <span id="meltdown-state">MELTDOWN: NOT ACTIVE</span>
-        </div>
-        <div class="bc-events-layout">
-          <div class="bc-events-log" id="event-log">
-            <!-- JS will append entries here -->
+      <!-- Command console -->
+      <section class="panel console-panel">
+        <h2>Command Console</h2>
+        <div class="console-body">
+          <div id="console-log" class="console-log">
+            <div class="log-line log-system">
+              [system] ChernOS v2.0.0 – fictive reactor control UI.
+            </div>
+            <div class="log-line log-system">
+              [system] Type commands like <span class="kbd">audio test 1</span> or
+              <span class="kbd">simulate ghost-rad</span>.
+            </div>
           </div>
-          <div class="bc-events-side">
-            <div class="bc-meltdown-meter">
-              <div class="bc-meltdown-label">MELTDOWN PROGRESSION</div>
-              <div class="bc-meltdown-bar">
-                <div id="meltdown-fill" class="bc-meltdown-fill"></div>
-              </div>
-              <div class="bc-meltdown-value" id="meltdown-value">
-                0 %
-              </div>
-            </div>
-            <div class="bc-toggle-group">
-              <div class="bc-toggle-row">
-                <label>
-                  <input type="checkbox" id="toggle-night" />
-                  Night shift mode
-                </label>
-              </div>
-              <div class="bc-toggle-row">
-                <label>
-                  <input type="checkbox" id="toggle-alarms" checked />
-                  Audio alarms
-                </label>
-              </div>
-              <div class="bc-toggle-row">
-                <label>
-                  <input type="checkbox" id="toggle-autofault" checked />
-                  Auto fault injection
-                </label>
-              </div>
-            </div>
-            <div class="bc-footer-hints">
-              <div>theme blackchamber (full UI style)</div>
-              <div>simulate &lt;fault&gt; · audio test &lt;id&gt;</div>
-            </div>
+          <div class="console-input-row">
+            <span class="prompt-label">chernos&gt;</span>
+            <input
+              id="console-input"
+              class="console-input"
+              type="text"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="audio test 1"
+            />
           </div>
         </div>
       </section>
     </main>
 
-    <footer class="bc-footer">
-      <div class="bc-footer-left" id="footer-left">
-        INTERNAL BUS: IDLE · PLUGINS: core, net, faults
-      </div>
-      <div class="bc-footer-right">
-        HOTKEYS: [Super+Enter] terminal · [Super+Shift+Q] exit Sway
-      </div>
+    <footer class="app-footer">
+      <span>PROFILE: blackchamber</span>
+      <span>MODE: simulation only – no real-world control</span>
+      <span>© ChernOS – fictional system</span>
     </footer>
   </div>
 
