@@ -17,7 +17,11 @@
         <div>> LINK: CORE-1 / FLOW-A / SHIELD-X / DIAG-NET / OPS-TOWER</div>
         <div>> STATUS: STANDBY – HUMAN CONFIRMATION REQUIRED</div>
       </div>
-      <button id="boot-start" class="bc-boot-button">
+      <button
+        id="boot-start"
+        class="bc-boot-button"
+        onclick="document.getElementById('boot-overlay').classList.add('bc-boot-overlay--hidden');"
+      >
         ARM REACTOR CONTROL
       </button>
       <div class="bc-boot-hint">
