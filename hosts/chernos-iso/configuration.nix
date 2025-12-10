@@ -55,7 +55,7 @@
     wrapperFeatures.gtk = true;
     extraPackages = with pkgs; [
       foot             # Minimal terminal for debugging
-      firefox          # Kiosk browser (no crashpad drama)
+      firefox          # Kiosk browser
     ];
   };
 
@@ -180,11 +180,14 @@
       font monospace 10
     }
 
-    # Launch Firefox in kiosk mode on startup (Wayland)
-    exec_always env MOZ_ENABLE_WAYLAND=1 XDG_CURRENT_DESKTOP=chernos \
+    # Launch Firefox in kiosk mode on startup with its own temp profile
+    exec_always sh -c 'mkdir -p /tmp/chernos-fx-profile && \
+      env MOZ_ENABLE_WAYLAND=1 XDG_CURRENT_DESKTOP=chernos \
       ${pkgs.firefox}/bin/firefox \
+        --no-remote \
+        --profile /tmp/chernos-fx-profile \
         --kiosk \
         --private-window \
-        file:///etc/chernos-ui/index.html
+        file:///etc/chernos-ui/index.html'
   '';
 }
