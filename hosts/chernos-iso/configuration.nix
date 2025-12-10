@@ -1,12 +1,26 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, modulesPath, ... }:
 
 {
+  ########################################
+  # Base: ISO image modules
+  ########################################
+
+  imports = [
+    (modulesPath + "/installer/cd-dvd/installation-cd-minimal.nix")
+  ];
+
   ########################################
   # Basic system identity
   ########################################
 
   networking.hostName = "chernos";
   system.stateVersion = "24.05";
+
+  ########################################
+  # Nix settings (inside the ISO)
+  ########################################
+
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   ########################################
   # User & autologin target
@@ -16,6 +30,7 @@
     isNormalUser = true;
     password = "chernos";
     extraGroups = [ "wheel" "audio" "video" "networkmanager" ];
+    home = "/home/chernos";
   };
 
   security.sudo.enable = true;
@@ -39,7 +54,7 @@
   # Graphics / Wayland / Sway kiosk
   ########################################
 
-  # No Xorg
+  # No Xorg – Wayland only
   services.xserver.enable = false;
 
   # OpenGL / Mesa
@@ -49,13 +64,14 @@
     driSupport32Bit = true;
   };
 
-  # Sway – only basic wiring; kiosk config is in /etc/chernos-sway.conf
+  # Sway – main WM; kiosk config goes into /etc/chernos-sway.conf
   programs.sway = {
     enable = true;
     wrapperFeatures.gtk = true;
     extraPackages = with pkgs; [
-      chromium         # Frontend
-      foot             # Minimal terminal for debugging
+      chromium           # Frontend
+      foot               # Minimal terminal for debugging
+      jq                 # handy
     ];
   };
 
@@ -74,15 +90,15 @@
     };
   };
 
-  # NOTE: do NOT override services.getty here – the ISO modules handle it.
+  # Do not override services.getty – ISO module handles it.
 
   ########################################
-  # Boot – let the ISO module handle bootloader, we only do Plymouth
+  # Boot – let the ISO module handle bootloader, only add Plymouth
   ########################################
 
   boot.plymouth = {
     enable = true;
-    theme = "bgrt";  # safe default, you can override with your own later
+    theme = "bgrt";  # simple, safe
   };
 
   ########################################
@@ -98,30 +114,6 @@
     alsa.support32Bit = true;
     pulse.enable = true;
   };
-
-  ########################################
-  # Persistence v3 (profiles, states, logs)
-  # /persist is optional (label CHERNOS_DATA), used if present
-  ########################################
-
-  fileSystems."/persist" = {
-    device = "/dev/disk/by-label/CHERNOS_DATA";
-    fsType = "ext4";
-    options = [ "nofail" ]; # boot even if disk not present
-  };
-
-  environment.persistence."/persist" = {
-    hideMounts = true;
-    directories = [
-      "/var/lib/chernos"                 # reactor state, logs
-      "/home/chernos/.config/chernos"    # UI prefs, profiles
-    ];
-  };
-
-  # Make sure runtime dirs exist
-  systemd.tmpfiles.rules = [
-    "d /var/lib/chernos 0755 chernos chernos -"
-  ];
 
   ########################################
   # System packages – keep it minimal
@@ -153,7 +145,7 @@
   ########################################
 
   environment.etc."chernos-sway.conf".text = ''
-    ### ChernOS Sway kiosk config
+    ### ChernOS v2.0.0 – Sway kiosk config
 
     # Use Super (Windows key) as mod
     set $mod Mod4
@@ -164,8 +156,8 @@
     # Hide cursor after 5 seconds of inactivity
     seat * hide_cursor 5000
 
-    # Always start a terminal so there is at least one window
-    exec foot
+    # Always start a terminal so there is at least one window (debug)
+    exec_always foot
 
     # Debug terminal (Super+Enter)
     bindsym $mod+Return exec foot
@@ -176,21 +168,31 @@
     # Simple bar so you see time/status (proves Sway is alive)
     bar {
       position bottom
-      status_command while true; do date; sleep 1; done
+      status_command while true; do date +"%Y-%m-%d %H:%M:%S ChernOS v2.0.0"; sleep 1; done
       font monospace 10
     }
 
-    # Launch Chromium in kiosk mode on startup with its own temp profile
-    exec_always sh -c 'mkdir -p /tmp/chernos-chromium && \
-      env MOZ_ENABLE_WAYLAND=1 QT_QPA_PLATFORM=wayland XDG_CURRENT_DESKTOP=chernos \
-      ${pkgs.chromium}/bin/chromium \
-        --user-data-dir=/tmp/chernos-chromium \
-        --no-first-run \
-        --no-default-browser-check \
-        --kiosk \
-        --incognito \
-        --disable-breakpad \
-        --disable-crash-reporter \
-        file:///etc/chernos-ui/index.html'
+    # Launch Chromium in kiosk mode on startup
+    # - dedicated profile dir in HOME
+    # - Wayland enabled
+    # - crashpad/crash reporter disabled
+    exec_always sh -c '
+      mkdir -p "$HOME/.config/chernos-chromium" &&
+      exec env \
+        MOZ_ENABLE_WAYLAND=1 \
+        QT_QPA_PLATFORM=wayland \
+        XDG_CURRENT_DESKTOP=chernos \
+        ${pkgs.chromium}/bin/chromium \
+          --user-data-dir="$HOME/.config/chernos-chromium" \
+          --kiosk \
+          --noerrdialogs \
+          --disable-session-crashed-bubble \
+          --incognito \
+          --disable-breakpad \
+          --disable-crash-reporter \
+          --enable-features=UseOzonePlatform \
+          --ozone-platform=wayland \
+          file:///etc/chernos-ui/index.html
+    '
   '';
 }
