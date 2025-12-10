@@ -54,8 +54,8 @@
     enable = true;
     wrapperFeatures.gtk = true;
     extraPackages = with pkgs; [
+      chromium         # Frontend
       foot             # Minimal terminal for debugging
-      firefox          # Kiosk browser
     ];
   };
 
@@ -131,8 +131,8 @@
     vim
     git
     htop
+    chromium
     foot
-    firefox
   ];
 
   ########################################
@@ -165,7 +165,7 @@
     seat * hide_cursor 5000
 
     # Always start a terminal so there is at least one window
-    exec_always foot
+    exec foot
 
     # Debug terminal (Super+Enter)
     bindsym $mod+Return exec foot
@@ -180,14 +180,17 @@
       font monospace 10
     }
 
-    # Launch Firefox in kiosk mode on startup with its own temp profile
-    exec_always sh -c 'mkdir -p /tmp/chernos-fx-profile && \
-      env MOZ_ENABLE_WAYLAND=1 XDG_CURRENT_DESKTOP=chernos \
-      ${pkgs.firefox}/bin/firefox \
-        --no-remote \
-        --profile /tmp/chernos-fx-profile \
+    # Launch Chromium in kiosk mode on startup with its own temp profile
+    exec_always sh -c 'mkdir -p /tmp/chernos-chromium && \
+      env MOZ_ENABLE_WAYLAND=1 QT_QPA_PLATFORM=wayland XDG_CURRENT_DESKTOP=chernos \
+      ${pkgs.chromium}/bin/chromium \
+        --user-data-dir=/tmp/chernos-chromium \
+        --no-first-run \
+        --no-default-browser-check \
         --kiosk \
-        --private-window \
+        --incognito \
+        --disable-breakpad \
+        --disable-crash-reporter \
         file:///etc/chernos-ui/index.html'
   '';
 }
