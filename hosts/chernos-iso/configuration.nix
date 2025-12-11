@@ -104,20 +104,6 @@
   # /persist is optional (label CHERNOS_DATA), used if present
   ########################################
 
-fileSystems."/persist" = {
-  device = "/dev/disk/by-label/CHERNOS_DATA";
-  fsType  = "ext4";
-  options = [ "nofail" ];
-  neededForBoot = true;
-};
-
-  environment.persistence."/persist" = {
-    hideMounts = true;
-    directories = [
-      "/var/lib/chernos"                 # reactor state, logs
-      "/home/chernos/.config/chernos"    # UI prefs, profiles
-    ];
-  };
 
   # Make sure runtime dirs exist (including Firefox profile dir)
   systemd.tmpfiles.rules = [
