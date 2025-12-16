@@ -1,171 +1,118 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>ChernOS v2.0.0 – Reactor Control</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ChernOS v2.0.0 — Blackchamber</title>
   <link rel="stylesheet" href="styles/blackchamber.css" />
 </head>
-<body class="chernos-root">
-  <!-- Boot / intro screen -->
-  <div id="boot-screen" class="boot-screen">
+<body>
+  <div id="boot">
     <div class="boot-card">
-      <div class="boot-logo-pulse"></div>
-      <h1 class="boot-title">ChernOS v2.0.0</h1>
-      <p class="boot-subtitle">
-        Fictional nuclear reactor control environment. Not connected to any real system.
-      </p>
-      <button id="enter-btn" class="btn-primary">
-        Enter Control Room
-      </button>
-      <p class="boot-footer">
-        SYSTEM ID: <span class="tag">CHERNOS-VM</span>
-        • PROFILE: <span class="tag">BLACKCHAMBER</span>
-      </p>
+      <div class="boot-title">CHERNOS // BLACKCHAMBER</div>
+      <div class="boot-sub">Reactor control interface (fictional)</div>
+      <button id="engage" class="btn">ENGAGE CONSOLE</button>
+      <div class="boot-hint">If audio is muted, press ENGAGE again.</div>
     </div>
   </div>
 
-  <!-- Main reactor UI -->
-  <div id="app-root" class="app hidden">
-    <header class="app-header">
-      <div class="app-header-left">
-        <div class="app-title">CORE CONTROL – ChernOS</div>
-        <div class="app-subtitle">
-          Reactor status:
-          <span id="reactor-status-label" class="status-pill status-nominal">Nominal</span>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark"></div>
+      <div class="brand-text">
+        <div class="brand-name">ChernOS</div>
+        <div class="brand-ver">v2.0.0 — Blackchamber</div>
+      </div>
+    </div>
+
+    <div class="status">
+      <div class="pill" id="pill-mode">MODE: NORMAL</div>
+      <div class="pill" id="pill-net">NET: DIAG-NET</div>
+      <div class="pill" id="pill-time">--:--:--</div>
+    </div>
+  </header>
+
+  <main class="grid">
+    <section class="panel">
+      <div class="panel-title">CORE-1 TEMPERATURE</div>
+      <div class="ring-wrap">
+        <canvas id="ring" width="280" height="280"></canvas>
+        <div class="ring-readout">
+          <div class="big" id="tempValue">--</div>
+          <div class="small">C° CORE</div>
         </div>
       </div>
-      <div class="app-header-right">
-        <div class="header-line">
-          <span class="header-label">Time</span>
-          <span id="clock-readout" class="header-value">--:--:--</span>
+      <div class="meter-row">
+        <div class="meter">
+          <div class="meter-label">COOLANT FLOW</div>
+          <div class="meter-bar"><div id="flowBar" class="meter-fill"></div></div>
         </div>
-        <div class="header-line">
-          <span class="header-label">Profile</span>
-          <span class="header-value">blackchamber</span>
+        <div class="meter">
+          <div class="meter-label">CONTAINMENT</div>
+          <div class="meter-bar"><div id="contBar" class="meter-fill"></div></div>
         </div>
       </div>
-    </header>
+    </section>
 
-    <main class="app-grid">
-      <!-- Core / temperature ring -->
-      <section class="panel core-panel">
-        <h2>Core Envelope</h2>
-        <div class="core-layout">
-          <div class="core-ring">
-            <div class="core-ring-inner">
-              <div class="core-temp-label">CORE TEMP</div>
-              <div id="core-temp" class="core-temp-value">312.4 K</div>
-              <div id="core-load" class="core-load-label">Load: 47%</div>
-            </div>
-          </div>
-
-          <div class="core-metrics">
-            <div class="metric-row">
-              <div class="metric-label">Pressure</div>
-              <div id="core-pressure" class="metric-value">87.3 bar</div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label">Coolant Flow</div>
-              <div id="coolant-flow" class="metric-value">72.1 %</div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label">Containment</div>
-              <div id="containment-status" class="metric-value metric-ok">
-                Sealed
-              </div>
-            </div>
-            <div class="metric-row">
-              <div class="metric-label">Safeguard Charge</div>
-              <div id="safeguard-charge" class="metric-value">83 %</div>
-            </div>
-          </div>
+    <section class="panel">
+      <div class="panel-title">REACTOR BOARD</div>
+      <div class="board">
+        <div class="tile flicker">
+          <div class="tile-h">SHIELD-X</div>
+          <div class="tile-v" id="shieldV">STABLE</div>
         </div>
-      </section>
-
-      <!-- Network nodes -->
-      <section class="panel network-panel">
-        <h2>Network Nodes</h2>
-        <ul class="node-list">
-          <li>
-            <span class="node-name">CORE-1</span>
-            <span id="node-core1" class="node-status node-ok">ONLINE</span>
-          </li>
-          <li>
-            <span class="node-name">FLOW-A</span>
-            <span id="node-flowa" class="node-status node-ok">ONLINE</span>
-          </li>
-          <li>
-            <span class="node-name">SHIELD-X</span>
-            <span id="node-shieldx" class="node-status node-ok">ARMED</span>
-          </li>
-          <li>
-            <span class="node-name">DIAG-NET</span>
-            <span id="node-diagnet" class="node-status node-ok">MONITOR</span>
-          </li>
-          <li>
-            <span class="node-name">OPS-TOWER</span>
-            <span id="node-opstower" class="node-status node-ok">LINKED</span>
-          </li>
-        </ul>
-        <p class="panel-footnote">
-          Network simulation only. No real equipment is controlled.
-        </p>
-      </section>
-
-      <!-- Faults / events -->
-      <section class="panel faults-panel">
-        <h2>Fault Events</h2>
-        <ul id="fault-list" class="fault-list">
-          <li class="fault-line fault-empty">
-            No active faults. System is running within nominal envelope.
-          </li>
-        </ul>
-        <div class="fault-controls">
-          <button id="btn-inject-fault" class="btn-secondary">
-            Simulate Fault
-          </button>
-          <button id="btn-clear-faults" class="btn-ghost">
-            Clear Faults
-          </button>
+        <div class="tile flicker">
+          <div class="tile-h">FLOW-A</div>
+          <div class="tile-v" id="flowV">NOMINAL</div>
         </div>
-      </section>
-
-      <!-- Command console -->
-      <section class="panel console-panel">
-        <h2>Command Console</h2>
-        <div class="console-body">
-          <div id="console-log" class="console-log">
-            <div class="log-line log-system">
-              [system] ChernOS v2.0.0 – fictive reactor control UI.
-            </div>
-            <div class="log-line log-system">
-              [system] Type commands like <span class="kbd">audio test 1</span> or
-              <span class="kbd">simulate ghost-rad</span>.
-            </div>
-          </div>
-          <div class="console-input-row">
-            <span class="prompt-label">chernos&gt;</span>
-            <input
-              id="console-input"
-              class="console-input"
-              type="text"
-              autocomplete="off"
-              spellcheck="false"
-              placeholder="audio test 1"
-            />
-          </div>
+        <div class="tile flicker">
+          <div class="tile-h">OPS-TOWER</div>
+          <div class="tile-v" id="opsV">ONLINE</div>
         </div>
-      </section>
-    </main>
+        <div class="tile flicker">
+          <div class="tile-h">DIAG-NET</div>
+          <div class="tile-v" id="diagV">READY</div>
+        </div>
+      </div>
 
-    <footer class="app-footer">
-      <span>PROFILE: blackchamber</span>
-      <span>MODE: simulation only – no real-world control</span>
-      <span>© ChernOS – fictional system</span>
-    </footer>
-  </div>
+      <div class="controls">
+        <div class="lever">
+          <div class="lever-label">SAFEGUARD</div>
+          <input id="safeguard" type="range" min="0" max="100" value="72" />
+          <div class="lever-read"><span id="safePct">72</span>%</div>
+        </div>
 
-  <script src="main.js"></script>
+        <div class="btn-row">
+          <button id="btn-alarm" class="btn danger">ARM ALARM</button>
+          <button id="btn-night" class="btn">NIGHT SHIFT</button>
+          <button id="btn-meltdown" class="btn warn">SIMULATE MELTDOWN</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-title">NETWORK TOPOLOGY</div>
+      <div id="topology" class="topology"></div>
+
+      <div class="panel-subtitle">COMMAND TERMINAL</div>
+      <div class="term">
+        <div class="term-log" id="termLog" aria-live="polite"></div>
+        <form id="termForm" class="term-form" autocomplete="off">
+          <span class="prompt">chernos&gt;</span>
+          <input id="termInput" class="term-input" spellcheck="false" />
+        </form>
+      </div>
+
+      <div class="help">
+        <div class="help-item"><span class="k">simulate</span> <span class="v">sensor|pump|pressure|ghost-rad|meltdown</span></div>
+        <div class="help-item"><span class="k">net</span> <span class="v">status|scan|trace|throttle</span></div>
+        <div class="help-item"><span class="k">audio</span> <span class="v">test &lt;id&gt; | mute</span></div>
+      </div>
+    </section>
+  </main>
+
+  <audio id="alarmAudio" preload="auto"></audio>
+
+  <script src="main.js" defer></script>
 </body>
 </html>
