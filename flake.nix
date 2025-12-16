@@ -26,13 +26,18 @@
             "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
           ];
 
-          # ISO identity
-          isoImage.isoName = "ChernOS-v2.0.0-x86_64-linux.iso";
-          isoImage.volumeID = "CHERNOS_2_0_0";
+# Base ISO module
+({ lib, ... }: {
+  imports = [
+    "${nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-minimal.nix"
+  ];
 
-          # Keep ISO leaner
-          documentation.enable = false;
-        })
+  # ISO identity (override base module defaults)
+  isoImage.isoName = lib.mkForce "ChernOS-v2.0.0-x86_64-linux.iso";
+  isoImage.volumeID = lib.mkForce "CHERNOS_2_0_0";
+
+  documentation.enable = false;
+})
 
         # Impermanence provides environment.persistence.*
         impermanence.nixosModules.impermanence
