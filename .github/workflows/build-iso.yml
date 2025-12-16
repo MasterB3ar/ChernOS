@@ -1,36 +1,40 @@
 name: Build ChernOS ISO
 
 on:
+  workflow_dispatch:
   push:
-    branches:
-      - main        # change this if your default branch is not "main"
-  workflow_dispatch: # allows manual runs from the GitHub UI
-
-permissions:
-  contents: read
+    branches: [ "main" ]
+    paths:
+      - "flake.nix"
+      - "hosts/**"
+      - "ui/**"
+      - ".github/workflows/build-iso.yml"
 
 jobs:
-  build-iso:
+  build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repo
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install Nix
-        uses: cachix/install-nix-action@v30
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+        uses: DeterminateSystems/nix-installer-action@v12
 
-      - name: Show flake outputs (debug)
-        run: nix flake show
+      - name: Enable cache
+        uses: DeterminateSystems/magic-nix-cache-action@v7
 
-      - name: Build ChernOS ISO
+      - name: Build ISO
         run: |
-          nix build .#nixosConfigurations.chernos-iso.config.system.build.isoImage
+          nix build .#iso -L
+
+      - name: List outputs
+        run: |
+          ls -lah result || true
+          ls -lah result/iso || true
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
         with:
-          name: chernos-iso
+          name: ChernOS-ISO
           path: result/iso/*.iso
+          if-no-files-found: error
