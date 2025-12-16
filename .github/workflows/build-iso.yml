@@ -25,7 +25,7 @@ jobs:
 
       - name: Build ISO
         run: |
-          nix build .#iso -L
+          nix build --accept-flake-config .#iso -L
 
       - name: List outputs
         run: |
