@@ -1,5 +1,5 @@
 {
-  description = "ChernOS v1.4.0 — Reactor Overdrive";
+  description = "ChernOS v1.9.5 — Reactor Overdrive";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
 
@@ -17,7 +17,7 @@ terminal_output gfxterm
 color_normal cfeecb 000000
 color_highlight bff9a8 000000
 
-menuentry "ChernOS v1.4.0 Live" {
+menuentry "ChernOS v1.9.5 Live" {
   set gfxpayload=keep
 }
 EOF
