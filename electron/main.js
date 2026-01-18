@@ -13,7 +13,7 @@ function createWindow () {
     }
   });
 
-  win.loadFile(path.join(__dirname, '..', 'desktop', 'index.html'));
+  win.loadFile(path.join(__dirname, '..', 'ui', 'index.html'));
   win.setFullScreen(true);
 }
 
