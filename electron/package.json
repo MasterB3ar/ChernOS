@@ -1,6 +1,6 @@
 {
   "name": "chernos-desktop",
-  "version": "1.3.0",
+  "version": "1.9.5",
   "private": true,
   "main": "main.js",
   "scripts": {
