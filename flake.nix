@@ -154,9 +154,7 @@ CSS
           # build does not fail with conflicting definitions.
           boot.loader.timeout      = lib.mkForce 0;
           boot.loader.grub.enable  = lib.mkForce true;
-          boot.loader.grub.version = 2;
           boot.loader.grub.device  = "nodev";
-          boot.loader.grub.timeout = 0;
           boot.loader.grub.theme   = "${grubTheme}/share/grub/themes/chernos/theme.txt";
 
           boot.initrd.verbose    = false;
@@ -267,7 +265,7 @@ CSS
               fi
 
               URL="file://${chernosUI}/index.html"
-              if [ "x${CHERNOS_PERSIST:-0}" = "x1" ]; then
+              if [ "x''${CHERNOS_PERSIST:-0}" = "x1" ]; then
                 URL="$URL?persist=1"
               fi
 
@@ -287,7 +285,7 @@ CSS
                 --autoplay-policy=no-user-gesture-required
 
               # Persistence-aware profile behavior
-              if [ "x${CHERNOS_PERSIST:-0}" = "x1" ]; then
+              if [ "x''${CHERNOS_PERSIST:-0}" = "x1" ]; then
                 set -- "$@" --user-data-dir=/home/kiosk/.config/chromium
               else
                 # Keep the live ISO stateless by default
@@ -295,7 +293,7 @@ CSS
               fi
 
               # Software-rendering fallback (VMs, weak GPUs). Force with CHERNOS_FORCE_SOFTWARE=1
-              if [ "x${CHERNOS_FORCE_SOFTWARE:-0}" = "x1" ] || [ ! -e /dev/dri/renderD128 ]; then
+              if [ "x''${CHERNOS_FORCE_SOFTWARE:-0}" = "x1" ] || [ ! -e /dev/dri/renderD128 ]; then
                 set -- "$@" --disable-gpu --disable-gpu-compositing --use-gl=swiftshader --disable-features=VaapiVideoDecodeLinuxGL
               fi
 
