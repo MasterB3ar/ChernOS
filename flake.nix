@@ -1,12 +1,14 @@
 {
-  description = "ChernOS v1.9.5 — Reactor Overdrive";
+  description = "ChernOS v2.0.0 - Reactor Overdrive";
 
+  # NixOS 24.05 input. flake.lock pins the exact revision + narHash.
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
 
   outputs = { self, nixpkgs }: let
-    system = "x86_64-linux";
-    lib    = nixpkgs.lib;
-    pkgs   = import nixpkgs { inherit system; };
+    system  = "x86_64-linux";
+    lib     = nixpkgs.lib;
+    pkgs    = import nixpkgs { inherit system; };
+    version = "2.0.0";
 
     # ---------- GRUB THEME ----------
     grubTheme = pkgs.runCommand "grub-theme-chernos" {} ''
@@ -17,7 +19,7 @@ terminal_output gfxterm
 color_normal cfeecb 000000
 color_highlight bff9a8 000000
 
-menuentry "ChernOS v1.9.5 Live" {
+menuentry "ChernOS v${version} Live" {
   set gfxpayload=keep
 }
 EOF
@@ -44,22 +46,95 @@ Window.SetBackgroundBottomColor (0.0, 0.0, 0.0);
 EOF
     '';
 
-    # ---------- Optional persistence helper ----------
-    mountHelper = pkgs.writeShellScriptBin "chernos-persist-helper" ''
+    # ---------- Persistence + overlayfs setup ----------
+    persistSetup = pkgs.writeShellScriptBin "chernos-persist-setup" ''
       set -eu
 
-      if [ -e /dev/disk/by-label/CHERNOS_PERSIST ]; then
-        mkdir -p /persist
-        mount -o rw,noatime /dev/disk/by-label/CHERNOS_PERSIST /persist || true
-        mkdir -p /persist/chernos-logs
-        touch /persist/chernos-logs/.persist-ok || true
-        echo "export CHERNOS_PERSIST=1" > /run/chernos-persist.env
+      DEV="/dev/disk/by-label/CHERNOS_PERSIST"
+
+      # Give udev a moment to populate /dev/disk/by-label (optional device)
+      for i in 1 2 3 4 5; do
+        [ -e "$DEV" ] && break
+        sleep 0.2
+      done
+
+      if [ ! -e "$DEV" ]; then
+        exit 0
       fi
+
+      mkdir -p /persist
+      if ! mountpoint -q /persist; then
+        mount -o rw,noatime "$DEV" /persist || exit 0
+      fi
+
+      mkdir -p /persist/overlay /run/chernos-lower
+
+      # Ensure base dirs exist (lower dirs)
+      mkdir -p /home/kiosk
+      mkdir -p /var/lib/chernos
+      mkdir -p /var/log/chernos
+
+      setup_overlay() {
+        NAME="$1"
+        TARGET="$2"
+        LOWER_SRC="$3"
+
+        mkdir -p "/persist/overlay/$NAME/upper" "/persist/overlay/$NAME/work" "/run/chernos-lower/$NAME"
+
+        # Bind-mount the current (lower) view somewhere stable.
+        if ! mountpoint -q "/run/chernos-lower/$NAME"; then
+          mount --bind "$LOWER_SRC" "/run/chernos-lower/$NAME"
+        fi
+
+        # Permissions: kiosk must be able to write its upperdir.
+        if [ "$NAME" = "home-kiosk" ]; then
+          chown -R kiosk:kiosk "/persist/overlay/$NAME/upper" "/persist/overlay/$NAME/work" || true
+        fi
+
+        if ! mountpoint -q "$TARGET"; then
+          mount -t overlay overlay -o "lowerdir=/run/chernos-lower/$NAME,upperdir=/persist/overlay/$NAME/upper,workdir=/persist/overlay/$NAME/work" "$TARGET"
+        fi
+      }
+
+      setup_overlay "home-kiosk"       "/home/kiosk"       "/home/kiosk"
+      setup_overlay "varlib-chernos"   "/var/lib/chernos"  "/var/lib/chernos"
+      setup_overlay "varlog-chernos"   "/var/log/chernos"  "/var/log/chernos"
+
+      # Marker for kiosk launcher.
+      echo "export CHERNOS_PERSIST=1" > /run/chernos-persist.env
     '';
 
-    # ---------- ChernOS UI (HTML + JS) ----------
-    # HTML is stored as a real file for easier editing:
-    chernosPage = ./ui/index.html;
+    # ---------- ChernOS UI (offline, bundled Tailwind) ----------
+    chernosUI = pkgs.stdenvNoCC.mkDerivation {
+      pname = "chernos-ui";
+      version = version;
+      src = ./ui;
+
+      nativeBuildInputs = [ (if pkgs ? tailwindcss then pkgs.tailwindcss else pkgs.nodePackages.tailwindcss) ];
+
+      buildPhase = ''
+        set -eu
+
+        cp $src/index.html ./index.html
+
+        cat > input.css <<'CSS'
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+CSS
+
+        tailwindcss -i input.css -o tailwind.css --content index.html --minify
+
+        substituteInPlace index.html \
+          --replace '<script src="https://cdn.tailwindcss.com"></script>' \
+                    '<link rel="stylesheet" href="./tailwind.css">'
+      '';
+
+      installPhase = ''
+        mkdir -p $out
+        cp index.html tailwind.css $out/
+      '';
+    };
 
   in {
     nixosConfigurations.chernos-iso = lib.nixosSystem {
@@ -71,37 +146,71 @@ EOF
         ({ pkgs, lib, ... }: {
           isoImage.isoName = "chernos-os.iso";
 
-
-          # ---------- Boot stack ----------
+          # ---------- Fast boot + quiet ----------
+          boot.loader.timeout      = 0;
           boot.loader.grub.enable  = lib.mkForce true;
           boot.loader.grub.version = 2;
           boot.loader.grub.device  = "nodev";
+          boot.loader.grub.timeout = 0;
           boot.loader.grub.theme   = "${grubTheme}/share/grub/themes/chernos/theme.txt";
 
-          boot.plymouth.enable        = true;
-          boot.plymouth.themePackages = [ plymouthTheme ];
-          boot.plymouth.theme         = "chernos";
+          boot.initrd.verbose    = false;
+          boot.consoleLogLevel  = 0;
+          boot.kernelModules    = [ "overlay" ];
 
           boot.kernelParams = [
             "quiet"
             "splash"
+            "loglevel=3"
+            "udev.log_level=3"
+            "rd.udev.log_level=3"
+            "systemd.show_status=0"
+            "rd.systemd.show_status=0"
             "vt.global_cursor_default=0"
             "panic=10"
             "sysrq=0"
           ];
 
-          # ---------- Silence noisy units on live ISO ----------
+          systemd.extraConfig = ''
+            DefaultTimeoutStartSec=10s
+            DefaultTimeoutStopSec=10s
+          '';
+
+          # Disable noisy/slow one-shots (live ISO kiosk)
           services.logrotate.enable = false;
-          systemd.services."logrotate-checkconf".enable              = false;
-          systemd.services."systemd-journal-catalog-update".enable   = false;
-          systemd.services."systemd-update-done".enable              = false;
+          systemd.services."logrotate-checkconf".enable            = false;
+          systemd.services."systemd-journal-catalog-update".enable = false;
+          systemd.services."systemd-update-done".enable            = false;
+          systemd.services."systemd-udev-settle".enable            = false;
+          systemd.services."systemd-timesyncd".enable              = false;
+
+          services.journald.extraConfig = ''
+            Storage=volatile
+            RuntimeMaxUse=32M
+            ForwardToConsole=no
+          '';
+
+          # ---------- Plymouth ----------
+          boot.plymouth.enable        = true;
+          boot.plymouth.themePackages = [ plymouthTheme ];
+          boot.plymouth.theme         = "chernos";
 
           # ---------- Networking / SSH off for kiosk ----------
-          networking.useDHCP                 = false;
-          networking.networkmanager.enable   = false;
+          networking.useDHCP                         = false;
+          networking.networkmanager.enable           = false;
           systemd.services."systemd-networkd".enable = false;
           systemd.services."systemd-resolved".enable = false;
           systemd.services."sshd".enable              = false;
+
+          # ---------- Audio (required for background music) ----------
+          sound.enable = true;
+          security.rtkit.enable = true;
+          services.pipewire = {
+            enable = true;
+            pulse.enable = true;
+            alsa.enable = true;
+            alsa.support32Bit = true;
+          };
 
           # ---------- Rendering ----------
           hardware.opengl.enable = true;
@@ -118,22 +227,26 @@ EOF
           users.users.kiosk = {
             isNormalUser = true;
             password     = "kiosk";
-            extraGroups  = [ "video" "input" ];
+            extraGroups  = [ "video" "input" "audio" ];
           };
 
-          # ---------- Optional persistence service ----------
+          # ---------- Real persistence (overlayfs) ----------
           systemd.services.chernos-persist = {
-            wantedBy = [ "multi-user.target" ];
-            after    = [ "local-fs.target" "systemd-udev-settle.service" ];
+            description = "ChernOS persistence overlay setup";
+            wantedBy    = [ "multi-user.target" ];
+            after       = [ "local-fs.target" ];
+            before      = [ "greetd.service" ];
             serviceConfig = {
-              Type      = "oneshot";
-              ExecStart = "${mountHelper}/bin/chernos-persist-helper";
+              Type = "oneshot";
+              ExecStart = "${persistSetup}/bin/chernos-persist-setup";
               RemainAfterExit = true;
             };
           };
 
           systemd.tmpfiles.rules = [
             "d /persist 0755 root root -"
+            "d /var/lib/chernos 0755 root root -"
+            "d /var/log/chernos 0755 root root -"
           ];
 
           # ---------- /etc/chernos-kiosk.sh (Chromium launcher) ----------
@@ -141,29 +254,51 @@ EOF
             mode = "0755";
             text = ''
               #!/bin/sh
+              set -eu
+
               # Optional persistence marker
               if [ -f /run/chernos-persist.env ]; then
                 . /run/chernos-persist.env
               fi
 
-              URL="file://${chernosPage}"
-              if [ "x$CHERNOS_PERSIST" = "x1" ]; then
+              URL="file://${chernosUI}/index.html"
+              if [ "x${CHERNOS_PERSIST:-0}" = "x1" ]; then
                 URL="$URL?persist=1"
               fi
 
-              exec ${pkgs.chromium}/bin/chromium \
+              # Chromium base flags (build argument vector safely)
+              set -- \
                 --enable-features=UseOzonePlatform \
                 --ozone-platform=wayland \
                 --kiosk "$URL" \
-                --incognito \
                 --start-fullscreen \
                 --noerrdialogs \
                 --disable-translate \
-                --overscroll-history-navigation=0
+                --overscroll-history-navigation=0 \
+                --no-first-run \
+                --no-default-browser-check \
+                --disable-infobars \
+                --disable-session-crashed-bubble \
+                --autoplay-policy=no-user-gesture-required
+
+              # Persistence-aware profile behavior
+              if [ "x${CHERNOS_PERSIST:-0}" = "x1" ]; then
+                set -- "$@" --user-data-dir=/home/kiosk/.config/chromium
+              else
+                # Keep the live ISO stateless by default
+                set -- "$@" --incognito --user-data-dir=/tmp/chromium-profile
+              fi
+
+              # Software-rendering fallback (VMs, weak GPUs). Force with CHERNOS_FORCE_SOFTWARE=1
+              if [ "x${CHERNOS_FORCE_SOFTWARE:-0}" = "x1" ] || [ ! -e /dev/dri/renderD128 ]; then
+                set -- "$@" --disable-gpu --disable-gpu-compositing --use-gl=swiftshader --disable-features=VaapiVideoDecodeLinuxGL
+              fi
+
+              exec ${pkgs.chromium}/bin/chromium "$@"
             '';
           };
 
-          # ---------- greetd → sway → Chromium kiosk ----------
+          # ---------- greetd -> sway -> Chromium kiosk ----------
           services.greetd.enable = true;
           services.greetd.settings = {
             terminal.vt = 1;
