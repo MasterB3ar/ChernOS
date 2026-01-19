@@ -146,8 +146,13 @@ CSS
         ({ pkgs, lib, ... }: {
           isoImage.isoName = "chernos-os.iso";
 
+          # Pin NixOS option semantics for reproducibility and to avoid warnings.
+          system.stateVersion = "24.05";
+
           # ---------- Fast boot + quiet ----------
-          boot.loader.timeout      = 0;
+          # The ISO module defines a loader timeout as well; force ours so the
+          # build does not fail with conflicting definitions.
+          boot.loader.timeout      = lib.mkForce 0;
           boot.loader.grub.enable  = lib.mkForce true;
           boot.loader.grub.version = 2;
           boot.loader.grub.device  = "nodev";
