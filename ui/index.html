@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>ChernOS v1.9.5 – Redline Crisis Engine</title>
+  <title>ChernOS v2.0.0 – Redline Crisis Engine</title>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -597,7 +597,7 @@
     <!-- TOP BAR -->
     <div class="card flex flex-wrap items-start justify-between gap-4">
       <div class="space-y-2">
-        <div class="label">ChernOS v1.9.5 – Redline Crisis Engine + NetSim</div>
+        <div class="label">ChernOS v2.0.0 – Redline Crisis Engine + NetSim</div>
         <div class="text-2xl font-semibold" id="title-main">
           Reactor + Containment + Black Chamber + Network Layer
         </div>
@@ -651,9 +651,14 @@
               <button class="btn" id="btn-diag-toggle">Diagnostics</button>
               <button class="btn" id="btn-overdrive-toggle">Overdrive</button>
             </div>
-            <div class="flex gap-2">
+            <div class="flex gap-2 items-center">
               <button class="btn" id="btn-audio-toggle">Toggle Audio</button>
               <span class="mute-indicator" id="audio-state">Audio: ON</span>
+            </div>
+            <div class="flex gap-2 items-center">
+              <button class="btn" id="btn-music-toggle">Music</button>
+              <span class="mute-indicator" id="music-state">Music: OFF</span>
+              <input id="music-vol" type="range" min="0" max="100" value="60" class="w-28" />
             </div>
 
             <div class="flex gap-2 mt-1">
@@ -909,7 +914,7 @@
 
   <script>
     // ============================================================
-    //   ChernOS v1.9.5 — Redline Crisis Engine (fictional)
+    //   ChernOS v2.0.0 — Redline Crisis Engine (fictional)
     //   - Crisis Index can reach 10.0 in full meltdown scenarios
     //   - Overdrive button fixed (UI + terminal)
     // ============================================================
@@ -933,6 +938,8 @@
     const elBadgeBlack= document.getElementById("badge-black");
     const elBadgeNet  = document.getElementById("badge-net");
     const elAudioState= document.getElementById("audio-state");
+    const elMusicState= document.getElementById("music-state");
+    const elMusicVol  = document.getElementById("music-vol");
     const elDiagCard  = document.getElementById("diag-card");
     const elLog       = document.getElementById("log");
     const elTitle     = document.getElementById("title-main");
@@ -968,6 +975,7 @@
     const btnDiag     = document.getElementById("btn-diag-toggle");
     const btnOver     = document.getElementById("btn-overdrive-toggle");
     const btnAudio    = document.getElementById("btn-audio-toggle");
+    const btnMusic    = document.getElementById("btn-music-toggle");
     const btnCfa      = document.getElementById("btn-cfa-toggle");
     const btnCfb      = document.getElementById("btn-cfb-reset");
     const btnCfg      = document.getElementById("btn-cfg-toggle");
@@ -1028,6 +1036,8 @@
       meltdownStage: 0, // 0..5
       diagnostics: false,
       audioOn: true,
+      musicOn: false,
+      musicVol: 60,
       theme: "green",
       themeMode: "auto",      // "auto" (engine) or "manual" (override)
       themeOverride: null,    // "green" | "amber" | "redline" | "2049" | null
@@ -1078,6 +1088,21 @@
       }
     }
 
+    // Local persisted settings (best-effort)
+    try {
+      const a = localStorage.getItem("chernos_audio_on");
+      if (a !== null) state.audioOn = (a === "1");
+
+      const m = localStorage.getItem("chernos_music_on");
+      if (m !== null) state.musicOn = (m === "1");
+
+      const v = localStorage.getItem("chernos_music_vol");
+      if (v !== null) {
+        const n = parseInt(v, 10);
+        if (!isNaN(n)) state.musicVol = Math.min(100, Math.max(0, n));
+      }
+    } catch (e) {}
+
     function levelLabel(lvl) {
       if (lvl === 0) return "GUEST";
       if (lvl === 1) return "TECHNICIAN";
@@ -1112,9 +1137,9 @@
       maybePersist(line + "\n");
     }
 
-    log("SIM: ChernOS v1.9.5 Redline Crisis Engine console ready.");
+    log("SIM: ChernOS v2.0.0 Redline Crisis Engine console ready.");
 
-    // ----- Audio Engine v3 -----
+    // ----- Audio Engine v3 + Background Music -----
     let audioCtx = null;
     let humNode = null;
     let coolantNode = null;
@@ -1122,6 +1147,14 @@
     let sirenNode = null;
     let containNode = null;
     let gammaNode = null;
+
+    // Music nodes (procedural pad)
+    let musicGain = null;
+    let musicFilter = null;
+    let musicOscs = [];
+    let musicLfo = null;
+    let musicIv = null;
+    let musicChordIndex = 0;
 
     function ensureAudio() {
       if (audioCtx) return;
@@ -1257,6 +1290,134 @@
       setTimeout(() => { try { osc.stop(); } catch (_) {} }, 400);
     }
 
+    // ----- Background Music System -----
+    const musicProg = [
+      [45, 52, 57],  // A2 E3 A3
+      [43, 50, 55],  // G2 D3 G3
+      [40, 47, 52],  // E2 B2 E3
+      [38, 45, 50]   // D2 A2 D3
+    ];
+
+    function mtof(m) {
+      return 440 * Math.pow(2, (m - 69) / 12);
+    }
+
+    function setMusicChord(idx) {
+      if (!musicOscs || musicOscs.length < 3 || !audioCtx) return;
+      const chord = musicProg[idx % musicProg.length];
+      for (let i = 0; i < 3; i++) {
+        const f = mtof(chord[i]);
+        musicOscs[i].frequency.setTargetAtTime(f, audioCtx.currentTime, 0.08);
+      }
+    }
+
+    function updateMusicVol(immediate) {
+      if (!audioCtx || !musicGain) return;
+      const on = state.audioOn && state.musicOn;
+      const target = on ? (0.06 * (state.musicVol / 100)) : 0.0;
+      if (immediate) {
+        musicGain.gain.value = target;
+      } else {
+        musicGain.gain.linearRampToValueAtTime(target, audioCtx.currentTime + 0.2);
+      }
+    }
+
+    function startMusic() {
+      if (!state.audioOn || !state.musicOn || !audioCtx || musicGain) return;
+
+      // Filtered pad
+      musicFilter = audioCtx.createBiquadFilter();
+      musicFilter.type = "lowpass";
+      musicFilter.frequency.value = 520;
+      musicFilter.Q.value = 0.7;
+
+      musicGain = audioCtx.createGain();
+      musicGain.gain.value = 0.0;
+
+      musicFilter.connect(musicGain);
+      musicGain.connect(audioCtx.destination);
+
+      musicOscs = [];
+      for (let i = 0; i < 3; i++) {
+        const osc = audioCtx.createOscillator();
+        osc.type = "sine";
+        osc.detune.value = (i - 1) * 6;
+        osc.connect(musicFilter);
+        osc.start();
+        musicOscs.push(osc);
+      }
+
+      // Slow filter movement (LFO)
+      const lfo = audioCtx.createOscillator();
+      lfo.type = "sine";
+      lfo.frequency.value = 0.05;
+      const lfoGain = audioCtx.createGain();
+      lfoGain.gain.value = 220;
+      lfo.connect(lfoGain);
+      lfoGain.connect(musicFilter.frequency);
+      lfo.start();
+      musicLfo = { osc: lfo, g: lfoGain };
+
+      musicChordIndex = 0;
+      setMusicChord(musicChordIndex);
+      updateMusicVol(true);
+
+      musicIv = setInterval(() => {
+        if (!state.audioOn || !state.musicOn) {
+          updateMusicVol(true);
+          return;
+        }
+        musicChordIndex = (musicChordIndex + 1) % musicProg.length;
+        setMusicChord(musicChordIndex);
+      }, 9800);
+    }
+
+    function stopMusic() {
+      if (musicIv) { clearInterval(musicIv); musicIv = null; }
+      if (musicLfo) {
+        try { musicLfo.osc.stop(); } catch (_) {}
+        musicLfo = null;
+      }
+      if (musicOscs && musicOscs.length) {
+        for (const o of musicOscs) {
+          try { o.stop(); } catch (_) {}
+        }
+      }
+      musicOscs = [];
+      musicFilter = null;
+      musicGain = null;
+    }
+
+    function applyMusicState() {
+      if (!elMusicState) return;
+
+      // Reflect the requested state even if audio master is off.
+      if (!state.musicOn) {
+        stopMusic();
+        elMusicState.textContent = "Music: OFF";
+        if (elMusicVol) elMusicVol.value = String(state.musicVol);
+        return;
+      }
+
+      if (!state.audioOn) {
+        stopMusic();
+        elMusicState.textContent = "Music: MUTED";
+        if (elMusicVol) elMusicVol.value = String(state.musicVol);
+        return;
+      }
+
+      ensureAudio();
+      if (!audioCtx) {
+        elMusicState.textContent = "Music: N/A";
+        return;
+      }
+
+      startMusic();
+      updateMusicVol(true);
+      elMusicState.textContent = "Music: ON";
+      if (elMusicVol) elMusicVol.value = String(state.musicVol);
+    }
+
     function stopNode(nodeObj, hasInterval) {
       if (!nodeObj) return;
       if (hasInterval && nodeObj.iv) clearInterval(nodeObj.iv);
@@ -1264,6 +1425,7 @@
     }
 
     function stopAllAudio() {
+      stopMusic();
       stopNode(humNode, false); humNode = null;
       stopNode(coolantNode, false); coolantNode = null;
       stopNode(crackNode, true); crackNode = null;
@@ -1273,11 +1435,15 @@
     }
 
     function applyAudioState() {
+      try { localStorage.setItem("chernos_audio_on", state.audioOn ? "1" : "0"); } catch (e) {}
+
       if (!state.audioOn) {
         stopAllAudio();
         elAudioState.textContent = "Audio: OFF";
+        applyMusicState();
         return;
       }
+
       ensureAudio();
       elAudioState.textContent = "Audio: ON";
       startHum();
@@ -1287,12 +1453,33 @@
       startContainHum();
       startGammaCharge();
       updateContainHumGain();
+      applyMusicState();
     }
 
     btnAudio.addEventListener("click", () => {
       state.audioOn = !state.audioOn;
       applyAudioState();
     });
+
+    if (btnMusic) {
+      btnMusic.addEventListener("click", () => {
+        state.musicOn = !state.musicOn;
+        try { localStorage.setItem("chernos_music_on", state.musicOn ? "1" : "0"); } catch (e) {}
+        applyMusicState();
+      });
+    }
+
+    if (elMusicVol) {
+      elMusicVol.value = String(state.musicVol);
+      elMusicVol.addEventListener("input", () => {
+        const n = parseInt(elMusicVol.value, 10);
+        if (!isNaN(n)) {
+          state.musicVol = Math.min(100, Math.max(0, n));
+          try { localStorage.setItem("chernos_music_vol", String(state.musicVol)); } catch (e) {}
+          updateMusicVol(false);
+        }
+      });
+    }
 
     window.addEventListener("load", () => {
       setTimeout(() => {
@@ -2254,13 +2441,13 @@
       log(`net: lookup '${name}' -> ${addr} (simulated).`);
     }
 
-    // ----- Terminal v1.9.5 -----
+    // ----- Terminal v2.0.0 -----
     const termHistory = [];
     let termIndex = -1;
     const commands = [
       "help","status","scram","relief","stress","chaos","reset",
       "diag on","diag off","overdrive on","overdrive off",
-      "audio on","audio off","save-log",
+      "audio on","audio off","music on","music off","music vol","save-log",
       "theme auto","theme green","theme amber","theme redline","theme 2049",
       "power","coolant","engine status",
       "unlock 2049","containment status","lockdown on","lockdown off",
@@ -2285,7 +2472,7 @@
       const lower = cmd.toLowerCase();
 
       if (lower === "help") {
-        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, theme <auto|green|amber|redline|2049>, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, operator set <name>, operator level <0-3>, engine status, save-log, unlock 2049, net status, net ping <host>, net lookup <name>, net stress, net reset");
+        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, music on/off, music vol <0-100>, theme <auto|green|amber|redline|2049>, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, operator set <name>, operator level <0-3>, engine status, save-log, unlock 2049, net status, net ping <host>, net lookup <name>, net stress, net reset");
         return;
       }
 
@@ -2363,6 +2550,28 @@
       }
       if (lower === "audio off") {
         if (state.audioOn) { state.audioOn = false; applyAudioState(); }
+        return;
+      }
+
+      if (lower === "music on") {
+        if (!state.musicOn) { state.musicOn = true; try { localStorage.setItem("chernos_music_on", "1"); } catch (e) {} applyMusicState(); }
+        return;
+      }
+      if (lower === "music off") {
+        if (state.musicOn) { state.musicOn = false; try { localStorage.setItem("chernos_music_on", "0"); } catch (e) {} applyMusicState(); }
+        return;
+      }
+      if (lower.startsWith("music vol ")) {
+        const n = parseInt(lower.split(/\s+/)[2], 10);
+        if (!isNaN(n)) {
+          state.musicVol = Math.min(100, Math.max(0, n));
+          if (elMusicVol) elMusicVol.value = String(state.musicVol);
+          try { localStorage.setItem("chernos_music_vol", String(state.musicVol)); } catch (e) {}
+          updateMusicVol(false);
+          log("music: volume set to " + state.musicVol + "%");
+        } else {
+          log("Invalid volume. Use: music vol <0-100>");
+        }
         return;
       }
 
