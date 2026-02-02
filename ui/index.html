@@ -1257,6 +1257,7 @@ const btnDeconAbort = document.getElementById("btn-decon-abort");
 
 const elCellAlarmBus = document.getElementById("cell-alarm-bus");
 const elAudioState= document.getElementById("audio-state");
+const elAudioDebug= document.getElementById("audio-debug");
     const elMusicState= document.getElementById("music-state");
     const elMusicVol  = document.getElementById("music-vol");
     const elDiagCard  = document.getElementById("diag-card");
@@ -1464,6 +1465,7 @@ const btnScram    = document.getElementById("btn-scram");
     const btnOver     = document.getElementById("btn-overdrive-toggle");
     const btnAudio    = document.getElementById("btn-audio-toggle");
     const btnMusic    = document.getElementById("btn-music-toggle");
+    const btnAudioTest= document.getElementById("btn-audio-test");
     const btnCfa      = document.getElementById("btn-cfa-toggle");
     const btnCfb      = document.getElementById("btn-cfb-reset");
     const btnCfg      = document.getElementById("btn-cfg-toggle");
@@ -1602,6 +1604,7 @@ persistEnabled: false,
     try { syncRoutingUI(); } catch (e) {}
     // URL params
     const params = new URLSearchParams(window.location.search);
+    const kioskMode = (params.get("kiosk") === "1");
     if (params.get("persist") === "1") {
       state.persistEnabled = true;
     }
@@ -1626,11 +1629,21 @@ persistEnabled: false,
     }
 
     try {
-      const a = localStorage.getItem("chernos_audio_on");
-      if (a !== null) state.audioOn = (a === "1");
+      if (!kioskMode) {
+        const a = localStorage.getItem("chernos_audio_on");
+        if (a !== null) state.audioOn = (a === "1");
 
-      const m = localStorage.getItem("chernos_music_on");
-      if (m !== null) state.musicOn = (m === "1");
+        const m = localStorage.getItem("chernos_music_on");
+        if (m !== null) state.musicOn = (m === "1");
+      } else {
+        // Kiosk defaults: keep audio + music on for reliable ambience.
+        state.audioOn = true;
+        state.musicOn = true;
+        try {
+          localStorage.setItem("chernos_audio_on", "1");
+          localStorage.setItem("chernos_music_on", "1");
+        } catch (e) {}
+      }
 
       const v = localStorage.getItem("chernos_music_vol");
       if (v !== null) {
@@ -2778,6 +2791,27 @@ persistEnabled: false,
       applyAudioState();
     });
 
+    // Simple diagnostic tone (confirms OS sink output in kiosk builds)
+    if (btnAudioTest) {
+      btnAudioTest.addEventListener("click", () => {
+        ensureAudio();
+        if (!audioCtx) return;
+        resumeAudioForGesture();
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = "sine";
+        o.frequency.setValueAtTime(440, audioCtx.currentTime);
+        g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+        o.connect(g); g.connect(audioCtx.destination);
+        const t0 = audioCtx.currentTime + 0.01;
+        g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.55);
+        try { o.start(t0); o.stop(t0 + 0.6); } catch (e) {}
+        setTimeout(() => { try { o.disconnect(); g.disconnect(); } catch (e) {} }, 750);
+        refreshAudioDebug();
+      });
+    }
+
     if (btnMusic) {
       btnMusic.addEventListener("click", () => {
         state.musicOn = !state.musicOn;
@@ -2818,7 +2852,14 @@ persistEnabled: false,
       ensureAudio();
       if (!audioCtx) return;
       if (audioCtx.state === "suspended") { try { audioCtx.resume(); } catch (e) {} }
+
+      // In ISO/kiosk builds we force ambience defaults ON.
+      if (typeof kioskMode !== "undefined" && kioskMode) {
+        state.musicOn = true;
+        try { localStorage.setItem("chernos_music_on", "1"); } catch (e) {}
+      }
       applyAudioState();
+      refreshAudioDebug();
     };
     window.addEventListener("pointerdown", primeAudioOnce, { once: true, passive: true });
     window.addEventListener("keydown", primeAudioOnce, { once: true });
