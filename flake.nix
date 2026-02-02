@@ -296,9 +296,10 @@ CSS
                 ${pkgs.pipewire}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.65 2>/dev/null || true
               fi
 
-              URL="file://${chernosUI}/index.html"
+              # Always run UI in kiosk mode (forces music/audio defaults inside the UI)
+              URL="file://${chernosUI}/index.html?kiosk=1"
               if [ "x''${CHERNOS_PERSIST:-0}" = "x1" ]; then
-                URL="$URL?persist=1"
+                URL="$URL&persist=1"
               fi
 
               # Chromium base flags (build argument vector safely)
