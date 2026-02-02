@@ -213,7 +213,11 @@ CSS
             pulse.enable = true;
             alsa.enable = true;
             alsa.support32Bit = true;
+            wireplumber.enable = true;
           };
+
+          # ---------- DBus (required by PipeWire session manager) ----------
+          services.dbus.enable = true;
 
           # ---------- Rendering ----------
           hardware.opengl.enable = true;
@@ -262,6 +266,34 @@ CSS
               # Optional persistence marker
               if [ -f /run/chernos-persist.env ]; then
                 . /run/chernos-persist.env
+              fi
+
+              # Ensure audio stack is running + unmuted (ISO kiosk reliability)
+              export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+              mkdir -p "$XDG_RUNTIME_DIR" 2>/dev/null || true
+
+              # Try systemd user services first (if available)
+              if command -v systemctl >/dev/null 2>&1; then
+                systemctl --user start pipewire pipewire-pulse wireplumber 2>/dev/null || true
+              fi
+
+              # Fallback: spawn daemons if user services did not start
+              if ! pgrep -u "$(id -u)" -x pipewire >/dev/null 2>&1; then
+                ${pkgs.pipewire}/bin/pipewire >/tmp/pipewire.log 2>&1 &
+              fi
+              if ! pgrep -u "$(id -u)" -x pipewire-pulse >/dev/null 2>&1; then
+                ${pkgs.pipewire}/bin/pipewire-pulse >/tmp/pipewire-pulse.log 2>&1 &
+              fi
+              if ! pgrep -u "$(id -u)" -x wireplumber >/dev/null 2>&1; then
+                ${pkgs.wireplumber}/bin/wireplumber >/tmp/wireplumber.log 2>&1 &
+              fi
+
+              # Unmute + set sane volume
+              ${pkgs.alsa-utils}/bin/amixer -q sset Master unmute 2>/dev/null || true
+              ${pkgs.alsa-utils}/bin/amixer -q sset PCM unmute 2>/dev/null || true
+              if command -v ${pkgs.pipewire}/bin/wpctl >/dev/null 2>&1; then
+                ${pkgs.pipewire}/bin/wpctl set-mute @DEFAULT_AUDIO_SINK@ 0 2>/dev/null || true
+                ${pkgs.pipewire}/bin/wpctl set-volume @DEFAULT_AUDIO_SINK@ 0.65 2>/dev/null || true
               fi
 
               URL="file://${chernosUI}/index.html"
@@ -320,9 +352,12 @@ CSS
 
           # Tools on the ISO
           environment.systemPackages = with pkgs; [
-            chromium
+chromium
             swaybg
             vim
+            alsa-utils
+            pipewire
+            wireplumber
           ];
 
           # ---------- sway config: call kiosk script ----------
