@@ -2116,6 +2116,7 @@ persistEnabled: false,
 
     // Music nodes (procedural pad + reactive layers)
     let musicGain = null;
+    let musicComp = null;
     let musicFilter = null;
     let musicOscs = [];
     let musicLfo = null;
@@ -2377,7 +2378,8 @@ persistEnabled: false,
       const t  = Math.max(0, Math.min(1, (state.temp - 300) / 450));
       const p  = Math.max(0, Math.min(1, (state.pressure - 1) / 6));
       const r  = Math.max(0, Math.min(1, (state.rad - 0.10) / 3.2));
-      const f  = state.faults ? Math.max(0, Math.min(1, state.faults.length / 8)) : 0;
+      const fCount = state.faults && state.faults.active ? Object.keys(state.faults.active).length : 0;
+      const f  = Math.max(0, Math.min(1, fCount / 8));
 
       let x = 0.45*ci + 0.20*t + 0.15*p + 0.15*r + 0.05*f;
       if (state.meltdownStage >= 1) x = Math.min(1, x + 0.15);
@@ -2527,13 +2529,18 @@ persistEnabled: false,
       const mode = computeMusicMode();
       const intensity = computeMusicIntensity();
 
-      // Base music loudness (scaled by slider) – tuned to be clearly audible but not overwhelming.
-      let base = 0.11;
-      if (mode === "AFTERMATH") base = 0.07;
-      if (mode === "MELTDOWN")  base = 0.13;
+      // Base music loudness (scaled by slider) – tuned to be clearly audible on ISO/kiosk.
+      // Note: pad/sub/noise layer gains are relatively low; master needs to sit higher than the SFX hum.
+      let base = 0.65;          // SAFE baseline
+      if (mode === "AFTERMATH") base = 0.42;
+      if (mode === "MELTDOWN")  base = 0.78;
 
-      const dyn = (0.60 + 0.40 * intensity);
-      const target = on ? (base * dyn * (state.musicVol / 100)) : 0.0;
+      // Intensity adds a bit of lift, but we keep it controlled (compressor handles peaks).
+      const dyn = (0.75 + 0.35 * intensity);
+
+      // Slider has a slightly exponential curve so mid-values are still audible.
+      const vol = Math.pow((state.musicVol / 100), 1.15);
+      const target = on ? (base * dyn * vol) : 0.0;
 
       if (immediate) {
         musicGain.gain.value = target;
@@ -2547,10 +2554,21 @@ persistEnabled: false,
 
       const ctx = audioCtx;
 
-      // Shared master gain
+      // Shared master gain (run through a compressor so music is audible on ISO/kiosk without clipping)
       musicGain = ctx.createGain();
       musicGain.gain.value = 0.0;
-      musicGain.connect(ctx.destination);
+
+      musicComp = ctx.createDynamicsCompressor();
+      try {
+        musicComp.threshold.value = -18;
+        musicComp.knee.value = 24;
+        musicComp.ratio.value = 6;
+        musicComp.attack.value = 0.003;
+        musicComp.release.value = 0.25;
+      } catch (e) {}
+
+      musicGain.connect(musicComp);
+      musicComp.connect(ctx.destination);
 
       // Filtered pad bus
       musicFilter = ctx.createBiquadFilter();
@@ -2567,7 +2585,7 @@ persistEnabled: false,
         const g = ctx.createGain();
         o.type = "triangle";
         o.frequency.value = 220;
-        g.gain.value = 0.028; // pad level per voice
+        g.gain.value = 0.07; // pad level per voice (audible on ISO)
         o.connect(g);
         g.connect(musicFilter);
         o.start();
@@ -2712,9 +2730,11 @@ persistEnabled: false,
       }
       musicNoise = null;
 
-      safeDisc(musicFilter); safeDisc(musicGain);
+      safeDisc(musicFilter); safeDisc(musicGain); safeDisc(musicComp);
+
       musicFilter = null;
       musicGain = null;
+      musicComp = null;
     }
 
 
