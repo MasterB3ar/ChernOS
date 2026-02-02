@@ -269,7 +269,7 @@ CSS
               fi
 
               # Ensure audio stack is running + unmuted (ISO kiosk reliability)
-              export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+              export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
               mkdir -p "$XDG_RUNTIME_DIR" 2>/dev/null || true
 
               # Try systemd user services first (if available)
