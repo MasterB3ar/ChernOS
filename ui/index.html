@@ -49,7 +49,108 @@
       --ch-bg-card: rgba(2,6,23,0.85);
     }
 
-    .wrap {
+    
+    /* BLACK CHAMBER – full UI theme layer (applies when state.blackChamber is ON) */
+    body.blackchamber {
+      --ch-accent: #7dd3fc;                 /* cold cyan */
+      --ch-accent-soft: rgba(125,211,252,0.22);
+      --ch-bg: #020617;                     /* slate-950 */
+      --ch-bg-card: rgba(2,6,23,0.88);      /* deep glass */
+      --ch-text-main: #e2e8f0;              /* slate-200 */
+      --ch-text-soft: #94a3b8;              /* slate-400 */
+      --ch-border-soft: rgba(148,163,184,0.22);
+
+      background:
+        radial-gradient(circle at 12% 0%, rgba(56,189,248,0.10), transparent 58%),
+        radial-gradient(circle at 92% -8%, rgba(168,85,247,0.08), transparent 62%),
+        radial-gradient(circle at 50% 120%, rgba(0,0,0,0.65), transparent 55%),
+        var(--ch-bg);
+    }
+
+    body.blackchamber .reactor-glow {
+      background:
+        radial-gradient(circle at 10% 0%, rgba(56,189,248,0.13), transparent 70%),
+        radial-gradient(circle at 90% -5%, rgba(168,85,247,0.10), transparent 68%);
+      opacity: 0.55;
+    }
+
+    body.blackchamber .card {
+      background:
+        radial-gradient(circle at top, rgba(56,189,248,0.10), transparent 120%)
+        rgba(2,6,23,0.92);
+      border-color: rgba(148,163,184,0.24);
+      box-shadow: 0 0 34px rgba(0,0,0,0.92);
+    }
+
+    body.blackchamber .btn {
+      border-color: rgba(125,211,252,0.22);
+    }
+    body.blackchamber .btn:hover {
+      background: rgba(125,211,252,0.06);
+      border-color: rgba(125,211,252,0.38);
+      box-shadow: 0 0 16px rgba(56,189,248,0.16);
+    }
+
+    body.blackchamber .pill {
+      border-color: rgba(148,163,184,0.26);
+      color: rgba(226,232,240,0.72);
+    }
+
+    body.blackchamber .status-cell {
+      border-color: rgba(125,211,252,0.14);
+      background: rgba(2,6,23,0.78);
+      color: rgba(226,232,240,0.70);
+    }
+    body.blackchamber .status-cell::after {
+      background: linear-gradient(to bottom, rgba(56,189,248,0.10), transparent);
+    }
+
+    body.blackchamber .diag-active {
+      box-shadow: 0 0 18px rgba(56,189,248,0.22);
+      border-color: rgba(125,211,252,0.45) !important;
+    }
+
+    body.blackchamber .theme-btn {
+      background: rgba(2,6,23,0.78);
+      border-color: rgba(148,163,184,0.58);
+    }
+    body.blackchamber .theme-btn.active {
+      border-color: rgba(56,189,248,0.38);
+      box-shadow: 0 0 10px rgba(56,189,248,0.22);
+    }
+
+    body.blackchamber .comms-pill,
+    body.blackchamber .contain-pill {
+      background: rgba(2,6,23,0.88);
+      border-color: rgba(148,163,184,0.55);
+    }
+
+    body.blackchamber #term-input {
+      background: rgba(2,6,23,0.90);
+      border-color: rgba(125,211,252,0.22);
+    }
+
+    body.blackchamber #log {
+      color: rgba(226,232,240,0.86);
+    }
+
+    body.blackchamber .black-overlay.active {
+      opacity: 0.86;
+    }
+
+    /* Tailwind utility overrides used across the UI (keep theme coherence) */
+    body.blackchamber .text-slate-200 { color: rgba(226,232,240,0.90) !important; }
+    body.blackchamber .text-slate-300 { color: rgba(226,232,240,0.78) !important; }
+    body.blackchamber .text-slate-400 { color: rgba(148,163,184,0.90) !important; }
+    body.blackchamber .text-slate-500 { color: rgba(148,163,184,0.78) !important; }
+
+    body.blackchamber .bg-black\/70 { background-color: rgba(2,6,23,0.84) !important; }
+    body.blackchamber .bg-black\/40 { background-color: rgba(2,6,23,0.58) !important; }
+    body.blackchamber .bg-slate-800\/70 { background-color: rgba(15,23,42,0.72) !important; }
+
+    body.blackchamber .border-slate-600\/40 { border-color: rgba(148,163,184,0.22) !important; }
+    body.blackchamber .border-slate-600\/60 { border-color: rgba(148,163,184,0.32) !important; }
+.wrap {
       min-height: 100vh;
       padding: 18px 24px;
       display: flex;
@@ -3370,6 +3471,7 @@ function renderTelemetry() {
     }
 
     function renderBlackOverlay() {
+      document.body.classList.toggle("blackchamber", !!state.blackChamber);
       if (state.blackChamber) {
         elBlackOverlay.classList.add("active");
       } else {
@@ -3763,7 +3865,7 @@ function renderTelemetry() {
       const target = (typeof forceOn === "boolean") ? forceOn : !state.blackChamber;
       state.blackChamber = target;
       if (state.blackChamber) {
-        log("BLACK CHAMBER engaged (visual dark-mode layer only).");
+        log("BLACK CHAMBER engaged (full UI theme).");
       } else {
         log("BLACK CHAMBER disengaged.");
       }
@@ -4497,7 +4599,11 @@ if (!state.aftermath.active) {
     // ----- Theme handling (low-level) -----
     function applyTheme(themeName) {
       state.theme = themeName;
-      document.body.className = `theme-${themeName}`;
+      // Preserve non-theme body classes (e.g. blackchamber)
+      Array.from(document.body.classList).forEach(c => { if (c.startsWith("theme-")) document.body.classList.remove(c); });
+      document.body.classList.add(`theme-${themeName}`);
+      document.body.classList.toggle("blackchamber", !!state.blackChamber);
+
 
       themeButtons.forEach(btn => {
         const t = btn.getAttribute("data-theme");
