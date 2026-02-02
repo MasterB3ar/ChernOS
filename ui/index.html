@@ -222,7 +222,25 @@
       white-space: nowrap;
     }
 
-    .status-board {
+    
+    .badge-warn {
+      border-color: rgba(250, 204, 107, 0.55);
+      color: rgba(250, 204, 107, 0.95);
+    }
+    .badge-alert {
+      border-color: rgba(251, 113, 133, 0.45);
+      color: rgba(251, 113, 133, 0.95);
+    }
+    .badge-critical {
+      border-color: rgba(251, 113, 133, 0.75);
+      color: rgba(251, 113, 133, 1);
+      animation: glowPulse 1.1s infinite;
+    }
+
+    .status-cell.alarm-warn { border-color: rgba(250, 204, 107, 0.35); color: rgba(250, 204, 107, 0.95); }
+    .status-cell.alarm-alert { border-color: rgba(251, 113, 133, 0.35); color: rgba(251, 113, 133, 0.95); }
+    .status-cell.alarm-critical { border-color: rgba(251, 113, 133, 0.65); color: rgba(251, 113, 133, 1); animation: flicker 0.9s infinite; }
+.status-board {
       display: grid;
       grid-template-columns: repeat(3, minmax(0,1fr));
       gap: 6px;
@@ -586,6 +604,141 @@
     .net-dot.offline {
       background: #fb7185;
     }
+  
+    /* ===== Multi-app dock + terminal output + netops ===== */
+    /* ===== NetOps topology map ===== */
+    .topo-wrap{
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(30,64,175,0.45);
+      background: rgba(2,6,23,0.55);
+    }
+    .topo-title{
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgba(148,163,184,0.95);
+      margin-bottom: 6px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .topo-legend{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      color: rgba(148,163,184,0.95);
+      font-size: 10px;
+    }
+    .topo-legend .sw{
+      width:10px;height:10px;border-radius:999px;display:inline-block;margin-right:6px;
+      border:1px solid rgba(148,163,184,0.35);
+    }
+    .topo-svg{
+      width:100%;
+      height: 230px;
+      border-radius: 10px;
+      background: rgba(0,0,0,0.22);
+      border: 1px solid rgba(148,163,184,0.18);
+      overflow:hidden;
+    }
+    .topo-link{ stroke: rgba(148,163,184,0.55); stroke-width: 2; }
+    .topo-link.on{ stroke: rgba(34,197,94,0.75); }
+    .topo-link.deg{ stroke: rgba(250,204,107,0.85); }
+    .topo-link.off{ stroke: rgba(251,113,133,0.85); }
+    .topo-link.route{ stroke-width: 4; filter: drop-shadow(0 0 6px rgba(34,197,94,0.25)); }
+    .topo-node{ cursor: pointer; }
+    .topo-node circle{ stroke: rgba(15,23,42,0.95); stroke-width: 2; }
+    .topo-node .node-on{ fill: rgba(34,197,94,0.95); }
+    .topo-node .node-deg{ fill: rgba(250,204,107,0.95); }
+    .topo-node .node-off{ fill: rgba(251,113,133,0.95); }
+    .topo-node text{ fill: rgba(226,232,240,0.92); font-size: 11px; letter-spacing: 0.06em; }
+    .topo-node .sub{ fill: rgba(148,163,184,0.95); font-size: 10px; letter-spacing: 0.02em; }
+
+    /* ===== Coolant routing card ===== */
+    .route-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .route-row span{ font-size:10px; color: rgba(148,163,184,0.95); }
+    .route-presets .btn{ padding: 6px 10px; }
+
+    .panel-hidden { display: none !important; }
+
+    .app-dock {
+      position: sticky;
+      bottom: 0;
+      z-index: 40;
+      margin-top: 10px;
+      padding: 10px 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(30,64,175,0.45);
+      background: rgba(2,6,23,0.92);
+      box-shadow: 0 0 22px rgba(2,6,23,0.65);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .dock-btn {
+      padding: 7px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(30,64,175,0.55);
+      background: rgba(15,23,42,0.75);
+      color: #e2e8f0;
+      font-size: 12px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      transition: transform 0.08s ease-out, box-shadow 0.12s ease-out, border-color 0.12s ease-out;
+      user-select: none;
+    }
+
+    .dock-btn:hover { transform: translateY(-1px); }
+    .dock-btn.active {
+      border-color: rgba(34,197,94,0.75);
+      box-shadow: 0 0 14px rgba(34,197,94,0.20);
+    }
+
+    .term-out {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(30,64,175,0.45);
+      background: rgba(2,6,23,0.75);
+      max-height: 210px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      line-height: 1.35;
+      white-space: pre-wrap;
+    }
+
+    .term-line { color: #e2e8f0; }
+    .term-line.dim { color: rgba(226,232,240,0.72); }
+    .term-line.err { color: rgba(248,113,113,0.95); }
+    .term-line.ok  { color: rgba(34,197,94,0.95); }
+
+    .net-node-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 6px 8px;
+      border-radius: 10px;
+      border: 1px solid rgba(30,64,175,0.4);
+      background: rgba(15,23,42,0.65);
+      cursor: pointer;
+      user-select: none;
+    }
+    .net-node-row:hover { border-color: rgba(34,197,94,0.55); }
+    .net-node-row.active { border-color: rgba(34,197,94,0.75); box-shadow: 0 0 14px rgba(34,197,94,0.18); }
+
+    .net-dot { width: 8px; height: 8px; border-radius: 999px; background: #4b5563; }
+    .net-dot.on { background: #22c55e; }
+    .net-dot.deg { background: #f59e0b; }
+    .net-dot.off { background: #ef4444; }
+
   </style>
 </head>
 <body class="theme-green">
@@ -608,7 +761,11 @@
           <div class="status-cell">BLACK CHAMBER: STANDBY</div>
           <div class="status-cell">DIAGNOSTICS ENGINE: READY</div>
           <div class="status-cell">NETSIM: ONLINE</div>
-        </div>
+        
+          <div class="status-cell" id="cell-alarm-bus">ALARM BUS: CLEAR</div>
+          <div class="status-cell" id="cell-fault-bus">FAULT BUS: CLEAR</div>
+          <div class="status-cell" id="cell-aftermath-bus">POST-INCIDENT: STANDBY</div>
+</div>
       </div>
 
       <div class="flex flex-col gap-3 items-end">
@@ -621,7 +778,11 @@
           <span class="badge" id="badge-satlink">SATLINK: OFF</span>
           <span class="badge" id="badge-black">BLACK CHAMBER: IDLE</span>
           <span class="badge" id="badge-net">NET: ONLINE</span>
-        </div>
+        
+          <span class="badge" id="badge-alarm">ALARM: OFF</span>
+          <span class="badge" id="badge-fault">FAULTS: 0</span>
+          <span class="badge" id="badge-aftermath">AFTERMATH: OFF</span>
+</div>
 
         <!-- REDLINE CRISIS ENGINE PANEL -->
         <div class="mt-1 text-right text-xs text-slate-300 space-y-1" id="crisis-panel">
@@ -711,11 +872,22 @@
           <div>
             <div class="text-lg font-semibold" id="read-sg">3 / 3</div>
             <div class="overdrive-label mt-1" id="overdrive-state-label">OVERDRIVE: DISARMED</div>
+            <div class="mt-2">
+              <div class="flex items-center justify-between text-[10px] text-slate-400">
+                <span>Safeguard Recharge</span>
+                <span id="sg-recharge-pct">0%</span>
+              </div>
+              <div class="w-full h-2 rounded bg-black/40 border border-slate-600/40 overflow-hidden mt-1">
+                <div id="sg-recharge-bar" class="h-full" style="width:0%; background: var(--ch-accent); opacity:0.75;"></div>
+              </div>
+              <div class="text-[10px] text-slate-500 mt-1" id="sg-recharge-status">standby</div>
+            </div>
+
           </div>
           <div class="flex flex-col gap-1 ml-2">
-            <div class="text-[10px] text-slate-400">Core Drive</div>
+            <div class="flex items-center justify-between text-[10px] text-slate-400"><span>Core Drive</span><span id="lever-core-val">80%</span></div>
             <input id="lever-core" type="range" min="40" max="125" value="80" class="lever">
-            <div class="text-[10px] text-slate-400 mt-1">Coolant Bias</div>
+            <div class="flex items-center justify-between text-[10px] text-slate-400 mt-1"><span>Coolant Bias</span><span id="lever-coolant-val">100%</span></div>
             <input id="lever-coolant" type="range" min="80" max="145" value="100" class="lever">
           </div>
         </div>
@@ -725,6 +897,60 @@
           <span class="pill">CONTAINMENT SEAL</span>
         </div>
       </div>
+
+
+      <div class="card" id="coolant-routing-card">
+        <div class="label">MANUAL COOLANT ROUTING</div>
+        <div class="text-[10px] text-slate-400">Distribution (auto-normalized to 100%)</div>
+
+        <div class="mt-2 space-y-2">
+          <div class="route-row"><span>Core Loop</span><span class="pill text-[10px]" id="route-core-val">50%</span></div>
+          <input id="route-core" type="range" min="0" max="100" value="50" class="lever">
+
+          <div class="route-row mt-1"><span>Heat Exchanger</span><span class="pill text-[10px]" id="route-exch-val">30%</span></div>
+          <input id="route-exch" type="range" min="0" max="100" value="30" class="lever">
+
+          <div class="route-row mt-1"><span>Relief Vent</span><span class="pill text-[10px]" id="route-relief-val">20%</span></div>
+          <input id="route-relief" type="range" min="0" max="100" value="20" class="lever">
+        </div>
+
+        <div class="route-presets mt-2 flex flex-wrap gap-2">
+          <button class="btn btn-small" id="route-preset-balanced">Balanced</button>
+          <button class="btn btn-small" id="route-preset-cooling">Cooling</button>
+          <button class="btn btn-small" id="route-preset-relief">Pressure Relief</button>
+          <button class="btn btn-small" id="route-preset-emergency">Emergency</button>
+        </div>
+
+        <div class="text-[10px] text-slate-500 mt-2" id="route-hint">
+          Heat Exchanger boosts cooling stability. Relief Vent reduces pressure, but can raise radiation (sim).
+        </div>
+      </div>
+
+      
+
+<div class="card" id="aftermath-card" style="display:none;">
+  <div class="label">MELTDOWN AFTERMATH MODE</div>
+  <div class="text-[10px] text-slate-400" id="aftermath-status">Standby</div>
+
+  <div class="mt-3">
+    <div class="h-2 w-full bg-slate-800/70 rounded">
+      <div id="decon-bar" class="h-2 rounded" style="width:0%; background: var(--ch-accent);"></div>
+    </div>
+    <div class="mt-1 flex items-center justify-between text-[10px] text-slate-400">
+      <span>Decon progress</span>
+      <span id="decon-pct">0%</span>
+    </div>
+  </div>
+
+  <div class="flex flex-wrap gap-2 mt-3">
+    <button class="btn btn-small" id="btn-decon-start">Begin Decon</button>
+    <button class="btn btn-small" id="btn-decon-abort">Abort</button>
+  </div>
+
+  <div class="text-[10px] text-slate-500 mt-2">
+    Aftermath mode locks the plant controls until decontamination stabilizes temperature, pressure and radiation.
+  </div>
+</div>
 
       <!-- NETSIM CARD -->
       <div class="card">
@@ -754,7 +980,7 @@
     </div>
 
     <!-- CONTAINMENT PANEL -->
-    <div class="card mt-1" data-panel="containment">
+    <div class="card mt-1" data-panel="reactor containment">
       <div class="label">CONTAINMENT PROTOCOLS</div>
       <div class="mt-2 flex flex-wrap gap-2 items-center">
         <div class="contain-pill alpha" id="pill-alpha">
@@ -787,7 +1013,7 @@
     </div>
 
     <!-- COMMS / BLACK CHAMBER PANEL -->
-    <div class="card mt-1" id="comms-card" data-panel="comms">
+    <div class="card mt-1" id="comms-card" data-panel="reactor comms">
       <div class="label">COMMS / BLACK CHAMBER</div>
       <div class="mt-2 flex flex-wrap gap-2 items-center">
         <div class="comms-pill" id="pill-satlink">
@@ -820,7 +1046,58 @@
     </div>
 
     <!-- OPERATOR WORKSTATION PANEL -->
-    <div class="card mt-1">
+    
+    <!-- NETOPS PANEL -->
+    <div class="card mt-1" id="netops-card" data-panel="netops">
+      <div class="label">NETOPS — NODE TOPOLOGY / TRACE / THROTTLE</div>
+      <div class="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Nodes</div>
+          <div id="netops-nodes" class="space-y-1"></div>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Selected</div>
+          <div class="pill w-full" id="netops-selected">OPS-TOWER</div>
+
+          <div class="mt-2 text-[10px] text-slate-400">Route (OPS-TOWER → target)</div>
+          <div class="pill w-full mt-1" id="netops-route">OPS-TOWER → CORE-1</div>
+
+          <div class="mt-2 text-[10px] text-slate-400">Throttle</div>
+          <div class="mt-1 flex items-center gap-2">
+            <input id="netops-throttle" type="range" min="0" max="100" value="100" class="flex-1">
+            <span class="pill text-[10px]" id="netops-throttle-label">100%</span>
+          </div>
+
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button class="btn btn-small" id="netops-scan">Net Scan</button>
+            <button class="btn btn-small" id="netops-trace">Trace Selected</button>
+            <button class="btn btn-small" id="netops-reset">Clear Throttle</button>
+          </div>
+
+          <div class="mt-2 text-[10px] text-slate-400">Scan</div>
+          <div class="pill w-full mt-1" id="netops-scanline">last scan: —</div>
+        </div>
+      </div>
+    
+      <div class="topo-wrap">
+        <div class="topo-title">
+          <span>Topology Map</span>
+          <div class="topo-legend" id="netops-topology-legend">
+            <span><span class="sw" style="background:rgba(34,197,94,0.95)"></span>ONLINE</span>
+            <span><span class="sw" style="background:rgba(250,204,107,0.95)"></span>DEGRADED</span>
+            <span><span class="sw" style="background:rgba(251,113,133,0.95)"></span>OFFLINE</span>
+          </div>
+        </div>
+        <svg id="netops-topology" class="topo-svg" viewBox="0 0 420 240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Network topology">
+        </svg>
+        <div class="text-[10px] text-slate-400 mt-2">
+          Tip: click a node on the map to select it. Route highlight follows OPS-TOWER → target.
+        </div>
+      </div>
+
+    </div>
+
+<div class="card mt-1" data-panel="reactor workstation">
       <div class="label">OPERATOR WORKSTATION</div>
       <div class="mt-2 flex flex-wrap gap-2">
         <button class="ws-btn active" data-ws-mode="full">Full Console</button>
@@ -858,8 +1135,8 @@
     </div>
 
     <!-- CONTROLS + TERMINAL + LOG -->
-    <div class="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] gap-3" data-panel="reactor logs">
-      <div class="card" data-panel="reactor">
+    <div class="grid grid-cols-[minmax(0,1.1fr)_minmax(0,1.2fr)] gap-3" data-panel="reactor logs terminal">
+      <div class="card" data-panel="reactor terminal logs">
         <div class="label">OPERATOR CONTROL SURFACE</div>
         <div class="flex flex-wrap gap-2 mt-2">
           <button class="btn" id="btn-scram">SCRAM</button>
@@ -880,9 +1157,14 @@
             placeholder="terminal (help, status, power &lt;n&gt;, coolant &lt;n&gt;, overdrive on/off, diag on/off, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, net status, net ping &lt;host&gt;, net lookup &lt;name&gt;, net stress, net reset, operator set &lt;name&gt;, operator level &lt;0–3&gt;, theme auto/green/amber/redline/2049)">
           <button class="btn" id="term-run">Run</button>
         </div>
+        <div class="mt-2 flex items-center gap-2">
+          <span class="pill text-[10px]">Terminal Output</span>
+          <button class="btn btn-small" id="term-clear">Clear</button>
+        </div>
+        <div id="term-out" class="term-out"></div>
       </div>
 
-      <div class="card" data-panel="logs">
+      <div class="card" data-panel="reactor logs">
         <div class="label">EVENT LOG (SIMULATION)</div>
         <div id="log" class="mt-2"></div>
       </div>
@@ -912,6 +1194,19 @@
     </div>
   </div>
 
+
+  <!-- APP DOCK (Multi-app environment) -->
+  <div id="app-dock" class="app-dock">
+    <button class="dock-btn" data-view="reactor">Reactor</button>
+    <button class="dock-btn" data-view="terminal">Terminal</button>
+    <button class="dock-btn" data-view="netops">NetOps</button>
+    <button class="dock-btn" data-view="containment">Containment</button>
+    <button class="dock-btn" data-view="comms">Comms</button>
+    <button class="dock-btn" data-view="workstation">Workstation</button>
+    <button class="dock-btn" data-view="logs">Logs</button>
+    <button class="dock-btn" data-view="all">All</button>
+  </div>
+
   <script>
     // ============================================================
     //   ChernOS v2.0.0 — Redline Crisis Engine (fictional)
@@ -927,6 +1222,10 @@
     const elR         = document.getElementById("read-rad");
     const elRStat     = document.getElementById("status-rad");
     const elSG        = document.getElementById("read-sg");
+    const elSgRechargePct = document.getElementById("sg-recharge-pct");
+    const elSgRechargeBar = document.getElementById("sg-recharge-bar");
+    const elSgRechargeStatus = document.getElementById("sg-recharge-status");
+
     const elOverLbl   = document.getElementById("overdrive-state-label");
     const elCoreDot   = document.getElementById("core-dot");
     const elBadgeOver = document.getElementById("badge-overdrive");
@@ -937,7 +1236,22 @@
     const elBadgeSat  = document.getElementById("badge-satlink");
     const elBadgeBlack= document.getElementById("badge-black");
     const elBadgeNet  = document.getElementById("badge-net");
-    const elAudioState= document.getElementById("audio-state");
+    
+    const elBadgeAlarm = document.getElementById("badge-alarm");
+const elBadgeFault = document.getElementById("badge-fault");
+const elBadgeAfter = document.getElementById("badge-aftermath");
+const elCellFaultBus = document.getElementById("cell-fault-bus");
+const elCellAfterBus = document.getElementById("cell-aftermath-bus");
+
+const elAfterCard = document.getElementById("aftermath-card");
+const elAfterStatus = document.getElementById("aftermath-status");
+const elDeconBar = document.getElementById("decon-bar");
+const elDeconPct = document.getElementById("decon-pct");
+const btnDeconStart = document.getElementById("btn-decon-start");
+const btnDeconAbort = document.getElementById("btn-decon-abort");
+
+const elCellAlarmBus = document.getElementById("cell-alarm-bus");
+const elAudioState= document.getElementById("audio-state");
     const elMusicState= document.getElementById("music-state");
     const elMusicVol  = document.getElementById("music-vol");
     const elDiagCard  = document.getElementById("diag-card");
@@ -965,9 +1279,178 @@
     const dotBlack   = document.getElementById("dot-black");
 
     const leverCore   = document.getElementById("lever-core");
+    // Manual coolant routing controls
+    const routeCore = document.getElementById("route-core");
+    const routeExch = document.getElementById("route-exch");
+    const routeRelief = document.getElementById("route-relief");
+    const routeCoreVal = document.getElementById("route-core-val");
+    const routeExchVal = document.getElementById("route-exch-val");
+    const routeReliefVal = document.getElementById("route-relief-val");
+    const routePresetBalanced = document.getElementById("route-preset-balanced");
+    const routePresetCooling  = document.getElementById("route-preset-cooling");
+    const routePresetRelief   = document.getElementById("route-preset-relief");
+    const routePresetEmergency= document.getElementById("route-preset-emergency");
+
     const leverCool   = document.getElementById("lever-coolant");
 
-    const btnScram    = document.getElementById("btn-scram");
+    
+
+    const elLeverCoreVal = document.getElementById("lever-core-val");
+    const elLeverCoolVal = document.getElementById("lever-coolant-val");
+
+    // ----- Lever readouts + mechanical SFX -----
+    function updateLeverReadouts() {
+      if (elLeverCoreVal) elLeverCoreVal.textContent = String(parseInt(leverCore.value, 10) || 0) + "%";
+      if (elLeverCoolVal) elLeverCoolVal.textContent = String(parseInt(leverCool.value, 10) || 0) + "%";
+    }
+    updateLeverReadouts();
+
+    // ----- Manual coolant routing logic -----
+    function clamp01(x){ return Math.max(0, Math.min(1, Number(x))); }
+    function clampInt(x, lo, hi){
+      const n = Math.round(Number(x));
+      if (Number.isNaN(n)) return lo;
+      return Math.max(lo, Math.min(hi, n));
+    }
+
+    function syncRoutingUI(){
+      if (!routeCore || !routeExch || !routeRelief) return;
+      const r = state.coolantRouting;
+
+      // ensure sane totals
+      const c = clampInt(r.core, 0, 100);
+      const e = clampInt(r.exchanger, 0, 100);
+      const v = clampInt(r.relief, 0, 100);
+      let total = c + e + v;
+      if (total <= 0){
+        r.core = 50; r.exchanger = 30; r.relief = 20;
+        total = 100;
+      }
+
+      // normalize to 100 with integer rounding that preserves sum
+      let core = Math.round((r.core / total) * 100);
+      let exch = Math.round((r.exchanger / total) * 100);
+      let relief = 100 - core - exch;
+
+      // keep within bounds
+      core = Math.max(0, Math.min(100, core));
+      exch = Math.max(0, Math.min(100, exch));
+      relief = Math.max(0, Math.min(100, relief));
+
+      // if rounding made negative, fix by shifting from largest
+      if (relief < 0){
+        const take = -relief;
+        if (core >= exch){ core = Math.max(0, core - take); }
+        else { exch = Math.max(0, exch - take); }
+        relief = 0;
+      }
+
+      r.core = core;
+      r.exchanger = exch;
+      r.relief = relief;
+
+      routeCore.value = String(core);
+      routeExch.value = String(exch);
+      routeRelief.value = String(relief);
+
+      if (routeCoreVal) routeCoreVal.textContent = `${core}%`;
+      if (routeExchVal) routeExchVal.textContent = `${exch}%`;
+      if (routeReliefVal) routeReliefVal.textContent = `${relief}%`;
+    }
+
+    function setRoutingFromChanged(changed){
+      if (!routeCore || !routeExch || !routeRelief) return;
+      const r = state.coolantRouting;
+
+      const core = clampInt(routeCore.value, 0, 100);
+      const exch = clampInt(routeExch.value, 0, 100);
+      const relief = clampInt(routeRelief.value, 0, 100);
+
+      // preserve total=100 by distributing remaining across the other two
+      if (changed === "core"){
+        const remaining = 100 - core;
+        const otherSum = exch + relief;
+        const newExch = otherSum <= 0 ? Math.round(remaining * 0.6) : Math.round(remaining * (exch / otherSum));
+        const newRelief = remaining - newExch;
+        r.core = core; r.exchanger = newExch; r.relief = newRelief;
+      } else if (changed === "exch"){
+        const remaining = 100 - exch;
+        const otherSum = core + relief;
+        const newCore = otherSum <= 0 ? Math.round(remaining * 0.65) : Math.round(remaining * (core / otherSum));
+        const newRelief = remaining - newCore;
+        r.core = newCore; r.exchanger = exch; r.relief = newRelief;
+      } else {
+        const remaining = 100 - relief;
+        const otherSum = core + exch;
+        const newCore = otherSum <= 0 ? Math.round(remaining * 0.62) : Math.round(remaining * (core / otherSum));
+        const newExch = remaining - newCore;
+        r.core = newCore; r.exchanger = newExch; r.relief = relief;
+      }
+      r._lastChanged = changed;
+      syncRoutingUI();
+    }
+
+    function applyRoutingPreset(name){
+      const r = state.coolantRouting;
+      if (name === "balanced"){ r.core = 50; r.exchanger = 30; r.relief = 20; }
+      else if (name === "cooling"){ r.core = 40; r.exchanger = 52; r.relief = 8; }
+      else if (name === "relief"){ r.core = 32; r.exchanger = 26; r.relief = 42; }
+      else if (name === "emergency"){ r.core = 20; r.exchanger = 20; r.relief = 60; }
+      syncRoutingUI();
+      log(`COOLANT ROUTING (sim): preset ${name.toUpperCase()}.`);
+    }
+
+    // Wire routing UI
+    if (routeCore) routeCore.addEventListener("input", () => setRoutingFromChanged("core"));
+    if (routeExch) routeExch.addEventListener("input", () => setRoutingFromChanged("exch"));
+    if (routeRelief) routeRelief.addEventListener("input", () => setRoutingFromChanged("relief"));
+
+    if (routePresetBalanced) routePresetBalanced.addEventListener("click", () => applyRoutingPreset("balanced"));
+    if (btnDeconStart) btnDeconStart.addEventListener("click", () => startDecon());
+    if (btnDeconAbort) btnDeconAbort.addEventListener("click", () => abortDecon());
+    if (routePresetCooling)  routePresetCooling.addEventListener("click", () => applyRoutingPreset("cooling"));
+    if (routePresetRelief)   routePresetRelief.addEventListener("click", () => applyRoutingPreset("relief"));
+    if (routePresetEmergency)routePresetEmergency.addEventListener("click", () => applyRoutingPreset("emergency"));
+
+    // initial sync (moved below after state init)
+
+    let _leverLastTickAt = 0;
+    let _leverLastCore = parseInt(leverCore.value, 10) || 0;
+    let _leverLastCool = parseInt(leverCool.value, 10) || 0;
+
+    leverCore.addEventListener("input", () => {
+      updateLeverReadouts();
+      const now = performance.now();
+      const v = parseInt(leverCore.value, 10) || 0;
+      const delta = Math.abs(v - _leverLastCore);
+      _leverLastCore = v;
+      if (now - _leverLastTickAt > 38) {
+        playLeverTick(Math.min(1.2, 0.6 + delta / 14));
+        _leverLastTickAt = now;
+      }
+    });
+    leverCore.addEventListener("change", () => {
+      const v = parseInt(leverCore.value, 10) || 0;
+      playLeverLatch(Math.min(1.4, 0.9 + Math.abs(v - _leverLastCore) / 10));
+    });
+
+    leverCool.addEventListener("input", () => {
+      updateLeverReadouts();
+      const now = performance.now();
+      const v = parseInt(leverCool.value, 10) || 0;
+      const delta = Math.abs(v - _leverLastCool);
+      _leverLastCool = v;
+      if (now - _leverLastTickAt > 38) {
+        playLeverTick(Math.min(1.2, 0.55 + delta / 16));
+        _leverLastTickAt = now;
+      }
+    });
+    leverCool.addEventListener("change", () => {
+      const v = parseInt(leverCool.value, 10) || 0;
+      playLeverLatch(Math.min(1.4, 0.85 + Math.abs(v - _leverLastCool) / 10));
+    });
+
+const btnScram    = document.getElementById("btn-scram");
     const btnRelief   = document.getElementById("btn-relief");
     const btnStress   = document.getElementById("btn-stress");
     const btnChaos    = document.getElementById("btn-chaos");
@@ -990,6 +1473,24 @@
 
     const termInput   = document.getElementById("term-input");
     const termRun     = document.getElementById("term-run");
+    const termOut     = document.getElementById("term-out");
+    const termClear   = document.getElementById("term-clear");
+
+    const appDock     = document.getElementById("app-dock");
+    const dockBtns    = appDock ? Array.from(appDock.querySelectorAll("[data-view]")) : [];
+
+    const netopsNodes = document.getElementById("netops-nodes");
+    const netopsSelected = document.getElementById("netops-selected");
+    const netopsRoute = document.getElementById("netops-route");
+    const netopsTopo = document.getElementById("netops-topology");
+
+    const netopsThrottle = document.getElementById("netops-throttle");
+    const netopsThrottleLabel = document.getElementById("netops-throttle-label");
+    const netopsScanBtn = document.getElementById("netops-scan");
+    const netopsTraceBtn = document.getElementById("netops-trace");
+    const netopsResetBtn = document.getElementById("netops-reset");
+    const netopsScanLine = document.getElementById("netops-scanline");
+
 
     const themeButtons = Array.from(document.querySelectorAll(".theme-btn"));
 
@@ -1036,14 +1537,20 @@
       meltdownStage: 0, // 0..5
       diagnostics: false,
       audioOn: true,
-      musicOn: false,
+      musicOn: true,
       musicVol: 60,
       theme: "green",
       themeMode: "auto",      // "auto" (engine) or "manual" (override)
       themeOverride: null,    // "green" | "amber" | "redline" | "2049" | null
       crisisIndex: 0,
       crisisMode: "SAFE",
-      persistEnabled: false,
+      
+      alarm: {
+        level: 0,           // 0=OFF, 1=WARNING, 2=ALERT, 3=CRITICAL
+        reason: "",
+        nextBeepAt: 0
+      },
+persistEnabled: false,
       ticks: 0,
       microJitter: 0,
       lockdown: false,
@@ -1073,6 +1580,21 @@
       }
     };
 
+
+    // Extended systems (2.0.0): safeguard recharge + manual coolant routing
+    state.sgRecharge = { progress: 0, cooldown: 0 };
+    state.coolantRouting = { core: 50, exchanger: 30, relief: 20 };
+    state.coolantRouting._lastChanged = "core";
+
+    // Fault events + aftermath mode (2.0.0)
+    state.faults = { active: {}, lastRollAt: 0 };
+    state._m5ticks = 0;
+    state.aftermath = { active: false, enteredAt: 0, reason: "", decon: { running: false, progress: 0 } };
+
+
+
+    // initial sync after state init (routing UI needs state)
+    try { syncRoutingUI(); } catch (e) {}
     // URL params
     const params = new URLSearchParams(window.location.search);
     if (params.get("persist") === "1") {
@@ -1089,6 +1611,15 @@
     }
 
     // Local persisted settings (best-effort)
+
+    // LocalStorage wrappers (kiosk-safe)
+    function lsGet(key){
+      try { return localStorage.getItem(key); } catch (e) { return null; }
+    }
+    function lsSet(key, val){
+      try { localStorage.setItem(key, String(val)); } catch (e) {}
+    }
+
     try {
       const a = localStorage.getItem("chernos_audio_on");
       if (a !== null) state.audioOn = (a === "1");
@@ -1137,6 +1668,423 @@
       maybePersist(line + "\n");
     }
 
+    // ----- Terminal Output Panel (dedicated) -----
+    const termMaxLines = 260;
+
+    function termPrint(msg, level = "info") {
+      if (!termOut) return;
+      const text = String(msg ?? "");
+      const lines = text.split(/\r?\n/);
+
+      for (const ln of lines) {
+        const div = document.createElement("div");
+        div.className = "term-line" +
+          (level === "dim" ? " dim" : "") +
+          (level === "err" ? " err" : "") +
+          (level === "ok"  ? " ok"  : "");
+        div.textContent = ln;
+        termOut.appendChild(div);
+      }
+
+      // cap size
+      while (termOut.childNodes.length > termMaxLines) {
+        termOut.removeChild(termOut.firstChild);
+      }
+      termOut.scrollTop = termOut.scrollHeight;
+    }
+
+    function termClearOut() {
+      if (!termOut) return;
+      termOut.innerHTML = "";
+    }
+
+    if (termClear) termClear.addEventListener("click", termClearOut);
+
+    // Boot banner in terminal output
+    termPrint("ChernOS 2.0.0 — terminal online", "dim");
+
+    // ----- Multi-app environment (Dock) -----
+    let appView = (lsGet("chernos_app_view") || "reactor");
+
+    function applyAppView() {
+      const els = Array.from(document.querySelectorAll("[data-panel]"));
+      for (const el of els) {
+        const tags = String(el.getAttribute("data-panel") || "")
+          .split(/\s+/).filter(Boolean);
+        const show = (appView === "all") || tags.includes(appView);
+        el.classList.toggle("panel-hidden", !show);
+      }
+
+      for (const btn of dockBtns) {
+        const v = btn.getAttribute("data-view");
+        btn.classList.toggle("active", v === appView);
+      }
+    }
+
+    function setAppView(v) {
+      appView = v || "reactor";
+      lsSet("chernos_app_view", appView);
+      applyAppView();
+
+      // convenience focus
+      if (appView === "terminal" && termInput) termInput.focus();
+    }
+
+    if (dockBtns.length) {
+      for (const btn of dockBtns) {
+        btn.addEventListener("click", () => setAppView(btn.getAttribute("data-view")));
+      }
+      // default view
+      setAppView(appView);
+    } else {
+      // no dock (legacy)
+      applyAppView();
+    }
+
+    // ----- NetOps node simulation model -----
+    const NET_NODE_NAMES = ["OPS-TOWER", "CORE-1", "FLOW-A", "SHIELD-X", "DIAG-NET"];
+    const NET_LINKS = {
+      "OPS-TOWER": ["CORE-1", "DIAG-NET"],
+      "CORE-1": ["OPS-TOWER", "FLOW-A", "SHIELD-X"],
+      "FLOW-A": ["CORE-1", "DIAG-NET"],
+      "SHIELD-X": ["CORE-1", "DIAG-NET"],
+      "DIAG-NET": ["OPS-TOWER", "FLOW-A", "SHIELD-X"]
+    };
+
+    function ensureNetModel() {
+      const net = state.net;
+      if (!net.nodes) {
+        net.nodes = {};
+        for (const name of NET_NODE_NAMES) {
+          net.nodes[name] = {
+            name,
+            health: 100,
+            status: "online",   // online | degraded | offline
+            throttle: null,     // 0..100 or null
+            rx: 0,
+            tx: 0
+          };
+        }
+      }
+      if (!net.selected) net.selected = "CORE-1";
+      if (!net.lastScan) net.lastScan = 0;
+      if (!net.lastTraceAt) net.lastTraceAt = 0;
+      if (!net.lastTraceRoute) net.lastTraceRoute = null;
+      if (!net.traceFlashUntil) net.traceFlashUntil = 0;
+    }
+
+    function nodeDotClass(node) {
+      if (!node) return "net-dot";
+      if (node.status === "online") return "net-dot on";
+      if (node.status === "degraded") return "net-dot deg";
+      return "net-dot off";
+    }
+
+    function computeRoute(target) {
+      const start = "OPS-TOWER";
+      const goal = String(target || "").trim().toUpperCase();
+      if (!goal) return [start];
+      if (goal === start) return [start];
+
+      // BFS
+      const q = [start];
+      const prev = {};
+      const seen = new Set([start]);
+
+      while (q.length) {
+        const cur = q.shift();
+        const next = NET_LINKS[cur] || [];
+        for (const n of next) {
+          if (seen.has(n)) continue;
+          seen.add(n);
+          prev[n] = cur;
+          if (n === goal) {
+            const path = [goal];
+            let p = goal;
+            while (prev[p]) { p = prev[p]; path.push(p); }
+            return path.reverse();
+          }
+          q.push(n);
+        }
+      }
+      return [start, goal];
+    }
+
+    function renderNetOps() {
+      if (!netopsNodes || !netopsSelected || !netopsRoute || !netopsThrottle || !netopsThrottleLabel || !netopsScanLine) return;
+      ensureNetModel();
+
+      const net = state.net;
+      const nodes = net.nodes;
+
+      // nodes list
+      netopsNodes.innerHTML = "";
+      for (const name of NET_NODE_NAMES) {
+        const n = nodes[name];
+        const row = document.createElement("div");
+        row.className = "net-node-row" + (net.selected === name ? " active" : "");
+        row.innerHTML = `
+          <div class="flex items-center gap-2">
+            <span class="${nodeDotClass(n)}"></span>
+            <span class="pill text-[10px]">${name}</span>
+            <span class="text-[10px] text-slate-400">${n.status.toUpperCase()}</span>
+          </div>
+          <div class="text-[10px] text-slate-400">${Math.round(n.health)}%</div>
+        `;
+        row.addEventListener("click", () => {
+          net.selected = name;
+          renderNetOps();
+        });
+        netopsNodes.appendChild(row);
+      }
+
+      const sel = nodes[net.selected] || nodes["CORE-1"];
+      netopsSelected.textContent = sel.name;
+
+      const route = computeRoute(sel.name);
+      netopsRoute.textContent = route.join(" → ");
+
+      const thr = (sel.throttle == null ? 100 : sel.throttle);
+      netopsThrottle.value = String(thr);
+      netopsThrottleLabel.textContent = `${thr}%`;
+
+      const stamp = net.lastScan ? new Date(net.lastScan).toLocaleTimeString() : "—";
+      netopsScanLine.textContent = `last scan: ${stamp}`;
+      renderNetTopology(route);
+    }
+
+
+    function renderNetTopology(routeArr) {
+      if (!netopsTopo) return;
+      ensureNetModel();
+
+      const net = state.net;
+      const nodes = net.nodes;
+
+      // Use selection route for display, but remember last trace for flash
+      const route = Array.isArray(routeArr) && routeArr.length ? routeArr : computeRoute(net.selected || "OPS-TOWER");
+      const routePairs = new Set();
+      for (let i = 0; i < route.length - 1; i++) {
+        routePairs.add(`${route[i]}->${route[i+1]}`);
+      }
+
+      const now = Date.now();
+      const flash = (net.traceFlashUntil || 0) > now;
+
+      // Node positions (fixed layout)
+      const POS = {
+        "OPS-TOWER": [70, 60],
+        "CORE-1":    [210, 44],
+        "FLOW-A":    [355, 118],
+        "SHIELD-X":  [230, 205],
+        "DIAG-NET":  [80, 190]
+      };
+
+      // clear svg
+      while (netopsTopo.firstChild) netopsTopo.removeChild(netopsTopo.firstChild);
+
+      const NS = "http://www.w3.org/2000/svg";
+      const mk = (tag) => document.createElementNS(NS, tag);
+
+      // background grid (subtle)
+      const bg = mk("g");
+      bg.setAttribute("opacity", "0.6");
+      for (let x = 20; x <= 400; x += 40) {
+        const l = mk("line"); l.setAttribute("x1", x); l.setAttribute("y1", 10); l.setAttribute("x2", x); l.setAttribute("y2", 230);
+        l.setAttribute("stroke", "rgba(148,163,184,0.10)"); l.setAttribute("stroke-width", "1");
+        bg.appendChild(l);
+      }
+      for (let y = 20; y <= 220; y += 40) {
+        const l = mk("line"); l.setAttribute("x1", 10); l.setAttribute("y1", y); l.setAttribute("x2", 410); l.setAttribute("y2", y);
+        l.setAttribute("stroke", "rgba(148,163,184,0.10)"); l.setAttribute("stroke-width", "1");
+        bg.appendChild(l);
+      }
+      netopsTopo.appendChild(bg);
+
+      // derive unique links
+      const seen = new Set();
+      const links = [];
+      for (const a of Object.keys(NET_LINKS)) {
+        for (const b of (NET_LINKS[a] || [])) {
+          const key = [a,b].sort().join("--");
+          if (seen.has(key)) continue;
+          seen.add(key);
+          links.push([a,b]);
+        }
+      }
+
+      // links layer
+      const gLinks = mk("g");
+      for (const [a,b] of links) {
+        const pa = POS[a]; const pb = POS[b];
+        if (!pa || !pb) continue;
+
+        const na = nodes[a]; const nb = nodes[b];
+        const status = (na?.status === "offline" || nb?.status === "offline") ? "off"
+          : (na?.status === "degraded" || nb?.status === "degraded") ? "deg" : "on";
+
+        const line = mk("line");
+        line.setAttribute("x1", pa[0]); line.setAttribute("y1", pa[1]);
+        line.setAttribute("x2", pb[0]); line.setAttribute("y2", pb[1]);
+        line.setAttribute("class", `topo-link ${status}`);
+
+        // highlight if part of current route
+        const ab = `${a}->${b}`;
+        const ba = `${b}->${a}`;
+        if (routePairs.has(ab) || routePairs.has(ba)) {
+          line.classList.add("route");
+          if (flash) line.setAttribute("opacity", "0.95");
+        }
+
+        gLinks.appendChild(line);
+      }
+      netopsTopo.appendChild(gLinks);
+
+      // nodes layer
+      const gNodes = mk("g");
+      for (const name of NET_NODE_NAMES) {
+        const p = POS[name];
+        if (!p) continue;
+
+        const n = nodes[name];
+        const g = mk("g");
+        g.setAttribute("class", "topo-node");
+        g.setAttribute("data-node", name);
+
+        const circle = mk("circle");
+        circle.setAttribute("cx", p[0]);
+        circle.setAttribute("cy", p[1]);
+        circle.setAttribute("r", name === net.selected ? "18" : "15");
+
+        const cls = (n?.status === "offline") ? "node-off" : (n?.status === "degraded") ? "node-deg" : "node-on";
+        circle.setAttribute("class", cls);
+
+        const label = mk("text");
+        label.setAttribute("x", p[0] + 18);
+        label.setAttribute("y", p[1] + 4);
+        label.textContent = name;
+
+        const sub = mk("text");
+        sub.setAttribute("x", p[0] + 18);
+        sub.setAttribute("y", p[1] + 18);
+        sub.setAttribute("class", "sub");
+        const hp = Math.round(n?.health ?? 0);
+        const thr = (n?.throttle == null ? "AUTO" : `${Math.round(n.throttle)}%`);
+        sub.textContent = `${(n?.status || "unknown").toUpperCase()} • ${hp}% • ${thr}`;
+
+        g.appendChild(circle);
+        g.appendChild(label);
+        g.appendChild(sub);
+
+        g.addEventListener("click", () => {
+          net.selected = name;
+          renderNetOps();
+        });
+
+        gNodes.appendChild(g);
+      }
+      netopsTopo.appendChild(gNodes);
+    }
+
+
+    function setThrottle(nodeName, pctOrNull) {
+      ensureNetModel();
+      const n = state.net.nodes[nodeName];
+      if (!n) return false;
+      if (pctOrNull == null) {
+        n.throttle = null;
+      } else {
+        const p = Math.max(0, Math.min(100, Number(pctOrNull)));
+        n.throttle = p;
+      }
+      return true;
+    }
+
+    function doNetScan(emitToTerminal = false) {
+      ensureNetModel();
+      state.net.lastScan = Date.now();
+      if (emitToTerminal) termPrint(`scan: ok (${NET_NODE_NAMES.length} nodes)`, "ok");
+      renderNetOps();
+      return true;
+    }
+
+    function doNetTrace(targetRaw, emitToTerminal = true) {
+      ensureNetModel();
+      const target = String(targetRaw || state.net.selected || "CORE-1").trim().toUpperCase();
+      const route = computeRoute(target);
+      const net = state.net;
+
+      // simulated timings per hop
+      const hopBase = (net.mode === "offline") ? 0 : Math.max(1, net.latencyMs / Math.max(1, route.length));
+      let out = `trace: OPS-TOWER -> ${target}\n`;
+      for (let i = 0; i < route.length; i++) {
+        const hop = route[i];
+        const jitter = (net.mode === "offline") ? 0 : (Math.random() * net.jitterMs);
+        const rtt = Math.max(0, hopBase + jitter);
+        out += `${String(i+1).padStart(2,"0")}  ${hop.padEnd(10," ")}  rtt=${rtt.toFixed(1)}ms\n`;
+      }
+      out += `loss=${net.lossPct.toFixed(1)}%  integrity=${net.integrity.toFixed(1)}%`;
+
+      // remember last trace for UI highlight
+      net.lastTraceAt = Date.now();
+      net.lastTraceRoute = route;
+      net.traceFlashUntil = net.lastTraceAt + 3500;
+      // refresh topology highlight if visible
+      renderNetOps();
+
+      if (emitToTerminal) termPrint(out, net.mode === "offline" ? "err" : "dim");
+      return route;
+    }
+
+    function stepNetNodes() {
+      ensureNetModel();
+      const net = state.net;
+
+      // Stress factors: net.stressLevel (0..2) + crisisIndex influence
+      const stress = (net.stressLevel || 0);
+      const crisis = Math.min(2.5, state.crisisIndex / 30);
+      const modePenalty = net.mode === "offline" ? 2.5 : (net.mode === "degraded" ? 1.2 : 0);
+
+      for (const name of NET_NODE_NAMES) {
+        const n = net.nodes[name];
+        if (!n) continue;
+
+        // health drift
+        let down = (stress * 0.45) + crisis * 0.25 + modePenalty * 0.55;
+        let up   = (net.mode === "online" && stress === 0 ? 0.22 : 0.06);
+
+        // keep OPS-TOWER more stable
+        if (name === "OPS-TOWER") { down *= 0.65; up *= 1.2; }
+
+        // throttle increases stability but reduces throughput
+        if (n.throttle != null && n.throttle < 100) {
+          down *= (0.75 + 0.25 * (n.throttle/100));
+        }
+
+        // random noise
+        const noise = (Math.random() - 0.5) * 0.7;
+        n.health = Math.max(0, Math.min(100, n.health + up - down + noise));
+
+        if (net.mode === "offline") {
+          n.status = "offline";
+        } else if (n.health < 14) {
+          n.status = "offline";
+        } else if (n.health < 40) {
+          n.status = "degraded";
+        } else {
+          n.status = "online";
+        }
+
+        // simulated traffic counters
+        const thr = (n.throttle == null ? 1 : n.throttle / 100);
+        const base = Math.max(0, net.rate) * thr;
+        n.rx = Math.max(0, base * (0.4 + Math.random() * 0.4));
+        n.tx = Math.max(0, base * (0.4 + Math.random() * 0.4));
+      }
+    }
+
+
+
     log("SIM: ChernOS v2.0.0 Redline Crisis Engine console ready.");
 
     // ----- Audio Engine v3 + Background Music -----
@@ -1148,13 +2096,19 @@
     let containNode = null;
     let gammaNode = null;
 
-    // Music nodes (procedural pad)
+    // Music nodes (procedural pad + reactive layers)
     let musicGain = null;
     let musicFilter = null;
     let musicOscs = [];
     let musicLfo = null;
+    let musicPulse = null;
+    let musicPulseLfo = null;
+    let musicSub = null;
+    let musicNoise = null;
     let musicIv = null;
     let musicChordIndex = 0;
+    let musicNextChordAt = 0;
+    let musicLastMode = "SAFE";
 
     function ensureAudio() {
       if (audioCtx) return;
@@ -1163,6 +2117,45 @@
       } catch (e) {
         audioCtx = null;
       }
+    }
+
+    function resumeAudioForGesture() {
+      if (!audioCtx) return;
+      if (audioCtx.state === "suspended") {
+        try { audioCtx.resume(); } catch (e) {}
+      }
+    }
+
+    function scheduleBeepAt(when, freq, dur, gain) {
+      if (!state.audioOn || !audioCtx) return;
+      const osc = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      osc.type = "square";
+      osc.frequency.setValueAtTime(freq, when);
+      g.gain.setValueAtTime(0.0001, when);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gain), when + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
+      osc.connect(g); g.connect(audioCtx.destination);
+      try { osc.start(when); osc.stop(when + dur + 0.03); } catch (e) {}
+    }
+
+    function playClick(freq, gain) {
+      if (!state.audioOn) return;
+      ensureAudio();
+      if (!audioCtx) return;
+      resumeAudioForGesture();
+      const t = audioCtx.currentTime + 0.002;
+      scheduleBeepAt(t, freq, 0.035, gain);
+    }
+
+    function playLeverTick(intensity) {
+      const k = Math.max(0.2, Math.min(1.2, intensity || 0.8));
+      playClick(170 + 240 * k, 0.018 * k);
+    }
+
+    function playLeverLatch(intensity) {
+      const k = Math.max(0.4, Math.min(1.4, intensity || 1.0));
+      playClick(120 + 120 * k, 0.03 * k);
     }
 
     function startHum() {
@@ -1219,7 +2212,7 @@
 
       let up = true;
       const iv = setInterval(() => {
-        if (!state.audioOn || state.meltdownStage < 2) {
+        if (!state.audioOn || (state.alarm && state.alarm.level < 3)) {
           g.gain.value = 0.0;
           return;
         }
@@ -1291,102 +2284,411 @@
     }
 
     // ----- Background Music System -----
-    const musicProg = [
-      [45, 52, 57],  // A2 E3 A3
-      [43, 50, 55],  // G2 D3 G3
-      [40, 47, 52],  // E2 B2 E3
-      [38, 45, 50]   // D2 A2 D3
-    ];
+    const MUSIC_PROG = {
+      SAFE: [
+        [45, 52, 57],  // A2 E3 A3
+        [43, 50, 55],  // G2 D3 G3
+        [40, 47, 52],  // E2 B2 E3
+        [38, 45, 50]   // D2 A2 D3
+      ],
+      WARNING: [
+        [45, 52, 57],
+        [44, 51, 56],
+        [43, 50, 55],
+        [41, 48, 53]
+      ],
+      ALERT: [
+        [45, 52, 57],
+        [43, 50, 55],
+        [41, 48, 53],
+        [40, 47, 52]
+      ],
+      CRITICAL: [
+        [45, 52, 57],
+        [44, 51, 56],
+        [42, 49, 54],
+        [40, 47, 52]
+      ],
+      MELTDOWN: [
+        [45, 52, 57],
+        [44, 51, 56],
+        [43, 50, 55],
+        [42, 49, 54]
+      ],
+      AFTERMATH: [
+        [40, 47, 52],  // E2 B2 E3
+        [38, 45, 50],  // D2 A2 D3
+        [36, 43, 48],  // C2 G2 C3
+        [35, 42, 47]   // B1 F#2 B2
+      ]
+    };
+
+    function getMusicProg(mode) {
+      return MUSIC_PROG[mode] || MUSIC_PROG.SAFE;
+    }
+
+    function computeMusicMode() {
+      if (state.aftermath && state.aftermath.active) return "AFTERMATH";
+      if (state.meltdownStage >= 3) return "MELTDOWN";
+
+      const a = state.alarm ? (state.alarm.level || 0) : 0;
+      if (a >= 3) return "CRITICAL";
+      if (a === 2) return "ALERT";
+      if (a === 1) return "WARNING";
+
+      const cm = (state.crisisMode || "SAFE").toUpperCase();
+      if (cm === "REDLINE") return "CRITICAL";
+      if (cm === "CRITICAL") return "CRITICAL";
+      if (cm === "ELEVATED") return "WARNING";
+      return "SAFE";
+    }
+
+    function computeMusicIntensity() {
+      // 0..1 aggregate intensity
+      const ci = Math.max(0, Math.min(10, state.crisisIndex || 0)) / 10;
+      const t  = Math.max(0, Math.min(1, (state.temp - 300) / 450));
+      const p  = Math.max(0, Math.min(1, (state.pressure - 1) / 6));
+      const r  = Math.max(0, Math.min(1, (state.rad - 0.10) / 3.2));
+      const f  = state.faults ? Math.max(0, Math.min(1, state.faults.length / 8)) : 0;
+
+      let x = 0.45*ci + 0.20*t + 0.15*p + 0.15*r + 0.05*f;
+      if (state.meltdownStage >= 1) x = Math.min(1, x + 0.15);
+      if (state.meltdownStage >= 3) x = Math.min(1, x + 0.25);
+      if (state.blackChamber) x = Math.min(1, x + 0.10);
+      if (state.aftermath && state.aftermath.active) x = Math.max(0.15, x*0.45);
+      return Math.max(0, Math.min(1, x));
+    }
+
+    function chordPeriodForMode(mode) {
+      if (mode === "AFTERMATH") return 14.5;
+      if (mode === "MELTDOWN") return 4.3;
+      if (mode === "CRITICAL") return 5.6;
+      if (mode === "ALERT") return 7.2;
+      if (mode === "WARNING") return 9.0;
+      return 10.8;
+    }
+
+    function refreshMusicLabel() {
+      if (!elMusicState) return;
+      if (!state.musicOn) { elMusicState.textContent = "Music: OFF"; return; }
+      if (!state.audioOn) { elMusicState.textContent = "Music: MUTED"; return; }
+      if (!audioCtx) { elMusicState.textContent = "Music: N/A"; return; }
+      if (audioCtx.state === "suspended") { elMusicState.textContent = "Music: ARMED"; return; }
+      elMusicState.textContent = "Music: " + computeMusicMode();
+    }
+
+    function applyMusicReactive(immediate) {
+      if (!audioCtx || !musicGain) return;
+      const now = audioCtx.currentTime;
+
+      const mode = computeMusicMode();
+      const intensity = computeMusicIntensity();
+
+      // Filter shaping
+      let baseCut = 420;
+      if (mode === "WARNING")  baseCut = 500;
+      if (mode === "ALERT")    baseCut = 600;
+      if (mode === "CRITICAL") baseCut = 720;
+      if (mode === "MELTDOWN") baseCut = 980;
+      if (mode === "AFTERMATH")baseCut = 340;
+
+      const cut = Math.min(2400, baseCut + 1300 * intensity);
+      const q = 0.85 + 1.25 * intensity + (mode === "MELTDOWN" ? 0.45 : 0);
+
+      if (musicFilter) {
+        if (immediate) { musicFilter.frequency.value = cut; musicFilter.Q.value = q; }
+        else {
+          musicFilter.frequency.setTargetAtTime(cut, now, 0.25);
+          musicFilter.Q.setTargetAtTime(q, now, 0.35);
+        }
+      }
+
+      // Filter LFO (depth + rate)
+      if (musicLfo && musicLfo.osc && musicLfo.g) {
+        const rate = (mode === "AFTERMATH" ? 0.06 : mode === "MELTDOWN" ? 0.34 : 0.10 + 0.22 * intensity);
+        const depth = (mode === "AFTERMATH" ? 120 : 180 + 520 * intensity + (mode === "MELTDOWN" ? 180 : 0));
+
+        if (immediate) { musicLfo.osc.frequency.value = rate; musicLfo.g.gain.value = depth; }
+        else {
+          musicLfo.osc.frequency.setTargetAtTime(rate, now, 0.35);
+          musicLfo.g.gain.setTargetAtTime(depth, now, 0.25);
+        }
+      }
+
+      // Sub + pulse + noise mixes
+      if (musicSub && musicSub.g) {
+        let sg = 0.018 + 0.020 * intensity;
+        if (mode === "AFTERMATH") sg *= 0.55;
+        if (mode === "MELTDOWN") sg = Math.min(0.045, sg + 0.010);
+        if (immediate) musicSub.g.gain.value = sg;
+        else musicSub.g.gain.setTargetAtTime(sg, now, 0.30);
+      }
+
+      if (musicPulseLfo && musicPulseLfo.osc && musicPulseLfo.g) {
+        let pr = 0.90 + 1.10 * intensity;
+        if (mode === "WARNING") pr += 0.15;
+        if (mode === "ALERT") pr += 0.45;
+        if (mode === "CRITICAL") pr += 0.75;
+        if (mode === "MELTDOWN") pr += 1.15;
+        if (mode === "AFTERMATH") pr = 0.55 + 0.30 * intensity;
+
+        let pd = 0.018 + 0.050 * intensity;
+        if (mode === "AFTERMATH") pd *= 0.45;
+
+        if (immediate) { musicPulseLfo.osc.frequency.value = pr; musicPulseLfo.g.gain.value = pd; }
+        else {
+          musicPulseLfo.osc.frequency.setTargetAtTime(pr, now, 0.25);
+          musicPulseLfo.g.gain.setTargetAtTime(pd, now, 0.20);
+        }
+      }
+
+      if (musicNoise && musicNoise.g && musicNoise.f) {
+        let ng = 0.0 + 0.012 * intensity;
+        if (mode === "CRITICAL") ng += 0.006;
+        if (mode === "MELTDOWN") ng += 0.010;
+        if (mode === "AFTERMATH") ng *= 0.35;
+
+        const nf = 820 + 520 * intensity + (mode === "MELTDOWN" ? 220 : 0);
+        if (immediate) { musicNoise.g.gain.value = ng; musicNoise.f.frequency.value = nf; }
+        else {
+          musicNoise.g.gain.setTargetAtTime(ng, now, 0.30);
+          musicNoise.f.frequency.setTargetAtTime(nf, now, 0.35);
+        }
+      }
+    }
+
 
     function mtof(m) {
       return 440 * Math.pow(2, (m - 69) / 12);
     }
 
+    
     function setMusicChord(idx) {
       if (!musicOscs || musicOscs.length < 3 || !audioCtx) return;
-      const chord = musicProg[idx % musicProg.length];
+      const mode = computeMusicMode();
+      const prog = getMusicProg(mode);
+      const chord = prog[idx % prog.length];
+
+      const inten = computeMusicIntensity();
+      const detuneCents = (mode === "MELTDOWN" ? 18 : mode === "CRITICAL" ? 10 : 5) * inten;
+
       for (let i = 0; i < 3; i++) {
         const f = mtof(chord[i]);
         musicOscs[i].frequency.setTargetAtTime(f, audioCtx.currentTime, 0.08);
+        if (musicOscs[i].detune) {
+          musicOscs[i].detune.setTargetAtTime((i - 1) * detuneCents, audioCtx.currentTime, 0.18);
+        }
+      }
+
+      // Sub follows root
+      if (musicSub && musicSub.osc) {
+        const root = chord[0];
+        musicSub.osc.frequency.setTargetAtTime(mtof(root - 24), audioCtx.currentTime, 0.12);
+      }
+
+      // Pulse sits above root
+      if (musicPulse && musicPulse.osc) {
+        const root = chord[0];
+        musicPulse.osc.frequency.setTargetAtTime(mtof(root + 12), audioCtx.currentTime, 0.10);
       }
     }
 
     function updateMusicVol(immediate) {
       if (!audioCtx || !musicGain) return;
       const on = state.audioOn && state.musicOn;
-      const target = on ? (0.06 * (state.musicVol / 100)) : 0.0;
+      const mode = computeMusicMode();
+      const intensity = computeMusicIntensity();
+
+      // Base music loudness (scaled by slider) – tuned to be clearly audible but not overwhelming.
+      let base = 0.11;
+      if (mode === "AFTERMATH") base = 0.07;
+      if (mode === "MELTDOWN")  base = 0.13;
+
+      const dyn = (0.60 + 0.40 * intensity);
+      const target = on ? (base * dyn * (state.musicVol / 100)) : 0.0;
+
       if (immediate) {
         musicGain.gain.value = target;
       } else {
-        musicGain.gain.linearRampToValueAtTime(target, audioCtx.currentTime + 0.2);
+        musicGain.gain.setTargetAtTime(target, audioCtx.currentTime, 0.20);
       }
     }
 
     function startMusic() {
       if (!state.audioOn || !state.musicOn || !audioCtx || musicGain) return;
 
-      // Filtered pad
-      musicFilter = audioCtx.createBiquadFilter();
+      const ctx = audioCtx;
+
+      // Shared master gain
+      musicGain = ctx.createGain();
+      musicGain.gain.value = 0.0;
+      musicGain.connect(ctx.destination);
+
+      // Filtered pad bus
+      musicFilter = ctx.createBiquadFilter();
       musicFilter.type = "lowpass";
       musicFilter.frequency.value = 520;
-      musicFilter.Q.value = 0.7;
+      musicFilter.Q.value = 0.9;
 
-      musicGain = audioCtx.createGain();
-      musicGain.gain.value = 0.0;
-
+      // Pad sources -> filter -> master
       musicFilter.connect(musicGain);
-      musicGain.connect(audioCtx.destination);
 
       musicOscs = [];
       for (let i = 0; i < 3; i++) {
-        const osc = audioCtx.createOscillator();
-        osc.type = "sine";
-        osc.detune.value = (i - 1) * 6;
-        osc.connect(musicFilter);
-        osc.start();
-        musicOscs.push(osc);
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = "triangle";
+        o.frequency.value = 220;
+        g.gain.value = 0.028; // pad level per voice
+        o.connect(g);
+        g.connect(musicFilter);
+        o.start();
+        musicOscs.push(o);
       }
 
-      // Slow filter movement (LFO)
-      const lfo = audioCtx.createOscillator();
+      // Sub drone (bypass filter into master)
+      const subOsc = ctx.createOscillator();
+      const subGain = ctx.createGain();
+      subOsc.type = "sine";
+      subOsc.frequency.value = 55;
+      subGain.gain.value = 0.0;
+      subOsc.connect(subGain);
+      subGain.connect(musicGain);
+      subOsc.start();
+      musicSub = { osc: subOsc, g: subGain };
+
+      // Pulse layer (into filter)
+      const pulseOsc = ctx.createOscillator();
+      const pulseGain = ctx.createGain();
+      pulseOsc.type = "triangle";
+      pulseOsc.frequency.value = 110;
+      pulseGain.gain.value = 0.0;
+      pulseOsc.connect(pulseGain);
+      pulseGain.connect(musicFilter);
+      pulseOsc.start();
+      musicPulse = { osc: pulseOsc, g: pulseGain };
+
+      // Pulse LFO (smooth)
+      const pLfo = ctx.createOscillator();
+      const pLfoGain = ctx.createGain();
+      pLfo.type = "sine";
+      pLfo.frequency.value = 1.1;
+      pLfoGain.gain.value = 0.0;
+      pLfo.connect(pLfoGain);
+      pLfoGain.connect(pulseGain.gain);
+      pLfo.start();
+      musicPulseLfo = { osc: pLfo, g: pLfoGain };
+
+      // Noise bed (bandpass -> filter)
+      const noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const ch = noiseBuf.getChannelData(0);
+      for (let i = 0; i < ch.length; i++) ch[i] = (Math.random() * 2 - 1) * 0.55;
+
+      const noiseSrc = ctx.createBufferSource();
+      noiseSrc.buffer = noiseBuf;
+      noiseSrc.loop = true;
+
+      const noiseF = ctx.createBiquadFilter();
+      noiseF.type = "bandpass";
+      noiseF.frequency.value = 900;
+      noiseF.Q.value = 0.7;
+
+      const noiseG = ctx.createGain();
+      noiseG.gain.value = 0.0;
+
+      noiseSrc.connect(noiseF);
+      noiseF.connect(noiseG);
+      noiseG.connect(musicFilter);
+      noiseSrc.start();
+      musicNoise = { src: noiseSrc, f: noiseF, g: noiseG };
+
+      // Filter LFO for gentle motion
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
       lfo.type = "sine";
-      lfo.frequency.value = 0.05;
-      const lfoGain = audioCtx.createGain();
-      lfoGain.gain.value = 220;
+      lfo.frequency.value = 0.12;
+      lfoGain.gain.value = 190;
       lfo.connect(lfoGain);
       lfoGain.connect(musicFilter.frequency);
       lfo.start();
       musicLfo = { osc: lfo, g: lfoGain };
 
+      // Initial chord + scheduling
       musicChordIndex = 0;
       setMusicChord(musicChordIndex);
-      updateMusicVol(true);
+      musicLastMode = computeMusicMode();
+      musicNextChordAt = ctx.currentTime + chordPeriodForMode(musicLastMode);
 
+      // Apply initial reactive shaping
+      applyMusicReactive(true);
+      updateMusicVol(true);
+      refreshMusicLabel();
+
+      // Adaptive scheduler (updates mix + mode + chord timing)
       musicIv = setInterval(() => {
-        if (!state.audioOn || !state.musicOn) {
-          updateMusicVol(true);
-          return;
+        if (!state.audioOn || !state.musicOn || !audioCtx) { updateMusicVol(true); refreshMusicLabel(); return; }
+        if (audioCtx.state === "suspended") { refreshMusicLabel(); return; }
+
+        const now = ctx.currentTime;
+        const mode = computeMusicMode();
+
+        // If mode changed, switch chord soon to make it feel responsive.
+        if (mode !== musicLastMode) {
+          musicLastMode = mode;
+          musicNextChordAt = Math.min(musicNextChordAt, now + 0.35);
         }
-        musicChordIndex = (musicChordIndex + 1) % musicProg.length;
-        setMusicChord(musicChordIndex);
-      }, 9800);
+
+        // Advance chord when due (uses mode-specific period)
+        const prog = getMusicProg(mode);
+        if (now >= musicNextChordAt) {
+          musicChordIndex = (musicChordIndex + 1) % prog.length;
+          setMusicChord(musicChordIndex);
+          musicNextChordAt = now + chordPeriodForMode(mode);
+        }
+
+        applyMusicReactive(false);
+        updateMusicVol(false);
+        refreshMusicLabel();
+      }, 250);
     }
 
+
+    
     function stopMusic() {
       if (musicIv) { clearInterval(musicIv); musicIv = null; }
-      if (musicLfo) {
-        try { musicLfo.osc.stop(); } catch (_) {}
-        musicLfo = null;
-      }
-      if (musicOscs && musicOscs.length) {
-        for (const o of musicOscs) {
-          try { o.stop(); } catch (_) {}
-        }
-      }
+      musicNextChordAt = 0;
+      musicLastMode = "SAFE";
+
+      const safeStop = (n) => { try { n && n.stop && n.stop(); } catch (_) {} };
+      const safeDisc = (n) => { try { n && n.disconnect && n.disconnect(); } catch (_) {} };
+
+      try { for (const o of (musicOscs || [])) safeStop(o); } catch (_) {}
+      try { for (const o of (musicOscs || [])) safeDisc(o); } catch (_) {}
       musicOscs = [];
+
+      if (musicLfo) { safeStop(musicLfo.osc); safeDisc(musicLfo.osc); safeDisc(musicLfo.g); }
+      musicLfo = null;
+
+      if (musicPulseLfo) { safeStop(musicPulseLfo.osc); safeDisc(musicPulseLfo.osc); safeDisc(musicPulseLfo.g); }
+      musicPulseLfo = null;
+
+      if (musicPulse) { safeStop(musicPulse.osc); safeDisc(musicPulse.osc); safeDisc(musicPulse.g); }
+      musicPulse = null;
+
+      if (musicSub) { safeStop(musicSub.osc); safeDisc(musicSub.osc); safeDisc(musicSub.g); }
+      musicSub = null;
+
+      if (musicNoise) {
+        safeStop(musicNoise.src);
+        safeDisc(musicNoise.src); safeDisc(musicNoise.f); safeDisc(musicNoise.g);
+      }
+      musicNoise = null;
+
+      safeDisc(musicFilter); safeDisc(musicGain);
       musicFilter = null;
       musicGain = null;
     }
+
 
     function applyMusicState() {
       if (!elMusicState) return;
@@ -1414,7 +2716,7 @@
 
       startMusic();
       updateMusicVol(true);
-      elMusicState.textContent = "Music: ON";
+      refreshMusicLabel();
       if (elMusicVol) elMusicVol.value = String(state.musicVol);
     }
 
@@ -1466,8 +2768,12 @@
         state.musicOn = !state.musicOn;
         try { localStorage.setItem("chernos_music_on", state.musicOn ? "1" : "0"); } catch (e) {}
         applyMusicState();
-      });
-    }
+      
+        // Attempt to start immediately on user gesture.
+        ensureAudio();
+        if (audioCtx && audioCtx.state === "suspended") { try { audioCtx.resume(); } catch (e) {} }
+        applyAudioState();
+      });}
 
     if (elMusicVol) {
       elMusicVol.value = String(state.musicVol);
@@ -1488,7 +2794,20 @@
       }, 400);
     });
 
-    // ----- Graph helpers -----
+    
+
+    // Prime audio + music after the first user gesture (autoplay-safe).
+    const primeAudioOnce = () => {
+      if (!state.audioOn) return;
+      ensureAudio();
+      if (!audioCtx) return;
+      if (audioCtx.state === "suspended") { try { audioCtx.resume(); } catch (e) {} }
+      applyAudioState();
+    };
+    window.addEventListener("pointerdown", primeAudioOnce, { once: true, passive: true });
+    window.addEventListener("keydown", primeAudioOnce, { once: true });
+
+// ----- Graph helpers -----
     function pushHist(buf, v) {
       buf.push(v);
       if (buf.length > histLen) buf.shift();
@@ -1531,11 +2850,46 @@
     }
 
     // ----- Rendering -----
-    function renderTelemetry() {
-      elTemp.textContent = Math.round(state.temp) + "°C";
-      elP.textContent    = state.pressure.toFixed(2) + " MPa";
-      elR.textContent    = state.rad.toFixed(2) + " mSv/h";
+    
+function renderTelemetry() {
+  // Sensor fault (display drift only)
+  let dispT = state.temp;
+  let dispP = state.pressure;
+  let dispR = state.rad;
+  const sf = getFault("sensor");
+  if (sf) {
+    const s = sf.sev || 1;
+    dispT = dispT + Math.sin(state.ticks / 13) * (5 * s) + (Math.random() - 0.5) * (2.2 * s);
+    dispP = dispP + Math.sin(state.ticks / 17) * (0.06 * s) + (Math.random() - 0.5) * (0.015 * s);
+    dispR = dispR + Math.cos(state.ticks / 11) * (0.08 * s) + (Math.random() - 0.5) * (0.02 * s);
+    if (dispP < 0.0) dispP = 0.0;
+    if (dispR < 0.0) dispR = 0.0;
+  }
+
+  elTemp.textContent = Math.round(dispT) + "°C";
+  elP.textContent    = dispP.toFixed(2) + " MPa";
+  elR.textContent    = dispR.toFixed(2) + " mSv/h";
       elSG.textContent   = state.safeguards + " / 3";
+
+      // Safeguard recharge readout (best-effort)
+      if (state.sgRecharge && elSgRechargePct && elSgRechargeBar && elSgRechargeStatus) {
+        const maxSg = 3;
+        const pct = Math.max(0, Math.min(100, Math.round((state.sgRecharge.progress || 0) * 100)));
+        elSgRechargeBar.style.width = `${pct}%`;
+        elSgRechargePct.textContent = `${pct}%`;
+
+        if (state.safeguards >= maxSg) {
+          elSgRechargeStatus.textContent = "full";
+          elSgRechargeBar.style.opacity = "0.25";
+        } else if ((state.sgRecharge.cooldown || 0) > 0) {
+          elSgRechargeStatus.textContent = `cooldown (${Math.ceil(state.sgRecharge.cooldown * 0.85)}s)`;
+          elSgRechargeBar.style.opacity = "0.4";
+        } else {
+          elSgRechargeBar.style.opacity = "0.75";
+          elSgRechargeStatus.textContent = (pct > 0 ? "charging" : "standby");
+        }
+      }
+
 
       const t = state.temp;
       const p = state.pressure;
@@ -1661,6 +3015,8 @@
         elBadgeNet.textContent = "NET: OFFLINE";
         elBadgeNet.style.color = "#fb7185";
       }
+    
+      renderNetOps();
     }
 
     function renderBadges() {
@@ -1718,7 +3074,127 @@
       updateContainPills();
       updateCommsPills();
       renderGraphs();
+      renderFaultUI();
+      renderAftermathUI();
     }
+
+    // ----- Alarm Sequencing Engine -----
+    function alarmLevelName(lvl) {
+      if (lvl === 1) return "WARNING";
+      if (lvl === 2) return "ALERT";
+      if (lvl === 3) return "CRITICAL";
+      return "OFF";
+    }
+
+    function computeAlarmState() {
+      const net = state.net;
+      const ci = state.crisisIndex || 0;
+
+      // Priority: meltdown/aftermath > rad/pressure/temp thresholds > network degradation
+      if (state.aftermath && state.aftermath.active) return { level: 2, reason: "AFTERMATH" };
+      if (state.meltdownStage >= 4) return { level: 3, reason: "MELTDOWN" };
+      if (state.meltdownStage >= 2) return { level: 2, reason: "CORE UNSTABLE" };
+
+      if (state.rad >= 3.0) return { level: 2, reason: "RADIATION SPIKE" };
+      if (state.pressure >= 3.2) return { level: 2, reason: "PRESSURE OVERRANGE" };
+      if (state.temp >= 860) return { level: 2, reason: "THERMAL RUNAWAY" };
+
+      if (ci >= 78) return { level: 2, reason: "CRISIS INDEX" };
+
+      if (net.mode === "offline") return { level: 1, reason: "NET OFFLINE" };
+      if (net.mode === "degraded") return { level: 1, reason: "NET DEGRADED" };
+      if (state.rad >= 1.0) return { level: 1, reason: "RADIATION ELEVATED" };
+      if (state.pressure >= 2.2) return { level: 1, reason: "PRESSURE ELEVATED" };
+      if (state.temp >= 720) return { level: 1, reason: "TEMP ELEVATED" };
+      if (ci >= 50) return { level: 1, reason: "CRISIS INDEX" };
+      if (faultActiveCount() > 0) return { level: 1, reason: "FAULT BUS" };
+
+      return { level: 0, reason: "" };
+    }
+
+    function renderAlarmUI() {
+      if (!elBadgeAlarm || !elCellAlarmBus) return;
+
+      const lvl = state.alarm.level || 0;
+      const name = alarmLevelName(lvl);
+      const reason = state.alarm.reason || "";
+
+      elBadgeAlarm.classList.remove("badge-warn","badge-alert","badge-critical");
+      elCellAlarmBus.classList.remove("alarm-warn","alarm-alert","alarm-critical");
+
+      if (lvl === 0) {
+        elBadgeAlarm.textContent = "ALARM: OFF";
+        elBadgeAlarm.style.color = "#9ca3af";
+        elCellAlarmBus.textContent = "ALARM BUS: CLEAR";
+      } else {
+        elBadgeAlarm.textContent = "ALARM: " + name;
+        elCellAlarmBus.textContent = "ALARM BUS: " + name + (reason ? " (" + reason + ")" : "");
+        elBadgeAlarm.style.color = "";
+      }
+
+      if (lvl === 1) {
+        elBadgeAlarm.classList.add("badge-warn");
+        elCellAlarmBus.classList.add("alarm-warn");
+      } else if (lvl === 2) {
+        elBadgeAlarm.classList.add("badge-alert");
+        elCellAlarmBus.classList.add("alarm-alert");
+      } else if (lvl >= 3) {
+        elBadgeAlarm.classList.add("badge-critical");
+        elCellAlarmBus.classList.add("alarm-critical");
+      }
+    }
+
+    function alarmAudioTick() {
+      const lvl = state.alarm.level || 0;
+      if (!state.audioOn) return;
+
+      // Ensure siren node exists; it will stay silent unless level >= 3.
+      if (lvl >= 3) startSiren();
+
+      if (lvl === 0 || lvl >= 3) return;
+
+      ensureAudio();
+      if (!audioCtx) return;
+      resumeAudioForGesture();
+
+      const nowMs = Date.now();
+      if (nowMs < (state.alarm.nextBeepAt || 0)) return;
+
+      // Patterns: WARNING = double-beep / 3.8s, ALERT = triple-beep / 2.6s
+      const pattern = (lvl === 1)
+        ? { count: 2, spacingMs: 180, periodMs: 3800, freq: 880, gain: 0.025 }
+        : { count: 3, spacingMs: 140, periodMs: 2600, freq: 980, gain: 0.03 };
+
+      state.alarm.nextBeepAt = nowMs + pattern.periodMs;
+
+      const t0 = audioCtx.currentTime + 0.02;
+      for (let i = 0; i < pattern.count; i++) {
+        const when = t0 + (i * pattern.spacingMs) / 1000;
+        scheduleBeepAt(when, pattern.freq, 0.08, pattern.gain);
+      }
+    }
+
+    function updateAlarmEngine() {
+      const next = computeAlarmState();
+      const prevLevel = state.alarm.level || 0;
+      const prevReason = state.alarm.reason || "";
+
+      if (next.level !== prevLevel || next.reason !== prevReason) {
+        state.alarm.level = next.level;
+        state.alarm.reason = next.reason;
+        state.alarm.nextBeepAt = 0;
+
+        if (next.level === 0) {
+          log("ALARM: cleared.");
+        } else {
+          log("ALARM: " + alarmLevelName(next.level) + (next.reason ? " — " + next.reason : ""));
+        }
+      }
+
+      renderAlarmUI();
+      alarmAudioTick();
+    }
+
 
     // ----- Redline Crisis Engine -----
     function computeCrisisIndex() {
@@ -1811,7 +3287,7 @@
     function applyWorkspaceMode(mode) {
       state.workspaceMode = mode;
       try {
-        localStorage.setItem("chernos_ws_mode", mode);
+        lsSet("chernos_ws_mode", mode);
       } catch (e) {}
 
       wsButtons.forEach(btn => {
@@ -1852,7 +3328,7 @@
     // ----- Workstation: notes + tasks -----
     function saveNotes() {
       try {
-        localStorage.setItem("chernos_ws_notes", wsNotes.value || "");
+        lsSet("chernos_ws_notes", wsNotes.value || "");
       } catch (e) {}
     }
 
@@ -1862,7 +3338,7 @@
 
     function saveTasks() {
       try {
-        localStorage.setItem("chernos_ws_tasks", JSON.stringify(state.tasks || []));
+        lsSet("chernos_ws_tasks", JSON.stringify(state.tasks || []));
       } catch (e) {}
     }
 
@@ -1933,10 +3409,10 @@
 
     function loadWorkstationState() {
       try {
-        const notes = localStorage.getItem("chernos_ws_notes");
+        const notes = lsGet("chernos_ws_notes");
         if (notes !== null) wsNotes.value = notes;
 
-        const tasksRaw = localStorage.getItem("chernos_ws_tasks");
+        const tasksRaw = lsGet("chernos_ws_tasks");
         if (tasksRaw) {
           try {
             const arr = JSON.parse(tasksRaw);
@@ -1944,7 +3420,7 @@
           } catch (_) {}
         }
 
-        const mode = localStorage.getItem("chernos_ws_mode");
+        const mode = lsGet("chernos_ws_mode");
         if (mode && ["full","reactor","containment","comms","logs"].includes(mode)) {
           applyWorkspaceMode(mode);
         } else {
@@ -1968,8 +3444,9 @@
         btnLockdown.classList.remove("lockdown-active");
       }
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
-    }
+}
 
     function toggleBlackChamber(forceOn) {
       const target = (typeof forceOn === "boolean") ? forceOn : !state.blackChamber;
@@ -1981,6 +3458,7 @@
       }
       updateContainHumGain();
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     }
 
@@ -1989,6 +3467,7 @@
       log(`Containment Alpha (thermal buffer) ${state.containment.alpha ? "enabled" : "disabled"} (sim).`);
       updateContainHumGain();
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     });
 
@@ -1997,6 +3476,7 @@
       log("Containment Beta latch reset (sim).");
       updateContainHumGain();
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     });
 
@@ -2005,6 +3485,7 @@
       log(`Containment Gamma field ${state.containment.gamma ? "engaged" : "disengaged"} (sim).`);
       updateContainHumGain();
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     });
 
@@ -2012,6 +3493,7 @@
       log("Containment pulse sweep triggered (sim).");
       state.rad = Math.max(0.05, state.rad - 0.6);
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     });
 
@@ -2024,6 +3506,7 @@
       state.satLink = !state.satLink;
       log(`SATLINK ${state.satLink ? "routed to sim uplink" : "disconnected"} (visual only).`);
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     });
 
@@ -2031,6 +3514,7 @@
       state.ghostLink = !state.ghostLink;
       log(`GHOST MIRROR ${state.ghostLink ? "latched (sim)" : "released (sim)"}.`);
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     });
 
@@ -2070,18 +3554,255 @@
     }
 
     // ----- Simulation Engine (meltdown v2.0) -----
-    function stepSim() {
+    
+// ----- Fault Events + Aftermath Mode -----
+function faultActiveCount() {
+  try { return Object.keys((state.faults && state.faults.active) || {}).length; } catch (e) { return 0; }
+}
+function getFault(type) {
+  return (state.faults && state.faults.active && state.faults.active[type]) ? state.faults.active[type] : null;
+}
+function injectFault(type, sev = 1, ttl = 160) {
+  const t = String(type || "").toLowerCase();
+  if (!t) return false;
+  if (!state.faults) state.faults = { active: {}, lastRollAt: 0 };
+  const s = Math.max(1, Math.min(3, parseInt(sev, 10) || 1));
+  const life = Math.max(30, Math.min(600, parseInt(ttl, 10) || 160));
+  state.faults.active[t] = { type: t, sev: s, ttl: life };
+  log(`FAULT INJECTED: ${t.toUpperCase()} (sev=${s}, ttl=${life})`);
+  return true;
+}
+function clearFault(type) {
+  if (!state.faults) return;
+  if (!type || type === "all") {
+    state.faults.active = {};
+    log("FAULT BUS CLEARED: ALL");
+    return;
+  }
+  const t = String(type).toLowerCase();
+  if (state.faults.active[t]) {
+    delete state.faults.active[t];
+    log("FAULT CLEARED: " + t.toUpperCase());
+  }
+}
+function tickFaults() {
+  if (!state.faults) return;
+  const active = state.faults.active || {};
+  for (const k of Object.keys(active)) {
+    const f = active[k];
+    f.ttl = (f.ttl || 0) - 1;
+    if (f.ttl <= 0) {
+      delete active[k];
+      log("FAULT EXPIRED: " + String(k).toUpperCase());
+    }
+  }
+  state.faults.active = active;
+}
+function maybeSpawnFault() {
+  // Low-rate stochastic faults in higher stress; disabled in aftermath/meltdown 4+
+  if (!state.faults) return;
+  if (state.aftermath && state.aftermath.active) return;
+  if (state.meltdownStage >= 4) return;
+  const ci = state.crisisIndex || 0;
+  const base = 0.0012; // per tick
+  const scale = Math.max(0, (ci - 45) / 90); // 0..~1
+  const p = base + (base * 3.0 * scale) + (state.overdrive ? 0.001 : 0);
+  if (Math.random() > p) return;
+
+  const types = ["sensor", "pump", "pressure", "ghostrad"];
+  const type = types[Math.floor(Math.random() * types.length)];
+  if (getFault(type)) return; // one active of each type
+  const sev = (ci > 80 || state.overdrive) ? 2 : 1;
+  const ttl = 120 + Math.floor(Math.random() * 120);
+  injectFault(type, sev, ttl);
+}
+
+function enterAftermath(reason = "INCIDENT") {
+  if (!state.aftermath) state.aftermath = { active:false, enteredAt:0, reason:"", decon:{running:false, progress:0} };
+  if (state.aftermath.active) return;
+  state.aftermath.active = true;
+  state.aftermath.enteredAt = state.ticks || 0;
+  state.aftermath.reason = reason || "INCIDENT";
+  state.aftermath.decon = { running: false, progress: 0 };
+  state.overdrive = false;
+  state.lockdown = true;
+  log("AFTERMATH MODE: engaged (" + state.aftermath.reason + "). Controls locked.");
+}
+
+function startDecon() {
+  if (!state.aftermath || !state.aftermath.active) {
+    termPrint("decon: not in aftermath mode.", "err");
+    return;
+  }
+  state.aftermath.decon.running = true;
+  log("DECON: started.");
+}
+function abortDecon() {
+  if (!state.aftermath || !state.aftermath.active) return;
+  state.aftermath.decon.running = false;
+  log("DECON: aborted.");
+}
+
+function tickAftermath() {
+  // Aftermath stabilizer; decon drives recovery + exit
+  if (!state.aftermath || !state.aftermath.active) return;
+
+  const decon = state.aftermath.decon || (state.aftermath.decon = { running:false, progress:0 });
+  const r = state.coolantRouting || { core: 50, exchanger: 30, relief: 20 };
+  const rExch = Math.max(0, Math.min(1, (r.exchanger ?? 30) / 100));
+  const baseK = decon.running ? (0.020 + 0.018 * rExch) : 0.010;
+
+  // Target recovery baselines
+  const tgtT = decon.running ? 360 : 520;
+  const tgtP = decon.running ? 1.25 : 1.70;
+  const tgtR = decon.running ? 0.18 : 0.65;
+
+  state.temp += (tgtT - state.temp) * baseK;
+  state.pressure += (tgtP - state.pressure) * (baseK * 0.8);
+  state.rad += (tgtR - state.rad) * (baseK * 0.9);
+
+  // Clamp
+  if (state.temp < 260) state.temp = 260;
+  if (state.pressure < 0.9) state.pressure = 0.9;
+  if (state.rad < 0.05) state.rad = 0.05;
+
+  if (decon.running) {
+    decon.progress = Math.min(1, (decon.progress || 0) + (0.006 + 0.004 * rExch));
+    if (decon.progress >= 1) {
+      // Exit aftermath into a stabilized baseline
+      state.aftermath.active = false;
+      state.lockdown = false;
+      state.meltdownStage = 0;
+      state.implosionPlayed = false;
+      state._m5ticks = 0;
+      clearFault("all");
+      state.temp = Math.min(state.temp, 520);
+      state.pressure = Math.min(state.pressure, 1.9);
+      state.rad = Math.min(state.rad, 0.75);
+      log("AFTERMATH COMPLETE: plant stabilized. Controls restored.");
+    }
+  }
+}
+
+function renderFaultUI() {
+  const n = faultActiveCount();
+  if (elBadgeFault) {
+    elBadgeFault.textContent = "FAULTS: " + n;
+    elBadgeFault.style.color = n > 0 ? "#facc6b" : "#9ca3af";
+  }
+  if (elCellFaultBus) {
+    if (n === 0) {
+      elCellFaultBus.textContent = "FAULT BUS: CLEAR";
+    } else {
+      const keys = Object.keys((state.faults && state.faults.active) || {});
+      elCellFaultBus.textContent = "FAULT BUS: " + keys.map(k => k.toUpperCase()).join(", ");
+    }
+  }
+}
+
+function renderAftermathUI() {
+  const on = !!(state.aftermath && state.aftermath.active);
+  if (elBadgeAfter) {
+    elBadgeAfter.textContent = "AFTERMATH: " + (on ? "ON" : "OFF");
+    elBadgeAfter.style.color = on ? "#fb7185" : "#9ca3af";
+  }
+  if (elCellAfterBus) {
+    elCellAfterBus.textContent = on ? ("POST-INCIDENT: ACTIVE" + (state.aftermath.reason ? " (" + state.aftermath.reason + ")" : "")) : "POST-INCIDENT: STANDBY";
+  }
+  if (elAfterCard) {
+    elAfterCard.style.display = on ? "" : "none";
+  }
+  if (elAfterStatus) {
+    if (!on) {
+      elAfterStatus.textContent = "Standby";
+    } else {
+      const decon = state.aftermath.decon || { running:false, progress:0 };
+      elAfterStatus.textContent = decon.running ? "Decon running…" : "Controls locked — begin decon to recover.";
+    }
+  }
+  if (elDeconBar && elDeconPct) {
+    const decon = (state.aftermath && state.aftermath.decon) ? state.aftermath.decon : { progress:0 };
+    const pct = Math.max(0, Math.min(100, Math.round((decon.progress || 0) * 100)));
+    elDeconBar.style.width = pct + "%";
+    elDeconPct.textContent = pct + "%";
+  }
+
+  // Lock controls during aftermath (keep UI clickable)
+  const lock = on;
+  try {
+    if (btnOver) btnOver.disabled = lock;
+    if (btnDiag) btnDiag.disabled = lock;
+    if (btnLockdown) btnLockdown.disabled = lock;
+    if (leverCore) leverCore.disabled = lock;
+    if (leverCool) leverCool.disabled = lock;
+    if (routeCore) routeCore.disabled = lock;
+    if (routeExch) routeExch.disabled = lock;
+    if (routeRelief) routeRelief.disabled = lock;
+    if (btnDeconStart) btnDeconStart.disabled = !on;
+    if (btnDeconAbort) btnDeconAbort.disabled = !on;
+  } catch (e) {}
+}
+
+function stepSim() {
       state.ticks++;
+
+      tickFaults();
+      maybeSpawnFault();
+
+      // Aftermath mode overrides normal sim
+      if (state.aftermath && state.aftermath.active) {
+        tickAftermath();
+        pushHist(histTemp,  state.temp);
+        pushHist(histPress, state.pressure);
+        pushHist(histRad,   state.rad);
+        updateCrisisEngine();
+        updateAlarmEngine();
+        renderAll();
+        return;
+      }
 
       const drive  = parseInt(leverCore.value, 10)   / 100;
       const cool   = parseInt(leverCool.value, 10)   / 100;
       const jitter = (Math.random() - 0.5);
 
+      // Manual coolant routing (affects cooling/pressure/radiation — sim)
+      const routing = state.coolantRouting || { core: 50, exchanger: 30, relief: 20 };
+      const rCore = Math.max(0, Math.min(1, (routing.core ?? 50) / 100));
+      const rExch = Math.max(0, Math.min(1, (routing.exchanger ?? 30) / 100));
+      const rRelief = Math.max(0, Math.min(1, (routing.relief ?? 20) / 100));
+      const coolEff = Math.max(0.6, Math.min(2.0, cool * (0.75 + (0.55 * rCore) + (0.75 * rExch))));
+      const reliefEff = rRelief; // 0..1
+
+
       state.microJitter = 0.3 * jitter;
 
-      let dT = jitter * 2.2 + (drive - 0.85) * 5.2 - (cool - 1.0) * 3.4;
+      let dT = jitter * 2.2 + (drive - 0.85) * 5.2 - (coolEff - 1.0) * 3.4;
       let dP = jitter * 0.07 + (state.temp - 320) / 2600;
       let dR = jitter * 0.02 + Math.max(0, (state.temp - 420)) / 6400;
+
+      // routing side-effects
+      dP -= reliefEff * 0.08;
+      dR += reliefEff * Math.max(0, (state.temp - 360)) / 22000;
+      dR *= (1.0 - 0.08 * rExch);
+
+// Fault effects (sim)
+const fPump = getFault("pump");
+if (fPump) {
+  const s = fPump.sev || 1;
+  dT += 3.6 * s;
+  dP += 0.03 * s;
+  dR += 0.04 * s;
+}
+const fPress = getFault("pressure");
+if (fPress) {
+  const s = fPress.sev || 1;
+  dP += (0.08 + 0.06 * Math.random()) * s;
+}
+const fGhost = getFault("ghostrad");
+if (fGhost) {
+  const s = fGhost.sev || 1;
+  dR += (0.05 + 0.05 * Math.random()) * s;
+}
 
       if (state.overdrive && state.meltdownStage === 0 && !state.lockdown) {
         dT *= 1.8;
@@ -2109,6 +3830,10 @@
           state.pressure -= 0.9;
           state.rad -= 0.25;
           log("AUTO-SAFEGUARD (sim): staged insertion + coolant surge.");
+          if (state.sgRecharge) {
+            state.sgRecharge.progress = 0;
+            state.sgRecharge.cooldown = 35;
+          }
         }
 
         if (state.temp > 1300 && state.pressure > 5.0 && state.safeguards === 0) {
@@ -2173,11 +3898,59 @@
       if (state.pressure < 0.9) state.pressure = 0.9;
       if (state.rad < 0.05) state.rad = 0.05;
 
+
+      // Safeguard recharge (only when stable)
+      if (state.sgRecharge) {
+        const maxSg = 3;
+        if (state.safeguards >= maxSg) {
+          state.sgRecharge.progress = 1;
+          state.sgRecharge.cooldown = 0;
+        } else {
+          if (state.sgRecharge.cooldown > 0) state.sgRecharge.cooldown -= 1;
+
+          const stable =
+            state.meltdownStage === 0 &&
+            !state.lockdown &&
+            !state.overdrive &&
+            state.temp < 860 &&
+            state.pressure < 3.8 &&
+            state.rad < 0.9;
+
+          if (stable && state.sgRecharge.cooldown <= 0) {
+            const tempFactor = (1.0 - Math.max(0, (state.temp - 520)) / 1200);
+            const rateBase = 0.010; // per tick
+            const rate = rateBase * (0.55 + 0.9 * rExch) * Math.max(0.2, tempFactor);
+            state.sgRecharge.progress += Math.max(0.002, rate);
+
+            if (state.sgRecharge.progress >= 1) {
+              state.safeguards += 1;
+              state.sgRecharge.progress = 0;
+              state.sgRecharge.cooldown = 40;
+              log("SAFEGUARD RECHARGE (sim): cartridge regenerated.");
+            }
+          } else if (!stable) {
+            // decay progress slowly while unstable
+            state.sgRecharge.progress = Math.max(0, (state.sgRecharge.progress || 0) - 0.006);
+          }
+        }
+      }
+
+// Auto-enter aftermath if core implosion persists
+if (!state.aftermath.active) {
+  if (state.meltdownStage === 5) {
+    state._m5ticks = (state._m5ticks || 0) + 1;
+    if (state._m5ticks >= 6) enterAftermath("CORE IMPLOSION");
+  } else {
+    state._m5ticks = 0;
+  }
+}
+
       pushHist(histTemp,  state.temp);
       pushHist(histPress, state.pressure);
       pushHist(histRad,   state.rad);
 
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     }
 
@@ -2229,12 +4002,43 @@
       integrity = Math.max(0, Math.min(100, integrity));
       net.integrity = integrity;
 
+      stepNetNodes();
       renderNet();
       pushHist(histNet, net.rate);
       renderGraphs();
     }
 
     setInterval(stepNetSim, 900);
+    // ----- NetOps UI hooks -----
+    if (netopsScanBtn) netopsScanBtn.addEventListener("click", () => doNetScan(true));
+    if (netopsTraceBtn) netopsTraceBtn.addEventListener("click", () => doNetTrace(state.net.selected, true));
+    if (netopsResetBtn) netopsResetBtn.addEventListener("click", () => {
+      ensureNetModel();
+      const sel = state.net.selected || "CORE-1";
+      setThrottle(sel, null);
+      termPrint(`throttle cleared: ${sel}`, "ok");
+      renderNetOps();
+    });
+
+    if (netopsThrottle) netopsThrottle.addEventListener("input", () => {
+      ensureNetModel();
+      const sel = state.net.selected || "CORE-1";
+      const v = Number(netopsThrottle.value);
+      setThrottle(sel, v);
+      if (netopsThrottleLabel) netopsThrottleLabel.textContent = `${v}%`;
+    });
+
+    if (netopsThrottle) netopsThrottle.addEventListener("change", () => {
+      ensureNetModel();
+      const sel = state.net.selected || "CORE-1";
+      const v = Number(netopsThrottle.value);
+      termPrint(`throttle: ${sel} -> ${v}%`, "dim");
+      renderNetOps();
+    });
+
+    // initial render
+    renderNetOps();
+
 
     btnNetStress.addEventListener("click", () => {
       const net = state.net;
@@ -2279,6 +4083,7 @@
         log("SCRAM (sim): meltdown chain remains in visual mode only.");
       }
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     }
 
@@ -2287,6 +4092,7 @@
       state.pressure -= 0.7;
       if (state.pressure < 0.9) state.pressure = 0.9;
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     }
 
@@ -2296,6 +4102,7 @@
       state.pressure += 1.4;
       state.rad += 0.45;
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     }
 
@@ -2306,6 +4113,7 @@
       state.pressure = 5.3;
       state.rad = 1.6;
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     }
 
@@ -2322,6 +4130,7 @@
       histNet = [];
       log("Simulation reset to nominal baseline.");
       updateCrisisEngine();
+      updateAlarmEngine();
       renderAll();
     }
 
@@ -2460,7 +4269,7 @@
     function runCommand(raw) {
       const cmd = String(raw || "").trim();
       if (!cmd) return;
-      log("> " + cmd);
+      termPrint("> " + cmd, "dim");
 
       if (state.macroRecording && !cmd.toLowerCase().startsWith("macro ")) {
         state.macroBuffer.push(cmd);
@@ -2472,12 +4281,12 @@
       const lower = cmd.toLowerCase();
 
       if (lower === "help") {
-        log("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, overdrive on/off, diag on/off, audio on/off, music on/off, music vol <0-100>, theme <auto|green|amber|redline|2049>, containment status, lockdown on/off, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, operator set <name>, operator level <0-3>, engine status, save-log, unlock 2049, net status, net ping <host>, net lookup <name>, net stress, net reset");
+        termPrint("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, safeguard <n>, operator name <name>, operator level <0-3>, engine status, save-log, unlock 2049, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, net status, net nodes, net scan, net trace <target>, net ping <host>, net lookup <name>, net throttle <node> <0-100|off>, net stress, net reset, fault list, fault inject <type> [sev] [ttl], fault clear <type|all>, decon start, decon abort, decon status");
         return;
       }
 
       if (lower === "status") {
-        log("status: temp=" + Math.round(state.temp) + "C, p=" + state.pressure.toFixed(2) +
+        termPrint("status: temp=" + Math.round(state.temp) + "C, p=" + state.pressure.toFixed(2) +
             "MPa, rad=" + state.rad.toFixed(2) + "mSv/h, sg=" + state.safeguards +
             ", od=" + (state.overdrive ? "on" : "off") + ", diag=" + (state.diagnostics ? "on" : "off") +
             ", meltdownStage=" + state.meltdownStage + ", satLink=" + state.satLink +
@@ -2488,7 +4297,7 @@
       }
 
       if (lower === "containment status") {
-        log(`containment: alpha=${state.containment.alpha}, betaLatched=${state.containment.betaLatched}, gamma=${state.containment.gamma}, lockdown=${state.lockdown}`);
+        termPrint(`containment: alpha=${state.containment.alpha}, betaLatched=${state.containment.betaLatched}, gamma=${state.containment.gamma}, lockdown=${state.lockdown}`);
         return;
       }
 
@@ -2503,11 +4312,12 @@
         if (!isNaN(n)) {
           let v = Math.min(125, Math.max(40, n));
           leverCore.value = v;
-          log("Core drive set via terminal: " + v);
+          termPrint("Core drive set via terminal: " + v);
           updateCrisisEngine();
-          renderAll();
+      updateAlarmEngine();
+      renderAll();
         } else {
-          log("Invalid power value.");
+          termPrint("Invalid power value.");
         }
         return;
       }
@@ -2517,11 +4327,12 @@
         if (!isNaN(n)) {
           let v = Math.min(145, Math.max(80, n));
           leverCool.value = v;
-          log("Coolant bias set via terminal: " + v);
+          termPrint("Coolant bias set via terminal: " + v);
           updateCrisisEngine();
-          renderAll();
+      updateAlarmEngine();
+      renderAll();
         } else {
-          log("Invalid coolant value.");
+          termPrint("Invalid coolant value.");
         }
         return;
       }
@@ -2568,9 +4379,9 @@
           if (elMusicVol) elMusicVol.value = String(state.musicVol);
           try { localStorage.setItem("chernos_music_vol", String(state.musicVol)); } catch (e) {}
           updateMusicVol(false);
-          log("music: volume set to " + state.musicVol + "%");
+          termPrint("music: volume set to " + state.musicVol + "%");
         } else {
-          log("Invalid volume. Use: music vol <0-100>");
+          termPrint("Invalid volume. Use: music vol <0-100>");
         }
         return;
       }
@@ -2581,22 +4392,22 @@
           if (state.themeMode !== "auto") {
             state.themeMode = "auto";
             state.themeOverride = null;
-            log("Theme control returned to Redline Crisis Engine (AUTO).");
+            termPrint("Theme control returned to Redline Crisis Engine (AUTO).");
             updateCrisisEngine();
           } else {
-            log("Theme already in AUTO (engine) mode.");
+            termPrint("Theme already in AUTO (engine) mode.");
           }
         } else if (["green","amber","redline","2049"].includes(t)) {
           if (t === "2049") unlock2049();
           setThemeOverride(t);
         } else {
-          log("Unknown theme. Use: auto, green, amber, redline, 2049");
+          termPrint("Unknown theme. Use: auto, green, amber, redline, 2049");
         }
         return;
       }
 
       if (lower === "engine status") {
-        log("engine: ticks=" + state.ticks +
+        termPrint("engine: ticks=" + state.ticks +
             ", meltdownStage=" + state.meltdownStage +
             ", overdrive=" + (state.overdrive?"on":"off") +
             ", lockdown=" + state.lockdown +
@@ -2610,7 +4421,7 @@
 
       if (lower === "save-log") {
         maybePersist("[manual flush]\\n");
-        log("log flush requested (sim)");
+        termPrint("log flush requested (sim)");
         return;
       }
 
@@ -2632,9 +4443,10 @@
       if (lower === "satlink on") {
         if (!state.satLink) {
           state.satLink = true;
-          log("SATLINK routed to sim uplink (visual only).");
+          termPrint("SATLINK routed to sim uplink (visual only).");
           updateCrisisEngine();
-          renderAll();
+      updateAlarmEngine();
+      renderAll();
         }
         return;
       }
@@ -2642,9 +4454,10 @@
       if (lower === "satlink off") {
         if (state.satLink) {
           state.satLink = false;
-          log("SATLINK disconnected (sim).");
+          termPrint("SATLINK disconnected (sim).");
           updateCrisisEngine();
-          renderAll();
+      updateAlarmEngine();
+      renderAll();
         }
         return;
       }
@@ -2652,9 +4465,10 @@
       if (lower === "ghost on") {
         if (!state.ghostLink) {
           state.ghostLink = true;
-          log("GHOST MIRROR latched (sim).");
+          termPrint("GHOST MIRROR latched (sim).");
           updateCrisisEngine();
-          renderAll();
+      updateAlarmEngine();
+      renderAll();
         }
         return;
       }
@@ -2662,9 +4476,10 @@
       if (lower === "ghost off") {
         if (state.ghostLink) {
           state.ghostLink = false;
-          log("GHOST MIRROR released (sim).");
+          termPrint("GHOST MIRROR released (sim).");
           updateCrisisEngine();
-          renderAll();
+      updateAlarmEngine();
+      renderAll();
         }
         return;
       }
@@ -2686,7 +4501,7 @@
 
       if (lower === "macro stop") {
         if (state.macroRecording) stopMacroRecording();
-        else log("Macro stop: no recording active.");
+        else termPrint("Macro stop: no recording active.");
         return;
       }
 
@@ -2698,30 +4513,30 @@
       if (lower.startsWith("operator set ")) {
         const name = cmd.slice("operator set ".length).trim();
         if (!name) {
-          log("operator set: missing name.");
+          termPrint("operator set: missing name.");
           return;
         }
         state.operatorName = name;
         updateOperatorLines();
-        log("Operator name set to: " + name);
+        termPrint("Operator name set to: " + name);
         return;
       }
 
       if (lower.startsWith("operator level ")) {
         const n = parseInt(lower.split(/\s+/)[2], 10);
         if (isNaN(n)) {
-          log("operator level: expected number 0–3.");
+          termPrint("operator level: expected number 0–3.");
           return;
         }
         state.operatorLevel = Math.min(3, Math.max(0, n));
         updateOperatorLines();
-        log("Operator level set to: " + state.operatorLevel + " (" + levelLabel(state.operatorLevel) + ")");
+        termPrint("Operator level set to: " + state.operatorLevel + " (" + levelLabel(state.operatorLevel) + ")");
         return;
       }
 
       if (lower === "net status") {
         const net = state.net;
-        log(`net status: mode=${net.mode}, latency=${net.latencyMs.toFixed(1)}ms, jitter=${net.jitterMs.toFixed(1)}ms, loss=${net.lossPct.toFixed(2)}%, rate=${net.rate.toFixed(0)} pkt/s, integrity=${net.integrity.toFixed(1)}%`);
+        termPrint(`net status: mode=${net.mode}, latency=${net.latencyMs.toFixed(1)}ms, jitter=${net.jitterMs.toFixed(1)}ms, loss=${net.lossPct.toFixed(2)}%, rate=${net.rate.toFixed(0)} pkt/s, integrity=${net.integrity.toFixed(1)}%`);
         return;
       }
 
@@ -2747,7 +4562,49 @@
         return;
       }
 
-      log("Unknown command — try `help`.");
+// Fault tools
+if (lower === "fault" || lower === "faults" || lower === "fault list") {
+  const keys = Object.keys((state.faults && state.faults.active) || {});
+  if (keys.length === 0) {
+    termPrint("fault bus: clear");
+  } else {
+    termPrint("fault bus: " + keys.map(k => {
+      const f = state.faults.active[k];
+      return `${k}(sev=${f.sev},ttl=${f.ttl})`;
+    }).join(", "));
+  }
+  return;
+}
+
+if (lower.startsWith("fault inject ")) {
+  const parts = cmd.split(/\s+/);
+  const t = (parts[2] || "").toLowerCase();
+  const sev = parts[3] != null ? parseInt(parts[3], 10) : 1;
+  const ttl = parts[4] != null ? parseInt(parts[4], 10) : 160;
+  if (!t) { termPrint("usage: fault inject <sensor|pump|pressure|ghostrad> [sev] [ttl]", "err"); return; }
+  if (injectFault(t, sev, ttl)) termPrint("fault injected: " + t);
+  return;
+}
+
+if (lower.startsWith("fault clear")) {
+  const parts = cmd.split(/\s+/);
+  const t = (parts[2] || "all").toLowerCase();
+  clearFault(t);
+  termPrint("fault cleared: " + t);
+  return;
+}
+
+// Aftermath decon tools
+if (lower === "decon start") { startDecon(); return; }
+if (lower === "decon abort") { abortDecon(); termPrint("decon aborted."); return; }
+if (lower === "decon status") {
+  if (!state.aftermath || !state.aftermath.active) { termPrint("decon: not in aftermath mode."); return; }
+  const d = state.aftermath.decon || { running:false, progress:0 };
+  termPrint("decon: running=" + d.running + ", progress=" + Math.round((d.progress||0)*100) + "%");
+  return;
+}
+
+      termPrint("Unknown command — try `help`.", "err");
     }
 
     termRun.addEventListener("click", () => {
