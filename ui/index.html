@@ -811,6 +811,7 @@
             <div class="flex gap-2">
               <button class="btn" id="btn-diag-toggle">Diagnostics</button>
               <button class="btn" id="btn-overdrive-toggle">Overdrive</button>
+              <button class="btn" id="btn-sound-toggle">Soundscape</button>
             </div>
             <div class="flex gap-2 items-center">
               <button class="btn" id="btn-audio-toggle">Toggle Audio</button>
@@ -1199,6 +1200,58 @@
     </div>
   </div>
 
+    <!-- SOUNDSCAPE -->
+    <div class="card mt-1" id="sound-card" style="display:none" data-panel="reactor">
+      <div class="label flex items-center justify-between">
+        <span>SOUNDSCAPE — MIX SETTINGS</span>
+        <span class="text-[10px] text-slate-400">Saved locally</span>
+      </div>
+
+      <div class="mt-3 grid gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-20 text-[12px] text-slate-300">Master</div>
+          <input id="vol-master" type="range" min="0" max="100" value="85" class="flex-1" />
+          <div class="w-10 text-right text-[12px] text-slate-300" id="val-master">85</div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="w-20 text-[12px] text-slate-300">Music</div>
+          <input id="vol-music" type="range" min="0" max="100" value="60" class="flex-1" />
+          <div class="w-10 text-right text-[12px] text-slate-300" id="val-music">60</div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="w-20 text-[12px] text-slate-300">Ambience</div>
+          <input id="vol-amb" type="range" min="0" max="100" value="70" class="flex-1" />
+          <div class="w-10 text-right text-[12px] text-slate-300" id="val-amb">70</div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="w-20 text-[12px] text-slate-300">Alarms</div>
+          <input id="vol-alarm" type="range" min="0" max="100" value="85" class="flex-1" />
+          <div class="w-10 text-right text-[12px] text-slate-300" id="val-alarm">85</div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="w-20 text-[12px] text-slate-300">UI</div>
+          <input id="vol-ui" type="range" min="0" max="100" value="70" class="flex-1" />
+          <div class="w-10 text-right text-[12px] text-slate-300" id="val-ui">70</div>
+        </div>
+
+        <div class="flex items-center gap-3 mt-1">
+          <label class="flex items-center gap-2 text-[12px] text-slate-300">
+            <input id="mute-all" type="checkbox" class="accent-green-400" />
+            Mute all (keeps engine running)
+          </label>
+          <button class="btn btn-small ml-auto" id="btn-sound-reset">Reset mix</button>
+        </div>
+
+        <div class="text-[10px] text-slate-400">
+          Tip: If you see <span class="text-slate-200">Music: ARMED</span>, click once to unlock audio.
+        </div>
+      </div>
+    </div>
+
 
   <!-- APP DOCK (Multi-app environment) -->
   <div id="app-dock" class="app-dock">
@@ -1261,7 +1314,20 @@ const elAudioDebug= document.getElementById("audio-debug");
     const elMusicState= document.getElementById("music-state");
     const elMusicVol  = document.getElementById("music-vol");
     const elDiagCard  = document.getElementById("diag-card");
-    const elLog       = document.getElementById("log");
+        const elSoundCard = document.getElementById("sound-card");
+    const elVolMaster = document.getElementById("vol-master");
+    const elVolMusic2 = document.getElementById("vol-music");
+    const elVolAmb    = document.getElementById("vol-amb");
+    const elVolAlarm  = document.getElementById("vol-alarm");
+    const elVolUi     = document.getElementById("vol-ui");
+    const elValMaster = document.getElementById("val-master");
+    const elValMusic2 = document.getElementById("val-music");
+    const elValAmb    = document.getElementById("val-amb");
+    const elValAlarm  = document.getElementById("val-alarm");
+    const elValUi     = document.getElementById("val-ui");
+    const elMuteAll   = document.getElementById("mute-all");
+    const btnSoundReset = document.getElementById("btn-sound-reset");
+const elLog       = document.getElementById("log");
     const elTitle     = document.getElementById("title-main");
     const elGammaOverlay = document.getElementById("gamma-overlay");
     const elBlackOverlay = document.getElementById("black-overlay");
@@ -1466,7 +1532,8 @@ const btnScram    = document.getElementById("btn-scram");
     const btnAudio    = document.getElementById("btn-audio-toggle");
     const btnMusic    = document.getElementById("btn-music-toggle");
     const btnAudioTest= document.getElementById("btn-audio-test");
-    const btnCfa      = document.getElementById("btn-cfa-toggle");
+        const btnSound   = document.getElementById("btn-sound-toggle");
+const btnCfa      = document.getElementById("btn-cfa-toggle");
     const btnCfb      = document.getElementById("btn-cfb-reset");
     const btnCfg      = document.getElementById("btn-cfg-toggle");
     const btnPulse    = document.getElementById("btn-contain-pulse");
@@ -1546,7 +1613,13 @@ const btnScram    = document.getElementById("btn-scram");
       audioOn: true,
       musicOn: true,
       musicVol: 60,
-      theme: "green",
+      
+      masterVol: 85,
+      ambVol: 70,
+      alarmVol: 85,
+      uiVol: 70,
+      muteAll: false,
+theme: "green",
       themeMode: "auto",      // "auto" (engine) or "manual" (override)
       themeOverride: null,    // "green" | "amber" | "redline" | "2049" | null
       crisisIndex: 0,
@@ -1650,6 +1723,22 @@ persistEnabled: false,
         const n = parseInt(v, 10);
         if (!isNaN(n)) state.musicVol = Math.min(100, Math.max(0, n));
       }
+
+      // Soundscape (mix) settings
+      const mv = lsGet("chernos_master_vol");
+      if (mv !== null) { const n = parseInt(mv, 10); if (!isNaN(n)) state.masterVol = Math.min(100, Math.max(0, n)); }
+
+      const av = lsGet("chernos_amb_vol");
+      if (av !== null) { const n = parseInt(av, 10); if (!isNaN(n)) state.ambVol = Math.min(100, Math.max(0, n)); }
+
+      const alv = lsGet("chernos_alarm_vol");
+      if (alv !== null) { const n = parseInt(alv, 10); if (!isNaN(n)) state.alarmVol = Math.min(100, Math.max(0, n)); }
+
+      const uv = lsGet("chernos_ui_vol");
+      if (uv !== null) { const n = parseInt(uv, 10); if (!isNaN(n)) state.uiVol = Math.min(100, Math.max(0, n)); }
+
+      const mm = lsGet("chernos_mute_all");
+      if (mm !== null) state.muteAll = (mm === "1");
     } catch (e) {}
 
     function levelLabel(lvl) {
@@ -2107,6 +2196,11 @@ persistEnabled: false,
 
     // ----- Audio Engine v3 + Background Music -----
     let audioCtx = null;
+    let masterBus = null;
+    let ambBus = null;
+    let alarmBus = null;
+    let uiBus = null;
+    let musicBus = null;
     let humNode = null;
     let coolantNode = null;
     let crackNode = null;
@@ -2136,6 +2230,28 @@ persistEnabled: false,
       } catch (e) {
         audioCtx = null;
       }
+      if (!audioCtx) return;
+
+      // Build category buses (Soundscape mixer)
+      try {
+        masterBus = audioCtx.createGain();
+        ambBus    = audioCtx.createGain();
+        alarmBus  = audioCtx.createGain();
+        uiBus     = audioCtx.createGain();
+        musicBus  = audioCtx.createGain();
+
+        // Default gains will be applied via applySoundscape()
+        ambBus.connect(masterBus);
+        alarmBus.connect(masterBus);
+        uiBus.connect(masterBus);
+        musicBus.connect(masterBus);
+        masterBus.connect(audioCtx.destination);
+      } catch (e) {
+        // Fallback: if something goes wrong, null buses and rely on direct destination
+        masterBus = ambBus = alarmBus = uiBus = musicBus = null;
+      }
+      applySoundscape(true);
+      refreshAudioDebug();
     }
 
     function resumeAudioForGesture() {
@@ -2151,11 +2267,60 @@ persistEnabled: false,
         elAudioDebug.textContent = "AudioCtx: none";
         return;
       }
+
+    function volCurve(pct, exp) {
+      const x = Math.max(0, Math.min(100, pct || 0)) / 100;
+      const e = (exp == null ? 1.35 : exp);
+      return Math.pow(x, e);
+    }
+
+    function applySoundscape(immediate) {
+      if (!audioCtx || !masterBus || !ambBus || !alarmBus || !uiBus || !musicBus) return;
+      const now = audioCtx.currentTime;
+
+      const master = (!state.audioOn || state.muteAll) ? 0.0 : volCurve(state.masterVol, 1.10);
+      const amb    = volCurve(state.ambVol, 1.25);
+      const alarm  = volCurve(state.alarmVol, 1.25);
+      const ui     = volCurve(state.uiVol, 1.15);
+
+      if (immediate) {
+        masterBus.gain.value = master;
+        ambBus.gain.value = amb;
+        alarmBus.gain.value = alarm;
+        uiBus.gain.value = ui;
+        musicBus.gain.value = 1.0; // music loudness is handled by updateMusicVol + master bus
+      } else {
+        masterBus.gain.setTargetAtTime(master, now, 0.08);
+        ambBus.gain.setTargetAtTime(amb, now, 0.12);
+        alarmBus.gain.setTargetAtTime(alarm, now, 0.12);
+        uiBus.gain.setTargetAtTime(ui, now, 0.10);
+        musicBus.gain.setTargetAtTime(1.0, now, 0.10);
+      }
+    }
+
+    function syncSoundscapeUI() {
+      if (elVolMaster) elVolMaster.value = String(state.masterVol);
+      if (elVolAmb) elVolAmb.value = String(state.ambVol);
+      if (elVolAlarm) elVolAlarm.value = String(state.alarmVol);
+      if (elVolUi) elVolUi.value = String(state.uiVol);
+
+      // Music slider is duplicated (top bar + sound card)
+      if (elVolMusic2) elVolMusic2.value = String(state.musicVol);
+      if (elMusicVol) elMusicVol.value = String(state.musicVol);
+
+      if (elValMaster) elValMaster.textContent = String(state.masterVol);
+      if (elValAmb) elValAmb.textContent = String(state.ambVol);
+      if (elValAlarm) elValAlarm.textContent = String(state.alarmVol);
+      if (elValUi) elValUi.textContent = String(state.uiVol);
+      if (elValMusic2) elValMusic2.textContent = String(state.musicVol);
+
+      if (elMuteAll) elMuteAll.checked = !!state.muteAll;
+    }
       const sr = audioCtx.sampleRate ? Math.round(audioCtx.sampleRate) : 0;
       elAudioDebug.textContent = `AudioCtx: ${audioCtx.state}${sr ? " | " + sr + "Hz" : ""}`;
     }
 
-    function scheduleBeepAt(when, freq, dur, gain) {
+    function scheduleBeepAt(when, freq, dur, gain, bus) {
       if (!state.audioOn || !audioCtx) return;
       const osc = audioCtx.createOscillator();
       const g = audioCtx.createGain();
@@ -2164,7 +2329,9 @@ persistEnabled: false,
       g.gain.setValueAtTime(0.0001, when);
       g.gain.exponentialRampToValueAtTime(Math.max(0.0001, gain), when + 0.004);
       g.gain.exponentialRampToValueAtTime(0.0001, when + dur);
-      osc.connect(g); g.connect(audioCtx.destination);
+      osc.connect(g);
+      const out = (bus === "alarm" ? alarmBus : bus === "amb" ? ambBus : uiBus) || audioCtx.destination;
+      g.connect(out);
       try { osc.start(when); osc.stop(when + dur + 0.03); } catch (e) {}
     }
 
@@ -2174,7 +2341,7 @@ persistEnabled: false,
       if (!audioCtx) return;
       resumeAudioForGesture();
       const t = audioCtx.currentTime + 0.002;
-      scheduleBeepAt(t, freq, 0.035, gain);
+      scheduleBeepAt(t, freq, 0.035, gain, "ui");
     }
 
     function playLeverTick(intensity) {
@@ -2194,7 +2361,7 @@ persistEnabled: false,
       osc.type = "sine";
       osc.frequency.value = 50;
       g.gain.value = 0.03;
-      osc.connect(g); g.connect(audioCtx.destination);
+      osc.connect(g); g.connect(ambBus || audioCtx.destination);
       osc.start();
       humNode = { osc, g };
     }
@@ -2206,7 +2373,7 @@ persistEnabled: false,
       osc.type = "triangle";
       osc.frequency.value = 19;
       g.gain.value = 0.02;
-      osc.connect(g); g.connect(audioCtx.destination);
+      osc.connect(g); g.connect(ambBus || audioCtx.destination);
       osc.start();
       coolantNode = { osc, g };
     }
@@ -2218,7 +2385,7 @@ persistEnabled: false,
       osc.type = "square";
       osc.frequency.value = 1200;
       g.gain.value = 0.0;
-      osc.connect(g); g.connect(audioCtx.destination);
+      osc.connect(g); g.connect(alarmBus || audioCtx.destination);
       osc.start();
       const iv = setInterval(() => {
         if (!state.audioOn || state.meltdownStage === 0) {
@@ -2236,7 +2403,7 @@ persistEnabled: false,
       const g = audioCtx.createGain();
       osc.type = "sawtooth";
       g.gain.value = 0.0;
-      osc.connect(g); g.connect(audioCtx.destination);
+      osc.connect(g); g.connect(alarmBus || audioCtx.destination);
       osc.start();
 
       let up = true;
@@ -2260,7 +2427,7 @@ persistEnabled: false,
       osc.type = "sine";
       osc.frequency.value = 35;
       g.gain.value = 0.0;
-      osc.connect(g); g.connect(audioCtx.destination);
+      osc.connect(g); g.connect(ambBus || audioCtx.destination);
       osc.start();
       containNode = { osc, g };
     }
@@ -2282,7 +2449,7 @@ persistEnabled: false,
       osc.type = "triangle";
       osc.frequency.value = 260;
       g.gain.value = 0.0;
-      osc.connect(g); g.connect(audioCtx.destination);
+      osc.connect(g); g.connect(ambBus || audioCtx.destination);
       osc.start();
 
       let up = true;
@@ -2306,7 +2473,7 @@ persistEnabled: false,
       osc.type = "sine";
       osc.frequency.value = 90;
       g.gain.value = 0.12;
-      osc.connect(g); g.connect(audioCtx.destination);
+      osc.connect(g); g.connect(alarmBus || audioCtx.destination);
       osc.start();
       setTimeout(() => g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.2), 40);
       setTimeout(() => { try { osc.stop(); } catch (_) {} }, 400);
@@ -2568,7 +2735,7 @@ persistEnabled: false,
       } catch (e) {}
 
       musicGain.connect(musicComp);
-      musicComp.connect(ctx.destination);
+      musicComp.connect((musicBus || ctx.destination));
 
       // Filtered pad bus
       musicFilter = ctx.createBiquadFilter();
@@ -2694,6 +2861,7 @@ persistEnabled: false,
 
         applyMusicReactive(false);
         updateMusicVol(false);
+          syncSoundscapeUI();
         refreshMusicLabel();
       }, 250);
     }
@@ -2789,12 +2957,14 @@ persistEnabled: false,
 
       if (!state.audioOn) {
         stopAllAudio();
+        applySoundscape(true);
         elAudioState.textContent = "Audio: OFF";
         applyMusicState();
         return;
       }
 
       ensureAudio();
+      applySoundscape(true);
       elAudioState.textContent = "Audio: ON";
       startHum();
       startCoolant();
@@ -2822,7 +2992,7 @@ persistEnabled: false,
         o.type = "sine";
         o.frequency.setValueAtTime(440, audioCtx.currentTime);
         g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-        o.connect(g); g.connect(audioCtx.destination);
+        o.connect(g); g.connect((masterBus || audioCtx.destination));
         const t0 = audioCtx.currentTime + 0.01;
         g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
         g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.55);
@@ -2856,11 +3026,73 @@ persistEnabled: false,
       });
     }
 
+    // Soundscape sliders (Master/Ambience/Alarms/UI + duplicated Music slider)
+    const bindRange = (el, key, lsKey, cb) => {
+      if (!el) return;
+      el.addEventListener("input", () => {
+        const n = parseInt(el.value, 10);
+        if (isNaN(n)) return;
+        state[key] = Math.min(100, Math.max(0, n));
+        lsSet(lsKey, state[key]);
+        if (cb) cb();
+        syncSoundscapeUI();
+      });
+    };
+
+    bindRange(elVolMaster, "masterVol", "chernos_master_vol", () => applySoundscape(false));
+    bindRange(elVolAmb, "ambVol", "chernos_amb_vol", () => applySoundscape(false));
+    bindRange(elVolAlarm, "alarmVol", "chernos_alarm_vol", () => applySoundscape(false));
+    bindRange(elVolUi, "uiVol", "chernos_ui_vol", () => applySoundscape(false));
+
+    // Music duplicated slider controls the existing musicVol path
+    if (elVolMusic2) {
+      elVolMusic2.addEventListener("input", () => {
+        const n = parseInt(elVolMusic2.value, 10);
+        if (isNaN(n)) return;
+        state.musicVol = Math.min(100, Math.max(0, n));
+        lsSet("chernos_music_vol", state.musicVol);
+        updateMusicVol(false);
+        syncSoundscapeUI();
+      });
+    }
+
+    if (elMuteAll) {
+      elMuteAll.addEventListener("change", () => {
+        state.muteAll = !!elMuteAll.checked;
+        lsSet("chernos_mute_all", state.muteAll ? "1" : "0");
+        applySoundscape(false);
+        syncSoundscapeUI();
+      });
+    }
+
+    if (btnSoundReset) {
+      btnSoundReset.addEventListener("click", () => {
+        state.masterVol = 85;
+        state.musicVol  = 60;
+        state.ambVol    = 70;
+        state.alarmVol  = 85;
+        state.uiVol     = 70;
+        state.muteAll   = false;
+
+        lsSet("chernos_master_vol", state.masterVol);
+        lsSet("chernos_music_vol", state.musicVol);
+        lsSet("chernos_amb_vol", state.ambVol);
+        lsSet("chernos_alarm_vol", state.alarmVol);
+        lsSet("chernos_ui_vol", state.uiVol);
+        lsSet("chernos_mute_all", "0");
+
+        applySoundscape(true);
+        applyMusicState();
+        syncSoundscapeUI();
+      });
+    }
+
     window.addEventListener("load", () => {
       setTimeout(() => {
         ensureAudio();
         refreshAudioDebug();
         applyAudioState();
+        syncSoundscapeUI();
       }, 400);
     });
 
@@ -2879,6 +3111,8 @@ persistEnabled: false,
         try { localStorage.setItem("chernos_music_on", "1"); } catch (e) {}
       }
       applyAudioState();
+      applySoundscape(true);
+      syncSoundscapeUI();
       refreshAudioDebug();
     };
     window.addEventListener("pointerdown", primeAudioOnce, { once: true, passive: true });
@@ -3247,7 +3481,7 @@ function renderTelemetry() {
       const t0 = audioCtx.currentTime + 0.02;
       for (let i = 0; i < pattern.count; i++) {
         const when = t0 + (i * pattern.spacingMs) / 1000;
-        scheduleBeepAt(when, pattern.freq, 0.08, pattern.gain);
+        scheduleBeepAt(when, pattern.freq, 0.08, pattern.gain, "alarm");
       }
     }
 
@@ -4231,7 +4465,15 @@ if (!state.aftermath.active) {
       renderBadges();
     });
 
-    // ----- Overdrive toggle (fixed) -----
+    
+    if (btnSound && elSoundCard) {
+      btnSound.addEventListener("click", () => {
+        const on = (elSoundCard.style.display === "none" || !elSoundCard.style.display);
+        elSoundCard.style.display = on ? "block" : "none";
+        if (on) { syncSoundscapeUI(); }
+      });
+    }
+// ----- Overdrive toggle (fixed) -----
     btnOver.addEventListener("click", () => {
       if (state.meltdownStage > 0) {
         log("Overdrive: locked (meltdown sim active).");
