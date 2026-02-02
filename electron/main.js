@@ -1,4 +1,7 @@
 const { app, BrowserWindow } = require('electron');
+
+// Allow audio to start without requiring a user gesture (kiosk-friendly)
+try { app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required'); } catch (e) {}
 const path = require('path');
 
 function createWindow () {
@@ -27,4 +30,4 @@ app.whenReady().then(() => {
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
-});
+})
