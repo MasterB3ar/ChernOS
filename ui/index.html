@@ -822,6 +822,11 @@
               <input id="music-vol" type="range" min="0" max="100" value="60" class="w-28" />
             </div>
 
+            <div class="flex gap-2 items-center">
+              <button class="btn" id="btn-audio-test">Test Tone</button>
+              <span class="mute-indicator" id="audio-debug">AudioCtx: —</span>
+            </div>
+
             <div class="flex gap-2 mt-1">
               <button class="theme-btn active" data-theme="green">
                 <span class="theme-dot" style="background:#22c55e;"></span>Green
@@ -2126,6 +2131,16 @@ persistEnabled: false,
       }
     }
 
+    function refreshAudioDebug() {
+      if (!elAudioDebug) return;
+      if (!audioCtx) {
+        elAudioDebug.textContent = "AudioCtx: none";
+        return;
+      }
+      const sr = audioCtx.sampleRate ? Math.round(audioCtx.sampleRate) : 0;
+      elAudioDebug.textContent = `AudioCtx: ${audioCtx.state}${sr ? " | " + sr + "Hz" : ""}`;
+    }
+
     function scheduleBeepAt(when, freq, dur, gain) {
       if (!state.audioOn || !audioCtx) return;
       const osc = audioCtx.createOscillator();
@@ -2790,6 +2805,7 @@ persistEnabled: false,
     window.addEventListener("load", () => {
       setTimeout(() => {
         ensureAudio();
+        refreshAudioDebug();
         applyAudioState();
       }, 400);
     });
