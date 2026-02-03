@@ -1850,19 +1850,23 @@ const btnScram    = document.getElementById("btn-scram");
     const btnAudioTest= document.getElementById("btn-audio-test");
         const btnSound   = document.getElementById("btn-sound-toggle");
 
-    // If this instance was launched as a silent WM child, lock audio/music OFF to avoid multi-source chaos.
-    if (noAudio) {
-      state.audioOn = false;
-      state.musicOn = false;
-      try {
-        if (btnAudio) { btnAudio.disabled = true; btnAudio.style.opacity = "0.55"; btnAudio.title = "Audio locked (wm child)"; }
-        if (btnMusic) { btnMusic.disabled = true; btnMusic.style.opacity = "0.55"; btnMusic.title = "Music locked (wm child)"; }
-        const mv = document.getElementById("music-vol");
-        if (mv) { mv.disabled = true; mv.style.opacity = "0.55"; }
-        const mm = document.getElementById("music-mode");
-        if (mm) mm.textContent = "Music: LOCKED";
-      } catch(e) {}
-    }
+	    // URL-param flag parsed later; default false here to avoid TDZ crashes in kiosk.
+	    let noAudio = false;
+
+	    // If this instance was launched as a silent WM child, lock audio/music OFF to avoid multi-source chaos.
+	    function applyNoAudioLockUI(){
+	      if (!noAudio) return;
+	      state.audioOn = false;
+	      state.musicOn = false;
+	      try {
+	        if (btnAudio) { btnAudio.disabled = true; btnAudio.style.opacity = "0.55"; btnAudio.title = "Audio locked (wm child)"; }
+	        if (btnMusic) { btnMusic.disabled = true; btnMusic.style.opacity = "0.55"; btnMusic.title = "Music locked (wm child)"; }
+	        const mv = document.getElementById("music-vol");
+	        if (mv) { mv.disabled = true; mv.style.opacity = "0.55"; }
+	        const mm = document.getElementById("music-mode");
+	        if (mm) mm.textContent = "Music: LOCKED";
+	      } catch(e) {}
+	    }
 
 const btnCfa      = document.getElementById("btn-cfa-toggle");
     const btnCfb      = document.getElementById("btn-cfb-reset");
@@ -2014,8 +2018,9 @@ persistEnabled: false,
     const appParam = String(params.get("app") || "").toLowerCase();
 
     const wmMode = ((params.get("wm") === "1") || (kioskMode && !desktopMode && !standaloneMode));
-    const wmChild = (params.get("wmchild") === "1");
-    const noAudio = (params.get("noaudio") === "1");
+	    const wmChild = (params.get("wmchild") === "1");
+	    noAudio = (params.get("noaudio") === "1");
+	    try { applyNoAudioLockUI(); } catch (e) {}
 
     if (params.get("persist") === "1") {
       state.persistEnabled = true;
@@ -3004,6 +3009,61 @@ persistEnabled: false,
     let musicChordIndex = 0;
     let musicNextChordAt = 0;
     let musicLastMode = "SAFE";
+
+    // ---- Soundscape helpers (global scope) ----
+
+
+    function volCurve(pct, exp) {
+      const x = Math.max(0, Math.min(100, pct || 0)) / 100;
+      const e = (exp == null ? 1.35 : exp);
+      return Math.pow(x, e);
+    }
+
+    function applySoundscape(immediate) {
+      if (!audioCtx || !masterBus || !ambBus || !alarmBus || !uiBus || !musicBus) return;
+      const now = audioCtx.currentTime;
+
+      const master = (!state.audioOn || state.muteAll) ? 0.0 : volCurve(state.masterVol, 1.10);
+      const amb    = volCurve(state.ambVol, 1.25);
+      const alarm  = volCurve(state.alarmVol, 1.25);
+      const ui     = volCurve(state.uiVol, 1.15);
+
+      if (immediate) {
+        masterBus.gain.value = master;
+        ambBus.gain.value = amb;
+        alarmBus.gain.value = alarm;
+        uiBus.gain.value = ui;
+        musicBus.gain.value = 1.0; // music loudness is handled by updateMusicVol + master bus
+      } else {
+        masterBus.gain.setTargetAtTime(master, now, 0.08);
+        ambBus.gain.setTargetAtTime(amb, now, 0.12);
+        alarmBus.gain.setTargetAtTime(alarm, now, 0.12);
+        uiBus.gain.setTargetAtTime(ui, now, 0.10);
+        musicBus.gain.setTargetAtTime(1.0, now, 0.10);
+      }
+    }
+
+    function syncSoundscapeUI() {
+      if (elVolMaster) elVolMaster.value = String(state.masterVol);
+      if (elVolAmb) elVolAmb.value = String(state.ambVol);
+      if (elVolAlarm) elVolAlarm.value = String(state.alarmVol);
+      if (elVolUi) elVolUi.value = String(state.uiVol);
+
+      // Music slider is duplicated (top bar + sound card)
+      if (elVolMusic2) elVolMusic2.value = String(state.musicVol);
+      if (elMusicVol) elMusicVol.value = String(state.musicVol);
+
+      if (elValMaster) elValMaster.textContent = String(state.masterVol);
+      if (elValAmb) elValAmb.textContent = String(state.ambVol);
+      if (elValAlarm) elValAlarm.textContent = String(state.alarmVol);
+      if (elValUi) elValUi.textContent = String(state.uiVol);
+      if (elValMusic2) elValMusic2.textContent = String(state.musicVol);
+
+      if (elMuteAll) elMuteAll.checked = !!state.muteAll;
+    }
+    // ---- end soundscape helpers ----
+
+
 
     function ensureAudio() {
       if (audioCtx) return;
