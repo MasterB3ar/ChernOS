@@ -769,7 +769,7 @@
     .app-dock {
       position: sticky;
       bottom: 0;
-      z-index: 40;
+      z-index: 90;
       margin-top: 10px;
       padding: 10px 10px 12px;
       border-radius: 14px;
@@ -823,7 +823,7 @@
     .wm-layer{
       position: fixed;
       inset: 0;
-      z-index: 50;
+      z-index: 80;
       pointer-events: none;
     }
     .wm-window{
@@ -922,7 +922,16 @@
       position: relative;
       flex: 1;
       background: rgba(0,0,0,0.20);
+      overflow: auto;
+      padding: 10px;
     }
+    .wm-body > [data-panel]{
+      display: block !important;
+      height: 100%;
+      min-height: 100%;
+    }
+    .wm-hosted{ margin: 0 !important; }
+
     .wm-frame{
       position: absolute;
       inset: 0;
@@ -1534,6 +1543,7 @@
     <button class="dock-btn" data-view="logs">Logs</button>
     <button class="dock-btn" data-view="diagnostics">Diagnostics</button>
     <button class="dock-btn" data-view="soundscape">Soundscape</button>
+    <button class="dock-btn" data-view="wm">Windows</button>
     <button class="dock-btn" data-view="all">All</button>
   </div>
 
@@ -1543,6 +1553,40 @@
     //   - Crisis Index can reach 10.0 in full meltdown scenarios
     //   - Overdrive button fixed (UI + terminal)
     // ============================================================
+
+
+    // ----- Fatal JS overlay (kiosk-friendly debugging) -----
+    (function setupFatalOverlay(){
+      const box = document.createElement("div");
+      box.id = "fatal-js";
+      box.style.cssText = [
+        "position:fixed","inset:12px","z-index:9999","padding:14px 16px",
+        "border-radius:16px","border:1px solid rgba(248,113,113,0.55)",
+        "background:rgba(15,23,42,0.96)","color:#e2e8f0",
+        "font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+        "font-size:12px","line-height:1.45","white-space:pre-wrap",
+        "display:none","box-shadow:0 18px 70px rgba(0,0,0,0.65)"
+      ].join(";");
+      document.body.appendChild(box);
+
+      function show(msg){
+        try{
+          box.style.display = "block";
+          box.textContent = "ChernOS JS error (copy this):\n\n" + String(msg || "Unknown error");
+        }catch(_){}
+      }
+
+      window.addEventListener("error", (e) => {
+        const msg = (e && e.message) ? e.message : "Unknown error";
+        const at = (e && (e.filename || e.lineno)) ? `\n@ ${e.filename || ""}:${e.lineno || ""}` : "";
+        show(msg + at);
+      });
+
+      window.addEventListener("unhandledrejection", (e) => {
+        const r = e && e.reason;
+        show(r && (r.stack || r.message) ? (r.stack || r.message) : String(r));
+      });
+    })();
 
     // ----- DOM Refs -----
     const elTemp      = document.getElementById("read-temp");
@@ -2164,6 +2208,13 @@ persistEnabled: false,
     }
 
     function applyAppView() {
+      // If internal window manager is active, it owns visibility.
+      if (document.body.classList.contains("wm-mode")) {
+        const els = (panelElems && panelElems.length) ? panelElems : Array.from(document.querySelectorAll("[data-panel]"));
+        for (const el of els) el.classList.remove("panel-hidden");
+        for (const btn of dockBtns) btn.classList.remove("active");
+        return;
+      }
       const els = (panelElems && panelElems.length) ? panelElems : Array.from(document.querySelectorAll("[data-panel]"));
       for (const el of els) {
         const tags = String(el.getAttribute("data-panel") || "")
@@ -2201,9 +2252,10 @@ persistEnabled: false,
     }
 
     
-    // ----- Internal Window Manager (ISO/Kiosk): open apps as draggable in-page windows -----
+    // ----- Internal Window Manager (ISO/Kiosk): DOM-windowing (no iframes) -----
     const wmLayer = document.getElementById("wm-layer");
     const wmWallpaper = document.getElementById("wm-wallpaper");
+
     const WM_APP_SIZES = {
       reactor:   { w: 980, h: 640 },
       terminal:  { w: 860, h: 520 },
@@ -2216,30 +2268,15 @@ persistEnabled: false,
       soundscape:{ w: 860, h: 520 }
     };
 
+    let wmEnabled = false;
     let wmZ = 200;
-    const wmWins = new Map(); // appId -> { el, state }
+    const wmWins = new Map(); // appId -> { el, state, panel, restore }
 
-    function wmBaseUrl() {
-      // same file path; keep relative safe for file://, http://, etc.
-      return window.location.pathname;
-    }
-
-    function wmBuildSrc(appId, opts = {}) {
-      const q = new URLSearchParams();
-      if (kioskMode) q.set("kiosk", "1");
-      q.set("standalone", "1");
-      q.set("app", appId);
-      q.set("wmchild", "1");
-      q.set("wm", "0");
-      // Only one window should produce audio by default.
-      const wantsAudio = !!opts.audio;
-      q.set("noaudio", wantsAudio ? "0" : "1");
-
-      // carry operator info for flavor (optional)
-      if (state.operatorName) q.set("op", encodeURIComponent(state.operatorName));
-      q.set("lvl", String(state.operatorLevel || 0));
-
-      return `${wmBaseUrl()}?${q.toString()}`;
+    function wmGetPanel(appId) {
+      const id = String(appId || "").trim().toLowerCase();
+      if (!id) return null;
+      // Panels are tagged with data-panel = app id.
+      return document.querySelector(`[data-panel="${id}"]`);
     }
 
     function wmFocus(appId) {
@@ -2247,43 +2284,12 @@ persistEnabled: false,
       if (!w) return;
       wmZ += 1;
       w.el.style.zIndex = String(wmZ);
-      for (const [k, ww] of wmWins.entries()) {
-        ww.el.classList.toggle("focused", k === appId);
+      for (const [k, ww] of wmWins.entries()) ww.el.classList.toggle("focused", k === appId);
+      // Dock highlight follows focus while WM is enabled.
+      for (const btn of dockBtns) {
+        const v = btn.getAttribute("data-view");
+        btn.classList.toggle("active", wmEnabled && v === appId);
       }
-    }
-
-    function wmClose(appId) {
-      const w = wmWins.get(appId);
-      if (!w) return;
-      try { w.el.remove(); } catch(e) {}
-      wmWins.delete(appId);
-      wmPersist();
-      // focus last
-      const last = Array.from(wmWins.keys()).pop();
-      if (last) wmFocus(last);
-    }
-
-    function wmToggleMax(appId) {
-      const w = wmWins.get(appId);
-      if (!w) return;
-      w.state.max = !w.state.max;
-      const dockH = appDock ? appDock.getBoundingClientRect().height : 0;
-      if (w.state.max) {
-        // store restore
-        w.state.restore = {
-          x: w.state.x, y: w.state.y, w: w.state.w, h: w.state.h
-        };
-        w.state.x = 10;
-        w.state.y = 10;
-        w.state.w = Math.max(520, window.innerWidth - 20);
-        w.state.h = Math.max(360, window.innerHeight - dockH - 30);
-      } else if (w.state.restore) {
-        const r = w.state.restore;
-        w.state.x = r.x; w.state.y = r.y; w.state.w = r.w; w.state.h = r.h;
-      }
-      wmApply(appId);
-      wmPersist();
-      wmFocus(appId);
     }
 
     function wmApply(appId) {
@@ -2296,14 +2302,129 @@ persistEnabled: false,
       w.el.style.height = `${Math.round(s.h)}px`;
     }
 
-    function wmOpen(appId, opts = {}) {
-      const id = String(appId || "").trim().toLowerCase();
-      if (!id || id === "all") return;
-      if (!wmLayer) return;
+    function wmPersist() {
+      try {
+        const arr = [];
+        for (const [id, w] of wmWins.entries()) arr.push({ id, s: w.state });
+        localStorage.setItem("chernos_wm_windows", JSON.stringify(arr));
+        localStorage.setItem("chernos_wm_enabled", wmEnabled ? "1" : "0");
+      } catch (e) {}
+    }
 
-      // If exists, focus.
-      if (wmWins.has(id)) {
-        wmFocus(id);
+    function wmRestore() {
+      if (!wmEnabled) return;
+      try {
+        const raw = localStorage.getItem("chernos_wm_windows");
+        if (!raw) return;
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr)) return;
+        for (const item of arr.slice(0, 9)) {
+          const id = String(item.id || "").toLowerCase();
+          if (!id) continue;
+          wmOpen(id);
+          const w = wmWins.get(id);
+          if (w && item.s) {
+            w.state = Object.assign(w.state, item.s);
+            wmApply(id);
+          }
+        }
+      } catch (e) {}
+    }
+
+    function wmEnable() {
+      if (wmEnabled) return true;
+      if (!wmLayer || !wmWallpaper) return false;
+      if (standaloneMode || desktopMode) return false;
+
+      wmEnabled = true;
+      document.body.classList.add("wm-mode");
+      wmWallpaper.classList.remove("wm-hidden");
+      wmLayer.classList.remove("wm-hidden");
+
+      // Keep underlying view on "all" so panel logic doesn't fight the windows.
+      setAppView("all", { persist: false });
+
+      wmPersist();
+      return true;
+    }
+
+    function wmDisable() {
+      if (!wmEnabled) return;
+      // Close all windows and restore panels.
+      for (const id of Array.from(wmWins.keys())) wmClose(id, { persist: false });
+      wmEnabled = false;
+      document.body.classList.remove("wm-mode");
+      if (wmWallpaper) wmWallpaper.classList.add("wm-hidden");
+      if (wmLayer) wmLayer.classList.add("wm-hidden");
+
+      // Back to last saved app view (or reactor).
+      const saved = lsGet("chernos_app_view") || "reactor";
+      setAppView(saved, { persist: false });
+
+      wmPersist();
+    }
+
+    function wmClose(appId, opts = {}) {
+      const id = String(appId || "").trim().toLowerCase();
+      const w = wmWins.get(id);
+      if (!w) return;
+
+      try {
+        // Restore panel to its original parent.
+        const r = w.restore;
+        if (w.panel && r && r.parent) {
+          if (r.next && r.next.parentNode === r.parent) r.parent.insertBefore(w.panel, r.next);
+          else r.parent.appendChild(w.panel);
+        }
+        w.panel.classList.remove("wm-hosted");
+      } catch (e) {}
+
+      try { w.el.remove(); } catch (e) {}
+      wmWins.delete(id);
+
+      if (opts.persist !== false) wmPersist();
+
+      // Focus last remaining.
+      const last = Array.from(wmWins.keys()).pop();
+      if (last) wmFocus(last);
+      else {
+        // No windows left: keep WM enabled but clear dock highlight.
+        for (const btn of dockBtns) btn.classList.remove("active");
+      }
+    }
+
+    function wmToggleMax(appId) {
+      const w = wmWins.get(appId);
+      if (!w) return;
+      w.state.max = !w.state.max;
+      const dockH = appDock ? appDock.getBoundingClientRect().height : 0;
+
+      if (w.state.max) {
+        w.state.restore = { x: w.state.x, y: w.state.y, w: w.state.w, h: w.state.h };
+        w.state.x = 10;
+        w.state.y = 10;
+        w.state.w = Math.max(520, window.innerWidth - 20);
+        w.state.h = Math.max(360, window.innerHeight - dockH - 30);
+      } else if (w.state.restore) {
+        const r = w.state.restore;
+        w.state.x = r.x; w.state.y = r.y; w.state.w = r.w; w.state.h = r.h;
+      }
+
+      wmApply(appId);
+      wmPersist();
+      wmFocus(appId);
+    }
+
+    function wmOpen(appId) {
+      const id = String(appId || "").trim().toLowerCase();
+      if (!id || id === "all" || id === "wm") return;
+      if (!wmEnable()) return;
+
+      if (wmWins.has(id)) { wmFocus(id); return; }
+
+      const panel = wmGetPanel(id);
+      if (!panel) {
+        log(`WM: panel '${id}' not found.`);
         return;
       }
 
@@ -2331,10 +2452,12 @@ persistEnabled: false,
 
       const acts = document.createElement("div");
       acts.className = "wm-actions";
+
       const btnMax = document.createElement("button");
       btnMax.className = "wm-act";
       btnMax.title = "Maximize";
       btnMax.textContent = "▢";
+
       const btnClose = document.createElement("button");
       btnClose.className = "wm-act close";
       btnClose.title = "Close";
@@ -2348,11 +2471,12 @@ persistEnabled: false,
 
       const body = document.createElement("div");
       body.className = "wm-body";
-      const frame = document.createElement("iframe");
-      frame.className = "wm-frame";
-      frame.setAttribute("sandbox", "allow-scripts allow-same-origin allow-forms allow-pointer-lock");
-      frame.src = wmBuildSrc(id, opts);
-      body.appendChild(frame);
+
+      // Remember panel position so we can restore.
+      const restore = { parent: panel.parentNode, next: panel.nextSibling };
+      panel.classList.remove("panel-hidden");
+      panel.classList.add("wm-hosted");
+      body.appendChild(panel);
 
       const resize = document.createElement("div");
       resize.className = "wm-resize";
@@ -2360,11 +2484,10 @@ persistEnabled: false,
 
       win.appendChild(titlebar);
       win.appendChild(body);
-
       wmLayer.appendChild(win);
 
       const st = { x, y, w: size.w, h: size.h, max: false, restore: null };
-      wmWins.set(id, { el: win, state: st });
+      wmWins.set(id, { el: win, state: st, panel, restore });
       wmApply(id);
       wmFocus(id);
       wmPersist();
@@ -2382,15 +2505,9 @@ persistEnabled: false,
         if (e.button !== 0) return;
         wmFocus(id);
         const ww = wmWins.get(id);
-        if (!ww) return;
-        if (ww.state.max) return; // don't drag in max
+        if (!ww || ww.state.max) return;
         const rect = win.getBoundingClientRect();
-        drag = {
-          startX: e.clientX,
-          startY: e.clientY,
-          baseX: rect.left,
-          baseY: rect.top
-        };
+        drag = { startX: e.clientX, startY: e.clientY, baseX: rect.left, baseY: rect.top };
         titlebar.setPointerCapture(e.pointerId);
       });
       titlebar.addEventListener("pointermove", (e) => {
@@ -2399,7 +2516,6 @@ persistEnabled: false,
         if (!ww) return;
         ww.state.x = drag.baseX + (e.clientX - drag.startX);
         ww.state.y = drag.baseY + (e.clientY - drag.startY);
-        // clamp lightly
         ww.state.x = Math.max(6, Math.min(window.innerWidth - 80, ww.state.x));
         ww.state.y = Math.max(6, Math.min(window.innerHeight - 80, ww.state.y));
         wmApply(id);
@@ -2407,7 +2523,7 @@ persistEnabled: false,
       titlebar.addEventListener("pointerup", (e) => {
         if (!drag) return;
         drag = null;
-        try { titlebar.releasePointerCapture(e.pointerId); } catch(_) {}
+        try { titlebar.releasePointerCapture(e.pointerId); } catch (_) {}
         wmPersist();
       });
 
@@ -2417,8 +2533,7 @@ persistEnabled: false,
         if (e.button !== 0) return;
         wmFocus(id);
         const ww = wmWins.get(id);
-        if (!ww) return;
-        if (ww.state.max) return;
+        if (!ww || ww.state.max) return;
         const rect = win.getBoundingClientRect();
         rsz = { startX: e.clientX, startY: e.clientY, baseW: rect.width, baseH: rect.height };
         resize.setPointerCapture(e.pointerId);
@@ -2428,7 +2543,7 @@ persistEnabled: false,
         if (!rsz) return;
         const ww = wmWins.get(id);
         if (!ww) return;
-        ww.state.w = Math.max(ww.el.offsetWidth >= 0 ? 360 : 360, rsz.baseW + (e.clientX - rsz.startX));
+        ww.state.w = Math.max(360, rsz.baseW + (e.clientX - rsz.startX));
         ww.state.h = Math.max(240, rsz.baseH + (e.clientY - rsz.startY));
         ww.state.w = Math.min(window.innerWidth - 12, ww.state.w);
         ww.state.h = Math.min(window.innerHeight - 12, ww.state.h);
@@ -2437,79 +2552,60 @@ persistEnabled: false,
       resize.addEventListener("pointerup", (e) => {
         if (!rsz) return;
         rsz = null;
-        try { resize.releasePointerCapture(e.pointerId); } catch(_) {}
+        try { resize.releasePointerCapture(e.pointerId); } catch (_) {}
         wmPersist();
       });
     }
 
-    function wmPersist() {
+    function wmMaybeBoot() {
+      // Auto-enable on kiosk, but respect the last user choice if saved.
       try {
-        const arr = [];
-        for (const [id, w] of wmWins.entries()) {
-          arr.push({ id, s: w.state, audio: false });
+        const saved = localStorage.getItem("chernos_wm_enabled");
+        if (saved === "0") return;
+      } catch (e) {}
+      if (wmMode && !standaloneMode && !desktopMode) {
+        wmEnable();
+        wmRestore();
+        if (wmWins.size === 0) wmOpen("reactor");
+        else {
+          const first = Array.from(wmWins.keys())[0];
+          if (first) wmFocus(first);
         }
-        localStorage.setItem("chernos_wm_windows", JSON.stringify(arr));
-      } catch(e) {}
+      }
     }
 
-    function wmRestore() {
-      if (!wmMode || !wmLayer) return;
-      try {
-        const raw = localStorage.getItem("chernos_wm_windows");
-        if (!raw) return;
-        const arr = JSON.parse(raw);
-        if (!Array.isArray(arr)) return;
-        for (const item of arr.slice(0, 8)) {
-          const id = String(item.id || "").toLowerCase();
-          if (!id) continue;
-          wmOpen(id, { audio: (id === "reactor") });
-          const ww = wmWins.get(id);
-          if (ww && item.s) {
-            ww.state = Object.assign(ww.state, item.s);
-            wmApply(id);
-          }
-        }
-      } catch(e) {}
-    }
-
-    function wmEnableUI() {
-      if (!wmMode || standaloneMode || desktopMode) return false;
-      if (!wmLayer || !wmWallpaper) return false;
-      document.body.classList.add("wm-mode");
-      wmWallpaper.classList.remove("wm-hidden");
-      wmLayer.classList.remove("wm-hidden");
-      return true;
-    }
-
-if (dockBtns.length) {
+    // ----- Dock navigation (single-surface / Electron windows / internal WM) -----
+    if (dockBtns.length) {
       for (const btn of dockBtns) {
         btn.addEventListener("click", (e) => {
-          const v = btn.getAttribute("data-view");
-          // WM quick toggle: "All" exits window mode back to single-surface view.
-          if (wmMode && !standaloneMode && !desktopMode && v === "all") {
-            try {
-              for (const k of Array.from(wmWins.keys())) wmClose(k);
-              document.body.classList.remove("wm-mode");
-              if (wmWallpaper) wmWallpaper.classList.add("wm-hidden");
-              if (wmLayer) wmLayer.classList.add("wm-hidden");
-            } catch(e) {}
-            setAppView("all", { persist: true });
+          const vRaw = btn.getAttribute("data-view") || "";
+          const v = String(vRaw).trim().toLowerCase();
+
+          // WM toggle button (works in ISO/kiosk too)
+          if (v === "wm") {
+            if (wmEnabled) wmDisable(); else { wmEnable(); wmOpen("reactor"); }
             return;
           }
+
+          // In WM mode: "All" exits to classic layout.
+          if (wmEnabled && v === "all") {
+            wmDisable();
+            return;
+          }
+
           const canInternalWM = wmMode && !standaloneMode && !desktopMode && v !== "all";
           if (canInternalWM && !e.shiftKey) {
-            // ISO/Kiosk: open in-page window (Shift-click keeps legacy single-surface view)
-            wmEnableUI();
-            wmOpen(v, { audio: (v === "reactor") });
+            wmOpen(v);
             wmFocus(v);
             return;
           }
+
           const canWindow = desktopMode && !standaloneMode && hasDesktopBridge && v !== "all";
           if (canWindow && !e.shiftKey) {
-            // Electron: launch separate window (Shift-click keeps focus in the main window)
             if (!openAppWindow(v)) setAppView(v);
             return;
           }
+
           setAppView(v, { persist: !standaloneMode });
         });
       }
@@ -2526,26 +2622,13 @@ if (dockBtns.length) {
         setAppView(appView);
       }
 
-
-      // Internal window manager (ISO/Kiosk): hide the single-surface panels and open apps as windows.
-      if (wmEnableUI()) {
-        // Prefer restore; if none, boot Reactor as the primary window with audio.
-        wmRestore();
-        if (wmWins.size === 0) {
-          wmOpen("reactor", { audio: true });
-        } else {
-          // ensure one focused
-          const first = Array.from(wmWins.keys())[0];
-          if (first) wmFocus(first);
-        }
-        // In WM mode, keep the underlying surface on "all" so aux logic doesn't fight the overlay.
-        setAppView("all", { persist: false });
-      }
-
+      // Boot internal WM if desired.
+      wmMaybeBoot();
     } else {
       // no dock (legacy)
       applyAppView();
     }
+
 
     // ----- NetOps node simulation model -----
     const NET_NODE_NAMES = ["OPS-TOWER", "CORE-1", "FLOW-A", "SHIELD-X", "DIAG-NET"];
