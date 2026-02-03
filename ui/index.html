@@ -1278,7 +1278,7 @@
     </div>
 
     <!-- DIAGNOSTICS -->
-    <div class="card mt-1" id="diag-card" style="display:none" data-panel="reactor">
+    <div class="card mt-1" id="diag-card" style="display:none" data-panel="reactor diagnostics">
       <div class="label">DIAGNOSTICS MODE — LIVE TELEMETRY & NET GRAPHS</div>
       <div class="graphs">
         <div>
@@ -1302,7 +1302,7 @@
   </div>
 
     <!-- SOUNDSCAPE -->
-    <div class="card mt-1" id="sound-card" style="display:none" data-panel="reactor">
+    <div class="card mt-1" id="sound-card" style="display:none" data-panel="reactor soundscape">
       <div class="label flex items-center justify-between">
         <span>SOUNDSCAPE — MIX SETTINGS</span>
         <span class="text-[10px] text-slate-400">Saved locally</span>
@@ -1363,6 +1363,8 @@
     <button class="dock-btn" data-view="comms">Comms</button>
     <button class="dock-btn" data-view="workstation">Workstation</button>
     <button class="dock-btn" data-view="logs">Logs</button>
+    <button class="dock-btn" data-view="diagnostics">Diagnostics</button>
+    <button class="dock-btn" data-view="soundscape">Soundscape</button>
     <button class="dock-btn" data-view="all">All</button>
   </div>
 
@@ -1779,6 +1781,9 @@ persistEnabled: false,
     // URL params
     const params = new URLSearchParams(window.location.search);
     const kioskMode = (params.get("kiosk") === "1");
+    const desktopMode = (params.get("desktop") === "1");
+    const standaloneMode = (params.get("standalone") === "1");
+    const appParam = String(params.get("app") || "").toLowerCase();
     if (params.get("persist") === "1") {
       state.persistEnabled = true;
     }
@@ -1911,11 +1916,60 @@ persistEnabled: false,
     // Boot banner in terminal output
     termPrint("ChernOS 2.0.0 — terminal online", "dim");
 
-    // ----- Multi-app environment (Dock) -----
+    // ----- Multi-app environment (Dock) + Electron app windows -----
     let appView = (lsGet("chernos_app_view") || "reactor");
 
+    const APP_LABELS = {
+      reactor: "Reactor Console",
+      containment: "Containment",
+      netops: "NetOps",
+      comms: "Comms & Link",
+      workstation: "Workstation",
+      terminal: "Terminal",
+      logs: "Event Log",
+      diagnostics: "Diagnostics",
+      soundscape: "Soundscape"
+    };
+
+    const hasDesktopBridge = !!(window.chernosDesktop && typeof window.chernosDesktop.openAppWindow === "function");
+    let _forcedDiagByView = false;
+    let _forcedSoundByView = false;
+
+    function ensureAuxPanelsForView() {
+      // Diagnostics: force-open diagnostics card when selected as an app.
+      if (appView === "diagnostics") {
+        _forcedDiagByView = true;
+        state.diagnostics = true;
+        if (elDiagCard) {
+          elDiagCard.style.display = "block";
+          elDiagCard.classList.add("diag-active");
+        }
+        try { renderBadges(); } catch (e) {}
+      } else if (_forcedDiagByView) {
+        _forcedDiagByView = false;
+        state.diagnostics = false;
+        if (elDiagCard) {
+          elDiagCard.style.display = "none";
+          elDiagCard.classList.remove("diag-active");
+        }
+        try { renderBadges(); } catch (e) {}
+      }
+
+      // Soundscape: force-open the mixer panel when selected as an app.
+      if (appView === "soundscape") {
+        _forcedSoundByView = true;
+        if (elSoundCard) {
+          elSoundCard.style.display = "block";
+          try { syncSoundscapeUI(); } catch (e) {}
+        }
+      } else if (_forcedSoundByView) {
+        _forcedSoundByView = false;
+        if (elSoundCard) elSoundCard.style.display = "none";
+      }
+    }
+
     function applyAppView() {
-      const els = Array.from(document.querySelectorAll("[data-panel]"));
+      const els = (panelElems && panelElems.length) ? panelElems : Array.from(document.querySelectorAll("[data-panel]"));
       for (const el of els) {
         const tags = String(el.getAttribute("data-panel") || "")
           .split(/\s+/).filter(Boolean);
@@ -1927,23 +1981,54 @@ persistEnabled: false,
         const v = btn.getAttribute("data-view");
         btn.classList.toggle("active", v === appView);
       }
-    }
 
-    function setAppView(v) {
-      appView = v || "reactor";
-      lsSet("chernos_app_view", appView);
-      applyAppView();
+      ensureAuxPanelsForView();
 
       // convenience focus
       if (appView === "terminal" && termInput) termInput.focus();
     }
 
+    function setAppView(v, opts = {}) {
+      appView = (v || "reactor");
+      const persist = (opts.persist !== false);
+      if (persist) lsSet("chernos_app_view", appView);
+      applyAppView();
+    }
+
+    function openAppWindow(view) {
+      const id = String(view || "").trim().toLowerCase();
+      if (!id || id === "all") return false;
+      try {
+        return !!window.chernosDesktop.openAppWindow(id, {});
+      } catch (e) {
+        return false;
+      }
+    }
+
     if (dockBtns.length) {
       for (const btn of dockBtns) {
-        btn.addEventListener("click", () => setAppView(btn.getAttribute("data-view")));
+        btn.addEventListener("click", (e) => {
+          const v = btn.getAttribute("data-view");
+          const canWindow = desktopMode && !standaloneMode && hasDesktopBridge && v !== "all";
+          if (canWindow && !e.shiftKey) {
+            // Electron: launch separate window (Shift-click keeps focus in the main window)
+            if (!openAppWindow(v)) setAppView(v);
+            return;
+          }
+          setAppView(v, { persist: !standaloneMode });
+        });
       }
-      // default view
-      setAppView(appView);
+
+      // Standalone app windows (Electron): force view + hide dock.
+      if (standaloneMode && appParam) {
+        setAppView(appParam, { persist: false });
+        if (appDock) appDock.style.display = "none";
+        const t = APP_LABELS[appParam] || appParam;
+        if (document.getElementById("title-main")) document.getElementById("title-main").textContent = t;
+        document.title = `ChernOS — ${t}`;
+      } else {
+        setAppView(appView);
+      }
     } else {
       // no dock (legacy)
       applyAppView();
