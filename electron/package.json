@@ -5,12 +5,68 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "pack:win": "electron-packager . ChernOS --platform=win32 --arch=x64 --out=dist --overwrite",
-    "pack:linux": "electron-packager . ChernOS --platform=linux --arch=x64 --out=dist --overwrite",
-    "pack:mac": "electron-packager . ChernOS --platform=darwin --arch=arm64 --out=dist --overwrite"
+    "dev": "cross-env ELECTRON_DEV=1 electron .",
+    "dist": "electron-builder --publish never",
+    "dist:win": "electron-builder --win --x64 --publish never",
+    "dist:linux": "electron-builder --linux --x64 --publish never",
+    "dist:mac": "electron-builder --mac --publish never",
+    "pack:win": "electron-packager . ChernOS --platform=win32 --arch=x64 --out=dist-packager --overwrite",
+    "pack:linux": "electron-packager . ChernOS --platform=linux --arch=x64 --out=dist-packager --overwrite",
+    "pack:mac": "electron-packager . ChernOS --platform=darwin --arch=arm64 --out=dist-packager --overwrite"
   },
   "devDependencies": {
     "electron": "^30.0.0",
-    "electron-packager": "^17.1.2"
+    "electron-builder": "^24.13.3",
+    "electron-packager": "^17.1.2",
+    "cross-env": "^7.0.3"
+  },
+  "description": "ChernOS Desktop Suite (Electron wrapper for the ChernOS UI)",
+  "productName": "ChernOS",
+  "build": {
+    "appId": "com.chernos.desktop",
+    "productName": "ChernOS",
+    "directories": {
+      "output": "dist"
+    },
+    "asar": true,
+    "files": [
+      "main.js",
+      "preload.js",
+      "menu.js",
+      "tray.js",
+      "ipc.js",
+      "windowState.js",
+      "assets/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../ui",
+        "to": "ui"
+      }
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility",
+      "icon": "assets/icon.png"
+    },
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "icon": "assets/icon.png",
+      "category": "public.app-category.utilities"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
-}
