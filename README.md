@@ -17,6 +17,28 @@ Requirements: Nix
 nix build .#iso
 ```
 
+## Electron desktop suite
+
+There is a standalone desktop wrapper under `electron/`.
+
+```bash
+cd electron
+npm install
+npm run start
+```
+
+Developer mode (enables devtools):
+
+```bash
+npm run dev
+```
+
+Build an installer/package (requires platform-specific tooling):
+
+```bash
+npm run dist
+```
+
 ## New in 2.0.0
 - Reproducible ISO build via pinned `flake.lock` (NixOS 24.05).
 - Software rendering fallback for Chromium (SwiftShader) when no GPU is detected.
