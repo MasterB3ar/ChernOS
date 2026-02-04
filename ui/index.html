@@ -932,6 +932,35 @@
     }
     .wm-hosted{ margin: 0 !important; }
 
+    .wm-toast{
+      position: fixed;
+      left: 50%;
+      top: 14px;
+      transform: translateX(-50%) translateY(-6px);
+      z-index: 9998;
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(148,163,184,0.25);
+      background: rgba(2,6,23,0.92);
+      color: #e2e8f0;
+      font-size: 12px;
+      line-height: 1.2;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+      opacity: 0;
+      transition: opacity .18s ease, transform .18s ease;
+      pointer-events: none;
+      max-width: calc(100vw - 24px);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .wm-toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(0px);
+    }
+
+
     .wm-frame{
       position: absolute;
       inset: 0;
@@ -2273,15 +2302,78 @@ persistEnabled: false,
       soundscape:{ w: 860, h: 520 }
     };
 
+    // Prefer specific root panels for certain apps to avoid stealing nested sections.
+    const WM_PANEL_PREFERRED = {
+      reactor: "reactor",
+      netops: "netops",
+      comms: "reactor comms",
+      containment: "reactor containment",
+      workstation: "reactor workstation",
+      terminal: "reactor terminal logs",
+      logs: "reactor logs",
+      diagnostics: "reactor diagnostics",
+      soundscape: "reactor soundscape",
+    };
+
+
     let wmEnabled = false;
     let wmZ = 200;
     const wmWins = new Map(); // appId -> { el, state, panel, restore }
 
+    let _wmToastEl = null;
+    let _wmToastT = null;
+    function wmToast(msg) {
+      try {
+        if (!_wmToastEl) {
+          _wmToastEl = document.createElement("div");
+          _wmToastEl.className = "wm-toast";
+          document.body.appendChild(_wmToastEl);
+        }
+        _wmToastEl.textContent = String(msg || "");
+        _wmToastEl.classList.add("show");
+        if (_wmToastT) clearTimeout(_wmToastT);
+        _wmToastT = setTimeout(() => {
+          if (_wmToastEl) _wmToastEl.classList.remove("show");
+        }, 1200);
+      } catch (e) {}
+    }
+
+
     function wmGetPanel(appId) {
       const id = String(appId || "").trim().toLowerCase();
       if (!id) return null;
-      // Panels are tagged with data-panel = app id.
-      return document.querySelector(`[data-panel="${id}"]`);
+
+      // 1) Preferred explicit root panel for this app (if present).
+      const pref = (typeof WM_PANEL_PREFERRED === "object" && WM_PANEL_PREFERRED) ? WM_PANEL_PREFERRED[id] : null;
+      if (pref) {
+        const el = document.querySelector(`[data-panel="${pref}"]`);
+        if (el) return el;
+      }
+
+      // 2) Tag-based match: data-panel is a whitespace-delimited tag list.
+      const all = Array.from(document.querySelectorAll("[data-panel]"));
+      const matches = all.filter(el => {
+        const tags = String(el.getAttribute("data-panel") || "")
+          .split(/\s+/).filter(Boolean).map(s => s.toLowerCase());
+        return tags.includes(id);
+      });
+      if (!matches.length) return null;
+
+      // Prefer the top-most match (not nested inside another match for the same tag).
+      for (const el of matches) {
+        let p = el.parentElement;
+        let nested = false;
+        while (p) {
+          const dp = p.getAttribute && p.getAttribute("data-panel");
+          if (dp) {
+            const ptags = String(dp).split(/\s+/).filter(Boolean).map(s => s.toLowerCase());
+            if (ptags.includes(id)) { nested = true; break; }
+          }
+          p = p.parentElement;
+        }
+        if (!nested) return el;
+      }
+      return matches[0];
     }
 
     function wmFocus(appId) {
@@ -2382,6 +2474,24 @@ persistEnabled: false,
           else r.parent.appendChild(w.panel);
         }
         w.panel.classList.remove("wm-hosted");
+      // Restore any forced visibility/state tweaks applied when windowed.
+      try {
+        const r = w.restore;
+        if (r && w.panel && w.panel.style && typeof r.display === "string") {
+          w.panel.style.display = r.display;
+        }
+        if (id === "diagnostics" && r && r.forcedDiag) {
+          state.diagnostics = !!r.diagPrev;
+          if (!state.diagnostics && w.panel) {
+            try { w.panel.classList.remove("diag-active"); } catch (e) {}
+          }
+          try { renderBadges(); } catch (e) {}
+        }
+        if (id === "soundscape" && r && r.forcedSound) {
+          if (w.panel && w.panel.style) w.panel.style.display = "none";
+        }
+      } catch (e) {}
+
       } catch (e) {}
 
       try { w.el.remove(); } catch (e) {}
@@ -2430,13 +2540,25 @@ persistEnabled: false,
       const panel = wmGetPanel(id);
       if (!panel) {
         log(`WM: panel '${id}' not found.`);
+        wmToast(`WM: panel '${id}' not found`);
         return;
       }
 
       const size = WM_APP_SIZES[id] || { w: 860, h: 560 };
       const pad = 16;
-      const x = Math.max(pad, Math.round((window.innerWidth - size.w) / 2));
-      const y = Math.max(pad, Math.round((window.innerHeight - size.h) / 2) - 20);
+      const baseX = Math.round((window.innerWidth - size.w) / 2);
+      const baseY = Math.round((window.innerHeight - size.h) / 2) - 20;
+
+      // Cascade new windows so it’s obvious something opened.
+      const n = wmWins.size;
+      const ox = (n * 34) % 180;
+      const oy = (n * 26) % 130;
+
+      const maxX = Math.max(pad, window.innerWidth - size.w - pad);
+      const maxY = Math.max(pad, window.innerHeight - size.h - pad);
+
+      const x = Math.max(pad, Math.min(maxX, baseX + ox));
+      const y = Math.max(pad, Math.min(maxY, baseY + oy));
 
       const win = document.createElement("div");
       win.className = "wm-window focused";
@@ -2478,7 +2600,30 @@ persistEnabled: false,
       body.className = "wm-body";
 
       // Remember panel position so we can restore.
-      const restore = { parent: panel.parentNode, next: panel.nextSibling };
+      const restore = {
+        parent: panel.parentNode,
+        next: panel.nextSibling,
+        display: panel.style ? panel.style.display : "",
+        forcedDiag: false,
+        diagPrev: false,
+        forcedSound: false
+      };
+
+      // Some panels are hidden behind view-gates; make sure they render when windowed.
+      if (id === "diagnostics") {
+        restore.diagPrev = !!state.diagnostics;
+        restore.forcedDiag = !state.diagnostics;
+        state.diagnostics = true;
+        panel.style.display = "block";
+        panel.classList.add("diag-active");
+        try { renderBadges(); } catch (e) {}
+      } else if (id === "soundscape") {
+        restore.forcedSound = (panel.style && panel.style.display === "none");
+        panel.style.display = "block";
+        try { syncSoundscapeUI(); } catch (e) {}
+      } else {
+        if (panel.style && panel.style.display === "none") panel.style.display = "";
+      }
       panel.classList.remove("panel-hidden");
       panel.classList.add("wm-hosted");
       body.appendChild(panel);
@@ -2496,6 +2641,7 @@ persistEnabled: false,
       wmApply(id);
       wmFocus(id);
       wmPersist();
+      wmToast(`Opened ${APP_LABELS[id] || id}`);
 
       // focus on click
       win.addEventListener("pointerdown", () => wmFocus(id), { passive: true });
@@ -2588,7 +2734,7 @@ persistEnabled: false,
 
           // WM toggle button (works in ISO/kiosk too)
           if (v === "wm") {
-            if (wmEnabled) wmDisable(); else { wmEnable(); wmOpen("reactor"); }
+            if (wmEnabled) { wmDisable(); wmToast("Windows: OFF"); } else { wmEnable(); wmOpen("reactor"); wmToast("Windows: ON"); }
             return;
           }
 
@@ -2598,7 +2744,7 @@ persistEnabled: false,
             return;
           }
 
-          const canInternalWM = wmMode && !standaloneMode && !desktopMode && v !== "all";
+          const canInternalWM = (wmEnabled || wmMode) && !standaloneMode && !desktopMode && v !== "all";
           if (canInternalWM && !e.shiftKey) {
             wmOpen(v);
             wmFocus(v);
