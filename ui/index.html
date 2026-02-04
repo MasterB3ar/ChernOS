@@ -992,7 +992,305 @@
     .wm-min{ display:none; } /* reserved */
     .wm-hidden{ display:none !important; }
 
-    @media (max-width: 980px){
+    
+
+
+/* ===== Desktop taskbar + wallpapers (Internal WM) ===== */
+.wm-mode #app-dock { display: none !important; }
+
+/* Hide the classic UI surface while WM is active (keep WM nodes only). */
+.wm-mode .wrap > *:not(#wm-wallpaper):not(#wm-layer):not(#wm-taskbar):not(#wm-startmenu):not(#wm-wallpanel) {
+  display: none !important;
+}
+
+.wm-taskbar{
+  position: fixed;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  height: 46px;
+  padding: 8px;
+  border-radius: 18px;
+  border: 1px solid rgba(148,163,184,0.20);
+  background: rgba(2,6,23,0.70);
+  backdrop-filter: blur(12px);
+  display: none;
+  align-items: center;
+  gap: 10px;
+  z-index: 999;
+  pointer-events: auto;
+  box-shadow: 0 16px 60px rgba(0,0,0,0.55);
+}
+body.blackchamber .wm-taskbar{
+  border-color: rgba(34,211,238,0.25);
+  background: rgba(0,0,0,0.72);
+}
+.wm-mode .wm-taskbar{ display:flex; }
+.wm-start{
+  width: 44px;
+  height: 32px;
+  border-radius: 12px;
+  border: 1px solid rgba(34,197,94,0.55);
+  background: rgba(34,197,94,0.10);
+  color: rgba(226,232,240,0.96);
+  font-size: 16px;
+  display: grid;
+  place-items: center;
+  user-select: none;
+}
+body.blackchamber .wm-start{
+  border-color: rgba(34,211,238,0.55);
+  background: rgba(34,211,238,0.08);
+}
+.wm-start:hover{ transform: translateY(-1px); }
+
+.wm-tasks{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2px;
+  flex: 1;
+  scrollbar-width: none;
+}
+.wm-tasks::-webkit-scrollbar{ display:none; }
+.wm-task{
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(148,163,184,0.06);
+  color: rgba(226,232,240,0.90);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  user-select:none;
+}
+.wm-task .dot{
+  width:8px;height:8px;border-radius:999px;
+  background: rgba(100,116,139,0.9);
+  box-shadow: 0 0 10px rgba(2,6,23,0.45);
+  border: 1px solid rgba(15,23,42,0.7);
+  flex: 0 0 auto;
+}
+.wm-task.active{
+  border-color: rgba(34,197,94,0.65);
+  background: rgba(34,197,94,0.10);
+  box-shadow: 0 0 16px rgba(34,197,94,0.10);
+}
+body.blackchamber .wm-task.active{
+  border-color: rgba(34,211,238,0.65);
+  background: rgba(34,211,238,0.09);
+  box-shadow: 0 0 16px rgba(34,211,238,0.10);
+}
+.wm-task.min{ opacity: 0.70; }
+.wm-task:hover{ transform: translateY(-1px); }
+
+.wm-spacer{ width: 6px; height: 1px; }
+.wm-quick{
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(148,163,184,0.06);
+  color: rgba(226,232,240,0.90);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  user-select:none;
+}
+.wm-clock{
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(148,163,184,0.06);
+  color: rgba(226,232,240,0.90);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 12px;
+  display:flex;
+  align-items:center;
+}
+
+.wm-startmenu{
+  position: fixed;
+  left: 10px;
+  bottom: 64px;
+  width: 320px;
+  max-height: 70vh;
+  overflow: auto;
+  border-radius: 18px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(2,6,23,0.92);
+  backdrop-filter: blur(14px);
+  z-index: 999;
+  box-shadow: 0 22px 90px rgba(0,0,0,0.60);
+  padding: 12px;
+  pointer-events: auto;
+  display:none;
+}
+body.blackchamber .wm-startmenu{
+  border-color: rgba(34,211,238,0.25);
+  background: rgba(0,0,0,0.92);
+}
+.wm-startmenu.show{ display:block; }
+.wm-menu-title{
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(226,232,240,0.65);
+  margin: 4px 2px 8px 2px;
+}
+.wm-menu-title.mt{ margin-top: 12px; }
+.wm-menu-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.wm-menu-item{
+  padding: 10px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(148,163,184,0.18);
+  background: rgba(148,163,184,0.06);
+  color: rgba(226,232,240,0.90);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: left;
+  user-select:none;
+}
+.wm-menu-item:hover{ transform: translateY(-1px); border-color: rgba(34,197,94,0.45); }
+body.blackchamber .wm-menu-item:hover{ border-color: rgba(34,211,238,0.45); }
+
+.wm-wallpanel{
+  position: fixed;
+  right: 10px;
+  bottom: 64px;
+  width: 420px;
+  max-width: calc(100vw - 20px);
+  max-height: 72vh;
+  overflow: auto;
+  border-radius: 18px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(2,6,23,0.92);
+  backdrop-filter: blur(14px);
+  z-index: 999;
+  box-shadow: 0 22px 90px rgba(0,0,0,0.60);
+  padding: 12px;
+  pointer-events: auto;
+  display:none;
+}
+body.blackchamber .wm-wallpanel{
+  border-color: rgba(34,211,238,0.25);
+  background: rgba(0,0,0,0.92);
+}
+.wm-wallpanel.show{ display:block; }
+.wm-panel-head{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.wm-panel-title{
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(226,232,240,0.72);
+}
+.wm-panel-x{
+  width: 32px;
+  height: 28px;
+  border-radius: 12px;
+  border: 1px solid rgba(248,113,113,0.45);
+  background: rgba(127,29,29,0.25);
+  color: rgba(226,232,240,0.92);
+  display:grid;
+  place-items:center;
+}
+.wm-wall-grid{
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+@media (min-width: 820px){
+  .wm-wall-grid{ grid-template-columns: repeat(3, 1fr); }
+}
+.wm-wall-item{
+  border-radius: 16px;
+  border: 1px solid rgba(148,163,184,0.18);
+  background: rgba(148,163,184,0.06);
+  padding: 8px;
+  cursor: pointer;
+  user-select:none;
+}
+.wm-wall-item.active{ border-color: rgba(34,197,94,0.55); box-shadow: 0 0 18px rgba(34,197,94,0.10); }
+body.blackchamber .wm-wall-item.active{ border-color: rgba(34,211,238,0.55); box-shadow: 0 0 18px rgba(34,211,238,0.10); }
+.wm-wall-prev{
+  height: 68px;
+  border-radius: 12px;
+  border: 1px solid rgba(15,23,42,0.55);
+  overflow:hidden;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: 8px;
+}
+.wm-wall-name{
+  font-size: 11px;
+  color: rgba(226,232,240,0.86);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.wm-wall-actions{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.wm-upload{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(148,163,184,0.06);
+  color: rgba(226,232,240,0.90);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select:none;
+}
+.wm-upload input{ display:none; }
+.wm-mini-btn{
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(148,163,184,0.06);
+  color: rgba(226,232,240,0.90);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  user-select:none;
+}
+.wm-wall-hint{
+  margin-top: 10px;
+  font-size: 10px;
+  color: rgba(226,232,240,0.55);
+}
+
+/* Window minimize visual */
+.wm-window.minimized{ display:none !important; }
+@media (max-width: 980px){
       .wm-window{ width: 92vw; height: 72vh; }
     }
 
@@ -1561,6 +1859,54 @@
   <!-- WINDOW MANAGER (ISO/Kiosk multi-app windows) -->
   <div id="wm-wallpaper" class="wm-wallpaper wm-hidden"></div>
   <div id="wm-layer" class="wm-layer wm-hidden"></div>
+
+
+<!-- DESKTOP TASKBAR + WALLPAPERS (Internal WM) -->
+<div id="wm-taskbar" class="wm-taskbar wm-hidden">
+  <button id="wm-start" class="wm-start" title="Start">☢</button>
+  <div id="wm-tasks" class="wm-tasks" aria-label="Open windows"></div>
+  <div class="wm-spacer"></div>
+  <button id="wm-wall-btn" class="wm-quick" title="Wallpapers">Wall</button>
+  <div id="wm-clock" class="wm-clock">--:--</div>
+</div>
+
+<div id="wm-startmenu" class="wm-startmenu wm-hidden" role="menu" aria-label="ChernOS menu">
+  <div class="wm-menu-title">Apps</div>
+  <div class="wm-menu-grid">
+    <button class="wm-menu-item" data-wm-open="reactor">Reactor Console</button>
+    <button class="wm-menu-item" data-wm-open="terminal">Terminal</button>
+    <button class="wm-menu-item" data-wm-open="netops">NetOps</button>
+    <button class="wm-menu-item" data-wm-open="containment">Containment</button>
+    <button class="wm-menu-item" data-wm-open="comms">Comms & Link</button>
+    <button class="wm-menu-item" data-wm-open="workstation">Workstation</button>
+    <button class="wm-menu-item" data-wm-open="logs">Event Log</button>
+    <button class="wm-menu-item" data-wm-open="diagnostics">Diagnostics</button>
+    <button class="wm-menu-item" data-wm-open="soundscape">Soundscape</button>
+  </div>
+
+  <div class="wm-menu-title mt">Desktop</div>
+  <div class="wm-menu-grid">
+    <button class="wm-menu-item" id="wm-menu-wallpapers">Wallpapers</button>
+    <button class="wm-menu-item" id="wm-menu-exit">Exit Windows Mode</button>
+  </div>
+</div>
+
+<div id="wm-wallpanel" class="wm-wallpanel wm-hidden" aria-label="Wallpapers">
+  <div class="wm-panel-head">
+    <div class="wm-panel-title">Wallpapers</div>
+    <button class="wm-panel-x" id="wm-wall-x" title="Close">✕</button>
+  </div>
+  <div id="wm-wall-grid" class="wm-wall-grid"></div>
+  <div class="wm-wall-actions">
+    <label class="wm-upload">
+      <input id="wm-wall-upload" type="file" accept="image/*" />
+      Upload image
+    </label>
+    <button class="wm-mini-btn" id="wm-wall-clear" title="Remove uploaded wallpaper">Clear upload</button>
+    <button class="wm-mini-btn" id="wm-wall-reset" title="Reset to default">Reset</button>
+  </div>
+  <div class="wm-wall-hint">Tip: Uploaded wallpaper is stored locally in the browser profile (localStorage).</div>
+</div>
 
 <div id="app-dock" class="app-dock">
     <button class="dock-btn" data-view="reactor">Reactor</button>
@@ -2290,6 +2636,365 @@ persistEnabled: false,
     const wmLayer = document.getElementById("wm-layer");
     const wmWallpaper = document.getElementById("wm-wallpaper");
 
+const wmTaskbar = document.getElementById("wm-taskbar");
+const wmTasksEl = document.getElementById("wm-tasks");
+const wmClockEl = document.getElementById("wm-clock");
+const wmStartBtn = document.getElementById("wm-start");
+const wmStartMenu = document.getElementById("wm-startmenu");
+const wmWallBtn = document.getElementById("wm-wall-btn");
+const wmWallPanel = document.getElementById("wm-wallpanel");
+const wmWallGrid = document.getElementById("wm-wall-grid");
+const wmWallUpload = document.getElementById("wm-wall-upload");
+const wmWallClear = document.getElementById("wm-wall-clear");
+const wmWallReset = document.getElementById("wm-wall-reset");
+const wmWallX = document.getElementById("wm-wall-x");
+const wmMenuWallpapers = document.getElementById("wm-menu-wallpapers");
+const wmMenuExit = document.getElementById("wm-menu-exit");
+
+let wmFocusedId = null;
+let wmClockTimer = null;
+
+const WM_WALLPAPERS = [
+  {
+    id: "reactor",
+    name: "Reactor Glow",
+    bg:
+      "radial-gradient(1200px 700px at 50% -10%, rgba(34,197,94,0.12), transparent 60%)," +
+      "radial-gradient(900px 650px at 20% 110%, rgba(59,130,246,0.12), transparent 55%)," +
+      "linear-gradient(180deg, rgba(0,0,0,0.68), rgba(0,0,0,0.82))"
+  },
+  {
+    id: "containment",
+    name: "Containment Fog",
+    bg:
+      "radial-gradient(900px 650px at 70% 10%, rgba(245,158,11,0.10), transparent 60%)," +
+      "radial-gradient(1100px 760px at 25% 120%, rgba(34,197,94,0.10), transparent 60%)," +
+      "linear-gradient(180deg, rgba(0,0,0,0.72), rgba(0,0,0,0.88))"
+  },
+  {
+    id: "black",
+    name: "Black Chamber",
+    bg:
+      "radial-gradient(1200px 700px at 50% -10%, rgba(34,211,238,0.12), transparent 60%)," +
+      "radial-gradient(900px 650px at 20% 110%, rgba(56,189,248,0.10), transparent 55%)," +
+      "linear-gradient(180deg, rgba(0,0,0,0.76), rgba(0,0,0,0.92))"
+  },
+  {
+    id: "grid",
+    name: "Grid Lines",
+    bg:
+      "linear-gradient(180deg, rgba(0,0,0,0.76), rgba(0,0,0,0.90))," +
+      "linear-gradient(90deg, rgba(34,197,94,0.06) 1px, transparent 1px)," +
+      "linear-gradient(0deg, rgba(34,197,94,0.06) 1px, transparent 1px)"
+  },
+  {
+    id: "blueprint",
+    name: "Blueprint",
+    bg:
+      "radial-gradient(1100px 760px at 60% 10%, rgba(59,130,246,0.14), transparent 60%)," +
+      "linear-gradient(180deg, rgba(0,0,0,0.70), rgba(0,0,0,0.90))," +
+      "linear-gradient(90deg, rgba(59,130,246,0.06) 1px, transparent 1px)," +
+      "linear-gradient(0deg, rgba(59,130,246,0.06) 1px, transparent 1px)"
+  }
+];
+
+function wmShow(el, on) {
+  if (!el) return;
+  el.classList.toggle("wm-hidden", !on);
+  el.classList.toggle("show", !!on);
+}
+
+function wmTickClock() {
+  if (!wmClockEl) return;
+  const d = new Date();
+  const t = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  wmClockEl.textContent = t;
+}
+
+function wmStartClock() {
+  if (wmClockTimer) return;
+  wmTickClock();
+  wmClockTimer = setInterval(wmTickClock, 1000);
+}
+function wmStopClock() {
+  if (!wmClockTimer) return;
+  clearInterval(wmClockTimer);
+  wmClockTimer = null;
+}
+
+function wmApplyWallpaper() {
+  if (!wmWallpaper) return;
+  let wpId = "reactor";
+  let custom = "";
+  try {
+    wpId = localStorage.getItem("chernos_wallpaper_id") || "reactor";
+    custom = localStorage.getItem("chernos_wallpaper_custom") || "";
+  } catch (e) {}
+  const preset = WM_WALLPAPERS.find(w => w.id === wpId) || WM_WALLPAPERS[0];
+
+  if (custom) {
+    wmWallpaper.style.background = 
+      "linear-gradient(180deg, rgba(0,0,0,0.72), rgba(0,0,0,0.90))," +
+      `url(${custom})`;
+    wmWallpaper.style.backgroundSize = "cover";
+    wmWallpaper.style.backgroundPosition = "center";
+    wmWallpaper.style.backgroundRepeat = "no-repeat";
+  } else {
+    wmWallpaper.style.background = preset.bg;
+    // For grid wallpapers, make the grid visible.
+    if (wpId === "grid" || wpId === "blueprint") {
+      wmWallpaper.style.backgroundSize = "auto, 44px 44px, 44px 44px";
+      wmWallpaper.style.backgroundPosition = "center, center, center";
+      wmWallpaper.style.backgroundRepeat = "no-repeat, repeat, repeat";
+    } else {
+      wmWallpaper.style.backgroundSize = "";
+      wmWallpaper.style.backgroundPosition = "";
+      wmWallpaper.style.backgroundRepeat = "";
+    }
+  }
+}
+
+function wmSetWallpaper(id) {
+  try {
+    localStorage.setItem("chernos_wallpaper_id", String(id || "reactor"));
+    localStorage.removeItem("chernos_wallpaper_custom");
+  } catch (e) {}
+  wmApplyWallpaper();
+  wmRenderWallpaperGrid();
+}
+
+function wmSetCustomWallpaper(dataUrl) {
+  try {
+    localStorage.setItem("chernos_wallpaper_custom", String(dataUrl || ""));
+  } catch (e) {}
+  wmApplyWallpaper();
+  wmRenderWallpaperGrid();
+}
+
+function wmClearWallpaperUpload() {
+  try { localStorage.removeItem("chernos_wallpaper_custom"); } catch (e) {}
+  wmApplyWallpaper();
+  wmRenderWallpaperGrid();
+}
+
+function wmResetWallpaper() {
+  try {
+    localStorage.removeItem("chernos_wallpaper_custom");
+    localStorage.setItem("chernos_wallpaper_id", "reactor");
+  } catch (e) {}
+  wmApplyWallpaper();
+  wmRenderWallpaperGrid();
+}
+
+function wmRenderWallpaperGrid() {
+  if (!wmWallGrid) return;
+  let activeId = "reactor";
+  let hasUpload = false;
+  try {
+    activeId = localStorage.getItem("chernos_wallpaper_id") || "reactor";
+    hasUpload = !!(localStorage.getItem("chernos_wallpaper_custom") || "");
+  } catch (e) {}
+  wmWallGrid.innerHTML = "";
+
+  // Uploaded option (if present)
+  if (hasUpload) {
+    const item = document.createElement("div");
+    item.className = "wm-wall-item active";
+    const prev = document.createElement("div");
+    prev.className = "wm-wall-prev";
+    try {
+      const cu = localStorage.getItem("chernos_wallpaper_custom") || "";
+      prev.style.backgroundImage = `url(${cu})`;
+      prev.style.backgroundSize = "cover";
+      prev.style.backgroundPosition = "center";
+    } catch (e) {}
+    const name = document.createElement("div");
+    name.className = "wm-wall-name";
+    name.textContent = "Uploaded";
+    item.appendChild(prev);
+    item.appendChild(name);
+    item.addEventListener("click", () => { wmApplyWallpaper(); });
+    wmWallGrid.appendChild(item);
+  }
+
+  for (const w of WM_WALLPAPERS) {
+    const item = document.createElement("div");
+    item.className = "wm-wall-item" + ((!hasUpload && w.id === activeId) ? " active" : "");
+    const prev = document.createElement("div");
+    prev.className = "wm-wall-prev";
+    prev.style.background = w.bg;
+    if (w.id === "grid" || w.id === "blueprint") {
+      prev.style.backgroundSize = "auto, 18px 18px, 18px 18px";
+      prev.style.backgroundRepeat = "no-repeat, repeat, repeat";
+    }
+    const name = document.createElement("div");
+    name.className = "wm-wall-name";
+    name.textContent = w.name;
+    item.appendChild(prev);
+    item.appendChild(name);
+    item.addEventListener("click", () => wmSetWallpaper(w.id));
+    wmWallGrid.appendChild(item);
+  }
+}
+
+function wmTaskbarSync() {
+  if (!wmTasksEl) return;
+  wmTasksEl.innerHTML = "";
+  for (const [id, w] of wmWins.entries()) {
+    const btn = document.createElement("button");
+    const isMin = !!w.state.min;
+    const isActive = (wmFocusedId === id) && !isMin;
+    btn.className = "wm-task" + (isMin ? " min" : "") + (isActive ? " active" : "");
+    btn.dataset.app = id;
+
+    const dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.background = isActive ? "rgba(34,197,94,0.95)" : "rgba(100,116,139,0.85)";
+    if (document.body.classList.contains("blackchamber")) {
+      dot.style.background = isActive ? "rgba(34,211,238,0.95)" : "rgba(100,116,139,0.85)";
+    }
+    btn.appendChild(dot);
+
+    const label = document.createElement("span");
+    label.textContent = APP_LABELS[id] || id;
+    btn.appendChild(label);
+
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (!wmEnabled) return;
+      const ww = wmWins.get(id);
+      if (!ww) return;
+      if (ww.state.min) wmRestoreFromMin(id);
+      else wmFocus(id);
+    });
+
+    btn.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      wmClose(id);
+    });
+
+    wmTasksEl.appendChild(btn);
+  }
+}
+
+function wmMinimize(appId) {
+  const id = String(appId || "").trim().toLowerCase();
+  const w = wmWins.get(id);
+  if (!w) return;
+  w.state.min = true;
+  w.el.classList.add("minimized");
+  w.el.style.display = "none";
+  if (wmFocusedId === id) wmFocusedId = null;
+  // Focus another visible window (if any)
+  const candidates = Array.from(wmWins.keys()).filter(k => k !== id);
+  for (let i = candidates.length - 1; i >= 0; i--) {
+    const kk = candidates[i];
+    const ww = wmWins.get(kk);
+    if (ww && !ww.state.min) { wmFocus(kk); break; }
+  }
+  wmTaskbarSync();
+  wmPersist();
+  wmToast(`Minimized ${APP_LABELS[id] || id}`);
+}
+
+function wmRestoreFromMin(appId) {
+  const id = String(appId || "").trim().toLowerCase();
+  const w = wmWins.get(id);
+  if (!w) return;
+  w.state.min = false;
+  w.el.classList.remove("minimized");
+  w.el.style.display = "flex";
+  wmFocus(id);
+  wmTaskbarSync();
+  wmPersist();
+}
+
+function wmToggleStartMenu(force) {
+  if (!wmStartMenu) return;
+  const isOpen = wmStartMenu.classList.contains("show");
+  const next = (typeof force === "boolean") ? force : !isOpen;
+  wmShow(wmStartMenu, next);
+  if (next) wmShow(wmWallPanel, false);
+}
+
+function wmToggleWallPanel(force) {
+  if (!wmWallPanel) return;
+  const isOpen = wmWallPanel.classList.contains("show");
+  const next = (typeof force === "boolean") ? force : !isOpen;
+  wmShow(wmWallPanel, next);
+  if (next) {
+    wmShow(wmStartMenu, false);
+    wmRenderWallpaperGrid();
+  }
+}
+
+function wmInitDesktopUI() {
+  // Buttons
+  if (wmStartBtn) wmStartBtn.addEventListener("click", (e) => { e.stopPropagation(); wmToggleStartMenu(); });
+  if (wmWallBtn) wmWallBtn.addEventListener("click", (e) => { e.stopPropagation(); wmToggleWallPanel(); });
+  if (wmWallX) wmWallX.addEventListener("click", (e) => { e.stopPropagation(); wmToggleWallPanel(false); });
+  if (wmMenuWallpapers) wmMenuWallpapers.addEventListener("click", (e) => { e.stopPropagation(); wmToggleWallPanel(true); });
+  if (wmMenuExit) wmMenuExit.addEventListener("click", (e) => { e.stopPropagation(); wmDisable(); });
+
+  // Start menu app launches
+  if (wmStartMenu) {
+    wmStartMenu.addEventListener("click", (e) => {
+      const btn = e.target && e.target.closest ? e.target.closest("[data-wm-open]") : null;
+      if (!btn) return;
+      const id = String(btn.getAttribute("data-wm-open") || "").toLowerCase();
+      if (!id) return;
+      wmOpen(id);
+      wmFocus(id);
+      wmToggleStartMenu(false);
+    });
+  }
+
+  // Wallpaper upload
+  if (wmWallUpload) {
+    wmWallUpload.addEventListener("change", async (e) => {
+      const f = (e.target && e.target.files) ? e.target.files[0] : null;
+      if (!f) return;
+      try {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = String(reader.result || "");
+          if (dataUrl.startsWith("data:image/")) wmSetCustomWallpaper(dataUrl);
+        };
+        reader.readAsDataURL(f);
+      } catch (err) {}
+      try { e.target.value = ""; } catch (_) {}
+    });
+  }
+
+  if (wmWallClear) wmWallClear.addEventListener("click", (e) => { e.stopPropagation(); wmClearWallpaperUpload(); });
+  if (wmWallReset) wmWallReset.addEventListener("click", (e) => { e.stopPropagation(); wmResetWallpaper(); });
+
+  // Close menus on outside click
+  document.addEventListener("pointerdown", (e) => {
+    if (!wmEnabled) return;
+    const t = e.target;
+    const inStart = wmStartMenu && (t === wmStartMenu || (wmStartMenu.contains && wmStartMenu.contains(t)));
+    const inWall = wmWallPanel && (t === wmWallPanel || (wmWallPanel.contains && wmWallPanel.contains(t)));
+    const inStartBtn = wmStartBtn && (t === wmStartBtn || (wmStartBtn.contains && wmStartBtn.contains(t)));
+    const inWallBtn = wmWallBtn && (t === wmWallBtn || (wmWallBtn.contains && wmWallBtn.contains(t)));
+    if (!inStart && !inStartBtn) wmToggleStartMenu(false);
+    if (!inWall && !inWallBtn) wmToggleWallPanel(false);
+  }, { passive: true });
+
+  // Initial render
+  wmRenderWallpaperGrid();
+  wmApplyWallpaper();
+  wmTickClock();
+}
+
+    // Init desktop chrome (taskbar + wallpapers)
+    wmInitDesktopUI();
+
+
+
+
+
     const WM_APP_SIZES = {
       reactor:   { w: 980, h: 640 },
       terminal:  { w: 860, h: 520 },
@@ -2387,6 +3092,9 @@ persistEnabled: false,
         const v = btn.getAttribute("data-view");
         btn.classList.toggle("active", wmEnabled && v === appId);
       }
+   
+      wmFocusedId = appId;
+      wmTaskbarSync();
     }
 
     function wmApply(appId) {
@@ -2423,6 +3131,8 @@ persistEnabled: false,
           if (w && item.s) {
             w.state = Object.assign(w.state, item.s);
             wmApply(id);
+            if (w.state.min) { w.el.classList.add("minimized"); w.el.style.display = "none"; }
+            else { w.el.classList.remove("minimized"); w.el.style.display = "flex"; }
           }
         }
       } catch (e) {}
@@ -2437,6 +3147,12 @@ persistEnabled: false,
       document.body.classList.add("wm-mode");
       wmWallpaper.classList.remove("wm-hidden");
       wmLayer.classList.remove("wm-hidden");
+      wmShow(wmTaskbar, true);
+      wmStartClock();
+      wmApplyWallpaper();
+      wmTaskbarSync();
+      wmToggleStartMenu(false);
+      wmToggleWallPanel(false);
 
       // Keep underlying view on "all" so panel logic doesn't fight the windows.
       setAppView("all", { persist: false });
@@ -2453,6 +3169,10 @@ persistEnabled: false,
       document.body.classList.remove("wm-mode");
       if (wmWallpaper) wmWallpaper.classList.add("wm-hidden");
       if (wmLayer) wmLayer.classList.add("wm-hidden");
+      wmShow(wmTaskbar, false);
+      wmStopClock();
+      wmToggleStartMenu(false);
+      wmToggleWallPanel(false);
 
       // Back to last saved app view (or reactor).
       const saved = lsGet("chernos_app_view") || "reactor";
@@ -2496,6 +3216,7 @@ persistEnabled: false,
 
       try { w.el.remove(); } catch (e) {}
       wmWins.delete(id);
+      if (wmFocusedId === id) wmFocusedId = null;
 
       if (opts.persist !== false) wmPersist();
 
@@ -2505,21 +3226,25 @@ persistEnabled: false,
       else {
         // No windows left: keep WM enabled but clear dock highlight.
         for (const btn of dockBtns) btn.classList.remove("active");
+        wmFocusedId = null;
       }
+      wmTaskbarSync();
     }
 
     function wmToggleMax(appId) {
       const w = wmWins.get(appId);
       if (!w) return;
       w.state.max = !w.state.max;
+      const taskH = wmTaskbar ? (wmTaskbar.getBoundingClientRect().height + 22) : 0;
       const dockH = appDock ? appDock.getBoundingClientRect().height : 0;
+      const bottomH = Math.max(taskH, dockH);
 
       if (w.state.max) {
         w.state.restore = { x: w.state.x, y: w.state.y, w: w.state.w, h: w.state.h };
         w.state.x = 10;
         w.state.y = 10;
         w.state.w = Math.max(520, window.innerWidth - 20);
-        w.state.h = Math.max(360, window.innerHeight - dockH - 30);
+        w.state.h = Math.max(360, window.innerHeight - bottomH - 30);
       } else if (w.state.restore) {
         const r = w.state.restore;
         w.state.x = r.x; w.state.y = r.y; w.state.w = r.w; w.state.h = r.h;
@@ -2580,6 +3305,11 @@ persistEnabled: false,
       const acts = document.createElement("div");
       acts.className = "wm-actions";
 
+      const btnMin = document.createElement("button");
+      btnMin.className = "wm-act";
+      btnMin.title = "Minimize";
+      btnMin.textContent = "—";
+
       const btnMax = document.createElement("button");
       btnMax.className = "wm-act";
       btnMax.title = "Maximize";
@@ -2590,6 +3320,7 @@ persistEnabled: false,
       btnClose.title = "Close";
       btnClose.textContent = "✕";
 
+      acts.appendChild(btnMin);
       acts.appendChild(btnMax);
       acts.appendChild(btnClose);
 
@@ -2636,18 +3367,20 @@ persistEnabled: false,
       win.appendChild(body);
       wmLayer.appendChild(win);
 
-      const st = { x, y, w: size.w, h: size.h, max: false, restore: null };
+      const st = { x, y, w: size.w, h: size.h, max: false, min: false, restore: null };
       wmWins.set(id, { el: win, state: st, panel, restore });
       wmApply(id);
       wmFocus(id);
       wmPersist();
       wmToast(`Opened ${APP_LABELS[id] || id}`);
+      wmTaskbarSync();
 
       // focus on click
       win.addEventListener("pointerdown", () => wmFocus(id), { passive: true });
 
-      // close/max
+      // close/min/max
       btnClose.addEventListener("click", (e) => { e.stopPropagation(); wmClose(id); });
+      btnMin.addEventListener("click", (e) => { e.stopPropagation(); wmMinimize(id); });
       btnMax.addEventListener("click", (e) => { e.stopPropagation(); wmToggleMax(id); });
 
       // drag
@@ -2668,7 +3401,8 @@ persistEnabled: false,
         ww.state.x = drag.baseX + (e.clientX - drag.startX);
         ww.state.y = drag.baseY + (e.clientY - drag.startY);
         ww.state.x = Math.max(6, Math.min(window.innerWidth - 80, ww.state.x));
-        ww.state.y = Math.max(6, Math.min(window.innerHeight - 80, ww.state.y));
+        const tbH = wmTaskbar ? (wmTaskbar.getBoundingClientRect().height + 22) : 0;
+        ww.state.y = Math.max(6, Math.min(window.innerHeight - tbH - 80, ww.state.y));
         wmApply(id);
       });
       titlebar.addEventListener("pointerup", (e) => {
@@ -2697,7 +3431,8 @@ persistEnabled: false,
         ww.state.w = Math.max(360, rsz.baseW + (e.clientX - rsz.startX));
         ww.state.h = Math.max(240, rsz.baseH + (e.clientY - rsz.startY));
         ww.state.w = Math.min(window.innerWidth - 12, ww.state.w);
-        ww.state.h = Math.min(window.innerHeight - 12, ww.state.h);
+        const tbH = wmTaskbar ? (wmTaskbar.getBoundingClientRect().height + 22) : 0;
+        ww.state.h = Math.min(window.innerHeight - tbH - 12, ww.state.h);
         wmApply(id);
       });
       resize.addEventListener("pointerup", (e) => {
