@@ -1,4 +1,21 @@
+## v38 — Plymouth + GRUB theme
+- Added nuclear-glow Plymouth splash (pulsing reactor ring + logo).
+- Added custom GRUB theme (Blackchamber) with background + logo + highlight.
+- Boot assets stored under `boot-assets/` so they ship with the repo/ISO.
+
+## v34 — Performance fix (VirtualBox-friendly)
+- Optimized NetOps topology rendering (no full SVG rebuild on packet tick)
+- Throttled Packet Bus panel updates
+- Message Bus panel no longer updates when not visible; buffered DOM appends
+- NetOps UI updates only when visible
+
 # Changelog
+
+
+## v33 — Plugin System (local scripts)
+- Added internal plugin framework (install/enable/disable/export/import).
+- Plugins can subscribe/publish on the internal message bus and register terminal commands.
+- Added Plugins app panel + dock button + WM start menu entry.
 
 ## v28 — Persistence v3 (profiles, states, logs)
 - Added Persistence v3 app (Profiles / States / Logs) with UI panel + WM start menu + dock.
