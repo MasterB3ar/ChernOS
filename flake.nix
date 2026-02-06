@@ -198,12 +198,13 @@ CSS
           boot.plymouth.themePackages = [ plymouthTheme ];
           boot.plymouth.theme         = "chernos";
 
-          # ---------- Networking / SSH off for kiosk ----------
-          networking.useDHCP                         = false;
-          networking.networkmanager.enable           = false;
-          systemd.services."systemd-networkd".enable = false;
-          systemd.services."systemd-resolved".enable = false;
-          systemd.services."sshd".enable              = false;
+          # ---------- Networking ----------
+          # Calamares + nixos-install are dramatically more reliable with networking available.
+          # (You can still keep the kiosk UI offline at the app layer.)
+          networking.useDHCP               = true;
+          networking.networkmanager.enable = true;
+          # Keep ssh off by default on the live ISO.
+          systemd.services."sshd".enable  = false;
 
           # ---------- Audio (required for background music) ----------
           sound.enable = true;
@@ -230,12 +231,35 @@ CSS
           services.xserver.enable = false;
           programs.sway.enable    = true;
 
+          # Calamares needs these even on a minimal ISO (device discovery + power info)
+          services.udisks2.enable = true;
+          services.upower.enable  = true;
+
           # ---------- kiosk user ----------
           users.users.kiosk = {
             isNormalUser = true;
             password     = "kiosk";
-            extraGroups  = [ "video" "input" "audio" ];
+            extraGroups  = [ "video" "input" "audio" "wheel" "networkmanager" ];
           };
+
+          # ---------- sudo (needed to launch Calamares as root from the kiosk session) ----------
+          security.sudo.enable = true;
+          security.sudo.extraConfig = ''
+            Defaults env_keep += "WAYLAND_DISPLAY XDG_RUNTIME_DIR DISPLAY DBUS_SESSION_BUS_ADDRESS XAUTHORITY"
+          '';
+
+          # Allow the kiosk user to run Calamares without a password (GUI installer on a live ISO).
+          security.sudo.extraRules = [
+            {
+              users = [ "kiosk" ];
+              commands = [
+                {
+                  command = "${pkgs.calamares}/bin/calamares";
+                  options = [ "NOPASSWD" "SETENV" ];
+                }
+              ];
+            }
+          ];
 
           # ---------- Real persistence (overlayfs) ----------
           systemd.services.chernos-persist = {
@@ -359,7 +383,51 @@ chromium
             alsa-utils
             pipewire
             wireplumber
+
+            # --- installer stack ---
+            calamares
+            calamares-nixos-extensions
+            sudo
+            networkmanager
+
+            # partition + fs utilities Calamares relies on
+            parted
+            gptfdisk
+            e2fsprogs
+            btrfs-progs
+            dosfstools
+            ntfs3g
+            lvm2
+            cryptsetup
+
+            # Qt Wayland plugin (Calamares is Qt6 in current nixpkgs)
+            qt6.qtwayland
+
+            # Helps avoid Kirigami/QML warnings (branding uses Kirigami in some configs)
+            kdePackages.kirigami
           ];
+
+          # Calamares on NixOS expects distro configuration in /etc/calamares.
+          # The NixOS-specific Calamares config ships in calamares-nixos-extensions.
+          environment.etc."calamares".source = "${pkgs.calamares-nixos-extensions}/etc/calamares";
+
+          # ---------- /etc/chernos-installer.sh (Calamares launcher) ----------
+          environment.etc."chernos-installer.sh" = {
+            mode = "0755";
+            text = ''
+              #!/bin/sh
+              set -eu
+
+              # If networking is enabled, make sure it's actually turned on.
+              if command -v nmcli >/dev/null 2>&1; then
+                nmcli networking on 2>/dev/null || true
+              fi
+
+              # Run Calamares as root, but keep Wayland/DBus env so the GUI can connect.
+              exec sudo --preserve-env=WAYLAND_DISPLAY,XDG_RUNTIME_DIR,DISPLAY,DBUS_SESSION_BUS_ADDRESS,XAUTHORITY \
+                ${pkgs.calamares}/bin/calamares
+            '';
+          };
 
           # ---------- sway config: call kiosk script ----------
           environment.etc."sway/config".text = ''
@@ -367,6 +435,10 @@ chromium
 
             # Prevent exit
             bindsym $mod+Shift+e exec echo "exit blocked"
+
+            # Open Calamares installer
+            bindsym $mod+i exec /etc/chernos-installer.sh
+            bindsym Ctrl+Alt+i exec /etc/chernos-installer.sh
 
             # Launch ChernOS kiosk helper script
             exec /etc/chernos-kiosk.sh
