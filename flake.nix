@@ -11,40 +11,28 @@
     version = "2.0.0";
 
     # ---------- GRUB THEME ----------
-    grubTheme = pkgs.runCommand "grub-theme-chernos" {} ''
-      mkdir -p $out/share/grub/themes/chernos
-
-      cat > $out/share/grub/themes/chernos/theme.txt <<EOF
-terminal_output gfxterm
-color_normal cfeecb 000000
-color_highlight bff9a8 000000
-
-menuentry "ChernOS v${version} Live" {
-  set gfxpayload=keep
-}
-EOF
-    '';
+    grubTheme = pkgs.stdenvNoCC.mkDerivation {
+      pname = "grub-theme-chernos";
+      version = version;
+      src = ./boot-assets/grub;
+      dontBuild = true;
+      installPhase = ''
+        mkdir -p $out/share/grub/themes/chernos
+        cp -r ./* $out/share/grub/themes/chernos/
+      '';
+    };
 
     # ---------- PLYMOUTH THEME ----------
-    plymouthTheme = pkgs.runCommand "plymouth-theme-chernos" {} ''
-      mkdir -p $out/share/plymouth/themes/chernos
-
-      cat > $out/share/plymouth/themes/chernos/chernos.plymouth <<EOF
-[Plymouth Theme]
-Name=ChernOS
-Description=Nuclear green boot glow
-ModuleName=script
-
-[script]
-ImageDir=/usr/share/plymouth/themes/chernos
-ScriptFile=/usr/share/plymouth/themes/chernos/chernos.script
-EOF
-
-      cat > $out/share/plymouth/themes/chernos/chernos.script <<'EOF'
-Window.SetBackgroundTopColor (0.0, 0.02, 0.01);
-Window.SetBackgroundBottomColor (0.0, 0.0, 0.0);
-EOF
-    '';
+    plymouthTheme = pkgs.stdenvNoCC.mkDerivation {
+      pname = "plymouth-theme-chernos";
+      version = version;
+      src = ./boot-assets/plymouth;
+      dontBuild = true;
+      installPhase = ''
+        mkdir -p $out/share/plymouth/themes/chernos
+        cp -r ./* $out/share/plymouth/themes/chernos/
+      '';
+    };
 
     # ---------- Persistence + overlayfs setup ----------
     persistSetup = pkgs.writeShellScriptBin "chernos-persist-setup" ''
@@ -155,7 +143,8 @@ CSS
           boot.loader.timeout      = lib.mkForce 0;
           boot.loader.grub.enable  = lib.mkForce true;
           boot.loader.grub.device  = "nodev";
-          boot.loader.grub.theme   = "${grubTheme}/share/grub/themes/chernos/theme.txt";
+          boot.loader.grub.theme   = "${grubTheme}/share/grub/themes/chernos";
+          boot.loader.grub.splashImage = "${grubTheme}/share/grub/themes/chernos/background.png";
 
           boot.initrd.verbose    = false;
           boot.consoleLogLevel  = 0;
