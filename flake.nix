@@ -101,7 +101,7 @@
       nativeBuildInputs = [ (if pkgs ? tailwindcss then pkgs.tailwindcss else pkgs.nodePackages.tailwindcss) ];
 
       buildPhase = ''
-        set -eu
+        set -e
 
         cp $src/index.html ./index.html
 
@@ -132,7 +132,7 @@ CSS
       src = ./.;
       dontBuild = true;
       installPhase = ''
-        set -eu
+        set -e
         mkdir -p $out/electron $out/ui $out/bin
         cp -r $src/electron/* $out/electron/
         cp -r ${chernosUI}/* $out/ui/
