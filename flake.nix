@@ -201,8 +201,8 @@ CSS
           # ---------- Networking ----------
           # Calamares + nixos-install are dramatically more reliable with networking available.
           # (You can still keep the kiosk UI offline at the app layer.)
-          networking.useDHCP               = true;
           networking.networkmanager.enable = true;
+          # DHCP is handled by NetworkManager (do not set networking.useDHCP here).
           # Keep ssh off by default on the live ISO.
           systemd.services."sshd".enable  = false;
 
