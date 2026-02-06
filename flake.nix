@@ -124,6 +124,29 @@ CSS
       '';
     };
 
+    # ---------- Electron Desktop Suite ----------
+    # Provides `chernos-desktop` which launches the Electron wrapper around the same UI.
+    chernosDesktop = pkgs.stdenvNoCC.mkDerivation {
+      pname = "chernos-desktop";
+      version = version;
+      src = ./.;
+      dontBuild = true;
+      installPhase = ''
+        set -eu
+        mkdir -p $out/electron $out/ui $out/bin
+        cp -r $src/electron/* $out/electron/
+        cp -r ${chernosUI}/* $out/ui/
+
+        cat > $out/bin/chernos-desktop <<'SH'
+        #!/bin/sh
+        set -eu
+        # Prefer Wayland on Sway.
+        exec env NIXOS_OZONE_WL=1 ${pkgs.electron}/bin/electron --enable-features=UseOzonePlatform --ozone-platform=wayland "$(dirname "$0")/.."/electron "$@"
+        SH
+        chmod +x $out/bin/chernos-desktop
+      '';
+    };
+
   in {
     nixosConfigurations.chernos-iso = lib.nixosSystem {
       inherit system;
@@ -281,6 +304,18 @@ CSS
                 . /run/chernos-persist.env
               fi
 
+
+              # Optional shell selector: "electron" boots the Desktop Suite instead of Chromium.
+              SHELL_MODE="${CHERNOS_SHELL:-}"
+              if [ -z "$SHELL_MODE" ] && [ "x${CHERNOS_PERSIST:-0}" = "x1" ] && [ -f /persist/chernos-shell ]; then
+                SHELL_MODE="$(cat /persist/chernos-shell 2>/dev/null | tr -d "$(printf '\r\n')" | tr '[:upper:]' '[:lower:]')"
+              fi
+              case "$SHELL_MODE" in
+                electron|desktop)
+                  exec ${chernosDesktop}/bin/chernos-desktop
+                  ;;
+              esac
+
               # Ensure audio stack is running + unmuted (ISO kiosk reliability)
               export XDG_RUNTIME_DIR="''${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
               mkdir -p "$XDG_RUNTIME_DIR" 2>/dev/null || true
@@ -366,7 +401,8 @@ CSS
 
           # Tools on the ISO
           environment.systemPackages = with pkgs; [
-chromium
+            chromium
+            chernosDesktop
             swaybg
             vim
             alsa-utils
@@ -429,6 +465,10 @@ chromium
             bindsym $mod+i exec /etc/chernos-installer.sh
             bindsym Ctrl+Alt+i exec /etc/chernos-installer.sh
 
+
+            # Launch Electron desktop suite
+            bindsym $mod+e exec ${chernosDesktop}/bin/chernos-desktop
+            bindsym Ctrl+Alt+e exec ${chernosDesktop}/bin/chernos-desktop
             # Launch ChernOS kiosk helper script
             exec /etc/chernos-kiosk.sh
           '';
