@@ -758,6 +758,12 @@
     .topo-node .node-off{ fill: rgba(251,113,133,0.95); }
     .topo-node text{ fill: rgba(226,232,240,0.92); font-size: 11px; letter-spacing: 0.06em; }
     .topo-node .sub{ fill: rgba(148,163,184,0.95); font-size: 10px; letter-spacing: 0.02em; }
+.topo-pkt{ filter: drop-shadow(0 0 6px rgba(59,130,246,0.35)); }
+.pkt-log{ max-height: 190px; overflow:auto; background: rgba(0,0,0,0.55); border: 1px solid rgba(148,163,184,0.28); border-radius: 12px; padding: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; line-height: 1.35; }
+.pkt-log .dim{ color: rgba(148,163,184,0.95); }
+.pkt-log .ok{ color: rgba(187,247,208,0.95); }
+.pkt-log .warn{ color: rgba(250,204,107,0.95); }
+.pkt-log .err{ color: rgba(251,113,133,0.95); }
 
     /* ===== Coolant routing card ===== */
     .route-row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
@@ -1288,6 +1294,319 @@ body.blackchamber .wm-wall-item.active{ border-color: rgba(34,211,238,0.55); box
   color: rgba(226,232,240,0.55);
 }
 
+
+/* ===== Hotkeys overlay ===== */
+.wm-hotkeys{
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.62);
+  z-index: 1200;
+  padding: 18px;
+}
+.wm-hotkeys.show{ display:flex; }
+.wm-hk-card{
+  width: min(980px, calc(100vw - 24px));
+  max-height: calc(100vh - 120px);
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(2,6,23,0.88);
+  backdrop-filter: blur(14px);
+  box-shadow: 0 30px 100px rgba(0,0,0,0.62);
+  display:flex;
+  flex-direction: column;
+}
+body.blackchamber .wm-hk-card{
+  border-color: rgba(34,211,238,0.25);
+  background: rgba(0,0,0,0.86);
+}
+.wm-hk-head{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(148,163,184,0.16);
+}
+.wm-hk-title{
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(226,232,240,0.92);
+}
+.wm-hk-x{
+  width: 34px;
+  height: 28px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(148,163,184,0.08);
+  color: rgba(226,232,240,0.92);
+}
+.wm-hk-x:hover{ transform: translateY(-1px); }
+.wm-hk-head-right{
+  display:flex;
+  gap: 8px;
+  align-items:center;
+}
+.wm-hk-edit{
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(148,163,184,0.08);
+  color: rgba(226,232,240,0.92);
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+}
+.wm-hk-edit.active{
+  border-color: rgba(34,197,94,0.35);
+  background: rgba(34,197,94,0.10);
+}
+.kcap.warn{
+  border-color: rgba(248,113,113,0.45);
+  background: rgba(248,113,113,0.12);
+}
+.wm-hk-tools{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.wm-hk-tool-row{
+  display:flex;
+  gap: 10px;
+  align-items:center;
+  flex-wrap: wrap;
+}
+.wm-hk-search{
+  flex: 1 1 220px;
+  min-width: 180px;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(148,163,184,0.20);
+  background: rgba(148,163,184,0.06);
+  color: rgba(226,232,240,0.92);
+  font-size: 12px;
+  outline: none;
+}
+.wm-hk-search::placeholder{ color: rgba(148,163,184,0.80); }
+.wm-hk-check{
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+  padding: 0 10px;
+  height: 34px;
+  border-radius: 14px;
+  border: 1px solid rgba(148,163,184,0.20);
+  background: rgba(148,163,184,0.06);
+  color: rgba(226,232,240,0.92);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  user-select:none;
+}
+.wm-hk-check input{ width: 16px; height: 16px; }
+.wm-hk-btn2{
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(148,163,184,0.20);
+  background: rgba(148,163,184,0.06);
+  color: rgba(226,232,240,0.92);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.wm-hk-btn2:hover{ transform: translateY(-1px); }
+.wm-hk-btn2.danger{
+  border-color: rgba(248,113,113,0.35);
+  background: rgba(248,113,113,0.10);
+}
+.wm-hk-capture{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(34,197,94,0.28);
+  background: rgba(34,197,94,0.10);
+  color: rgba(226,232,240,0.92);
+  font-size: 12px;
+}
+.wm-hk-capture .sub{
+  color: rgba(148,163,184,0.92);
+  font-size: 11px;
+}
+.wm-hk-json{
+  border-radius: 18px;
+  border: 1px solid rgba(148,163,184,0.20);
+  background: rgba(148,163,184,0.04);
+  padding: 10px;
+}
+.wm-hk-json textarea{
+  width: 100%;
+  min-height: 160px;
+  resize: vertical;
+  border-radius: 14px;
+  border: 1px solid rgba(148,163,184,0.18);
+  background: rgba(2,6,23,0.50);
+  color: rgba(226,232,240,0.92);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+  padding: 10px;
+  outline:none;
+}
+.wm-hk-json-actions{
+  display:flex;
+  gap: 10px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.wm-hk-json-hint{
+  margin-top: 8px;
+  font-size: 10px;
+  color: rgba(148,163,184,0.92);
+}
+.wm-hk-edit-list{
+  display:flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.wm-hk-row{
+  display:grid;
+  grid-template-columns: 260px 1fr auto;
+  gap: 10px;
+  align-items: start;
+  padding: 10px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(148,163,184,0.16);
+  background: rgba(148,163,184,0.03);
+}
+@media (max-width: 820px){
+  .wm-hk-row{ grid-template-columns: 1fr; }
+}
+.wm-hk-row-title{
+  color: rgba(226,232,240,0.92);
+  font-size: 12px;
+}
+.wm-hk-row-id{
+  margin-top: 4px;
+  color: rgba(148,163,184,0.92);
+  font-size: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+.wm-hk-pills{
+  display:flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wm-hk-pill{
+  display:inline-flex;
+  align-items:center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(148,163,184,0.06);
+  color: rgba(226,232,240,0.92);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+}
+.wm-hk-pill.warn{
+  border-color: rgba(248,113,113,0.45);
+  background: rgba(248,113,113,0.12);
+}
+.wm-hk-pill-x{
+  width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(148,163,184,0.08);
+  color: rgba(226,232,240,0.92);
+  display:inline-grid;
+  place-items:center;
+  font-size: 12px;
+  line-height: 1;
+}
+.wm-hk-row-actions{
+  display:flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.wm-hk-mini{
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.20);
+  background: rgba(148,163,184,0.06);
+  color: rgba(226,232,240,0.92);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.wm-hk-mini.danger{
+  border-color: rgba(248,113,113,0.35);
+  background: rgba(248,113,113,0.10);
+}
+.wm-hk-warn{
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(248,113,113,0.35);
+  background: rgba(248,113,113,0.08);
+  color: rgba(226,232,240,0.92);
+  font-size: 12px;
+}
+
+.wm-hk-body{
+  padding: 14px 16px 16px 16px;
+  overflow: auto;
+}
+.wm-hk-section{
+  margin-top: 14px;
+}
+.wm-hk-section:first-child{ margin-top: 0; }
+.wm-hk-sec-title{
+  margin-bottom: 8px;
+  font-size: 11px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: rgba(148,163,184,0.90);
+}
+.wm-hk-grid{
+  display:grid;
+  grid-template-columns: 240px 1fr;
+  gap: 8px 14px;
+}
+@media (max-width: 720px){
+  .wm-hk-grid{ grid-template-columns: 1fr; }
+}
+.kcap{
+  display:inline-grid;
+  place-items:center;
+  padding: 2px 8px;
+  border-radius: 9px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(148,163,184,0.08);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 11px;
+  color: rgba(226,232,240,0.92);
+  margin-right: 6px;
+  margin-bottom: 6px;
+}
+.wm-hk-foot{
+  padding: 12px 16px;
+  border-top: 1px solid rgba(148,163,184,0.16);
+  color: rgba(148,163,184,0.92);
+  font-size: 12px;
+}
+
 /* Window minimize visual */
 .wm-window.minimized{ display:none !important; }
 @media (max-width: 980px){
@@ -1700,7 +2019,46 @@ body.blackchamber .wm-wall-item.active{ border-color: rgba(34,211,238,0.55); box
         <div class="text-[10px] text-slate-400 mt-2">
           Tip: click a node on the map to select it. Route highlight follows OPS-TOWER → target.
         </div>
+      
+<div class="card mt-3" id="netpkt-card">
+  <div class="label">PACKET BUS — SNIFFER / SEND / LOG</div>
+  <div class="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+    <div>
+      <div class="flex items-center justify-between">
+        <div class="text-[10px] text-slate-400">Sniffer</div>
+        <button class="btn btn-small" id="netpkt-sniff-toggle">Sniff: OFF</button>
       </div>
+      <div class="mt-2 text-[10px] text-slate-400">Filter</div>
+      <input id="netpkt-filter" class="w-full mt-1 text-[11px] bg-black/70 border border-slate-600/60 rounded-md px-2 py-1 outline-none" placeholder="type=ping dst=core-1 status=dropped" />
+
+      <div class="mt-2 text-[10px] text-slate-400">Quick Send</div>
+      <div class="mt-1 grid grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_auto] gap-2 items-center">
+        <select id="netpkt-type" class="w-full text-[11px] bg-black/70 border border-slate-600/60 rounded-md px-2 py-1 outline-none">
+          <option value="DATA">DATA</option>
+          <option value="PING">PING</option>
+          <option value="SCAN">SCAN</option>
+          <option value="ALERT">ALERT</option>
+        </select>
+        <select id="netpkt-dst" class="w-full text-[11px] bg-black/70 border border-slate-600/60 rounded-md px-2 py-1 outline-none"></select>
+        <button class="btn btn-small" id="netpkt-send">Send</button>
+      </div>
+
+      <div class="mt-2 flex flex-wrap gap-2 items-center">
+        <button class="btn btn-small" id="netpkt-clear">Clear Log</button>
+        <span class="pill text-[10px]" id="netpkt-stats">inflight=0 · delivered=0 · dropped=0 · rate=0 pkt/s</span>
+      </div>
+    </div>
+
+    <div>
+      <div class="text-[10px] text-slate-400 mb-1">Packet Log</div>
+      <div id="netpkt-log" class="pkt-log">—</div>
+    </div>
+  </div>
+  <div class="text-[10px] text-slate-500 mt-2">
+    Tip: Net Scan emits SCAN packets. Trace emits a PING probe. Background DATA traffic is scaled down for visualization.
+  </div>
+</div>
+</div>
 
     </div>
 
@@ -1854,6 +2212,69 @@ body.blackchamber .wm-wall-item.active{ border-color: rgba(34,211,238,0.55); box
     </div>
 
 
+<!-- PERSISTENCE v3 -->
+<div class="card mt-1" id="persist-card" data-panel="persistence">
+  <div class="label flex items-center justify-between">
+    <span>PERSISTENCE v3 — PROFILES • STATES • LOGS</span>
+    <span class="text-[10px] text-slate-400">Saved locally</span>
+  </div>
+
+  <div class="mt-3 grid gap-3">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="pill text-[10px]">Profile</span>
+      <select id="p3-profile" style="min-width:180px; max-width:260px; padding:6px 10px; border-radius:14px; border:1px solid rgba(148,163,184,0.25); background:rgba(15,23,42,0.35); color:#e2e8f0;"></select>
+      <button class="btn btn-small" id="p3-new" title="Create new profile">New</button>
+      <button class="btn btn-small" id="p3-clone" title="Clone active profile">Clone</button>
+      <button class="btn btn-small" id="p3-rename" title="Rename active profile">Rename</button>
+      <button class="btn btn-small" id="p3-delete" title="Delete active profile (not DEFAULT)">Delete</button>
+      <div class="ml-auto flex items-center gap-2">
+        <span class="text-[10px] text-slate-400">Active:</span>
+        <span id="p3-active" class="pill text-[10px]">—</span>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="pill text-[10px]">State</span>
+      <select id="p3-state" style="min-width:220px; max-width:380px; padding:6px 10px; border-radius:14px; border:1px solid rgba(148,163,184,0.25); background:rgba(15,23,42,0.35); color:#e2e8f0;"></select>
+      <button class="btn btn-small" id="p3-save">Save new</button>
+      <button class="btn btn-small" id="p3-restore">Restore</button>
+      <button class="btn btn-small" id="p3-state-rename" title="Rename selected state">Rename</button>
+      <button class="btn btn-small" id="p3-state-delete" title="Delete selected state">Delete</button>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <label class="flex items-center gap-2 text-[12px] text-slate-300">
+        <input id="p3-autosave" type="checkbox" class="accent-green-400" />
+        Auto-save (updates AUTO state)
+      </label>
+      <label class="flex items-center gap-2 text-[12px] text-slate-300">
+        <input id="p3-includelogs" type="checkbox" class="accent-green-400" />
+        Include logs in saves
+      </label>
+      <label class="flex items-center gap-2 text-[12px] text-slate-300">
+        <input id="p3-autorestore" type="checkbox" class="accent-green-400" />
+        Auto-restore on boot
+      </label>
+    </div>
+
+    <div class="grid gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="pill text-[10px]">Export / Import</span>
+        <button class="btn btn-small" id="p3-export-active">Export active</button>
+        <button class="btn btn-small" id="p3-export-all">Export all</button>
+        <button class="btn btn-small" id="p3-copy" title="Copy JSON">Copy</button>
+        <button class="btn btn-small" id="p3-apply-import">Apply import</button>
+      </div>
+      <textarea id="p3-json" class="term-out" style="height:150px; white-space:pre; overflow:auto; padding:10px; border-radius:14px;"></textarea>
+      <div id="p3-status" class="text-[11px] text-slate-400"></div>
+    </div>
+
+    <div class="text-[10px] text-slate-500">
+      Terminal: <span class="text-slate-300">profile help</span> • <span class="text-slate-300">profile list</span> • <span class="text-slate-300">profile save</span> • <span class="text-slate-300">profile restore</span>
+    </div>
+  </div>
+</div>
+
   <!-- APP DOCK (Multi-app environment) -->
   
   <!-- WINDOW MANAGER (ISO/Kiosk multi-app windows) -->
@@ -1866,6 +2287,7 @@ body.blackchamber .wm-wall-item.active{ border-color: rgba(34,211,238,0.55); box
   <button id="wm-start" class="wm-start" title="Start">☢</button>
   <div id="wm-tasks" class="wm-tasks" aria-label="Open windows"></div>
   <div class="wm-spacer"></div>
+  <button id="wm-hk-btn" class="wm-quick" title="Hotkeys (F1)">Keys</button>
   <button id="wm-wall-btn" class="wm-quick" title="Wallpapers">Wall</button>
   <div id="wm-clock" class="wm-clock">--:--</div>
 </div>
@@ -1882,10 +2304,12 @@ body.blackchamber .wm-wall-item.active{ border-color: rgba(34,211,238,0.55); box
     <button class="wm-menu-item" data-wm-open="logs">Event Log</button>
     <button class="wm-menu-item" data-wm-open="diagnostics">Diagnostics</button>
     <button class="wm-menu-item" data-wm-open="soundscape">Soundscape</button>
-  </div>
+      <button class="wm-menu-item" data-wm-open="persistence">Persistence</button>
+</div>
 
   <div class="wm-menu-title mt">Desktop</div>
   <div class="wm-menu-grid">
+    <button class="wm-menu-item" id="wm-menu-hotkeys">Hotkeys</button>
     <button class="wm-menu-item" id="wm-menu-wallpapers">Wallpapers</button>
     <button class="wm-menu-item" id="wm-menu-exit">Exit Windows Mode</button>
   </div>
@@ -1908,6 +2332,22 @@ body.blackchamber .wm-wall-item.active{ border-color: rgba(34,211,238,0.55); box
   <div class="wm-wall-hint">Tip: Uploaded wallpaper is stored locally in the browser profile (localStorage).</div>
 </div>
 
+<!-- HOTKEYS OVERLAY -->
+<div id="wm-hotkeys" class="wm-hotkeys wm-hidden" aria-label="Hotkeys">
+  <div class="wm-hk-card" role="dialog" aria-modal="true">
+    <div class="wm-hk-head">
+      <div class="wm-hk-title">Hotkeys</div>
+      <div class="wm-hk-head-right">
+        <button id="wm-hk-edit" class="wm-hk-edit" title="Edit keybindings">Edit</button>
+        <button id="wm-hk-x" class="wm-hk-x" title="Close (Esc)">✕</button>
+      </div>
+    </div>
+    <div id="wm-hk-body" class="wm-hk-body"></div>
+    <div class="wm-hk-foot">Tip: Hotkeys are ignored while typing in inputs/terminal. Press <span class="kcap">F1</span> to toggle this panel.</div>
+  </div>
+</div>
+
+
 <div id="app-dock" class="app-dock">
     <button class="dock-btn" data-view="reactor">Reactor</button>
     <button class="dock-btn" data-view="terminal">Terminal</button>
@@ -1918,7 +2358,8 @@ body.blackchamber .wm-wall-item.active{ border-color: rgba(34,211,238,0.55); box
     <button class="dock-btn" data-view="logs">Logs</button>
     <button class="dock-btn" data-view="diagnostics">Diagnostics</button>
     <button class="dock-btn" data-view="soundscape">Soundscape</button>
-    <button class="dock-btn" data-view="wm">Windows</button>
+        <button class="dock-btn" data-view="persistence">Persistence</button>
+<button class="dock-btn" data-view="wm">Windows</button>
     <button class="dock-btn" data-view="all">All</button>
   </div>
 
@@ -2274,6 +2715,19 @@ const btnCfa      = document.getElementById("btn-cfa-toggle");
     const netopsTraceBtn = document.getElementById("netops-trace");
     const netopsResetBtn = document.getElementById("netops-reset");
     const netopsScanLine = document.getElementById("netops-scanline");
+const netpktSniffToggle = document.getElementById("netpkt-sniff-toggle");
+const netpktFilter      = document.getElementById("netpkt-filter");
+const netpktType        = document.getElementById("netpkt-type");
+const netpktDst         = document.getElementById("netpkt-dst");
+const netpktSend        = document.getElementById("netpkt-send");
+const netpktClear       = document.getElementById("netpkt-clear");
+const netpktLog         = document.getElementById("netpkt-log");
+const netpktStats       = document.getElementById("netpkt-stats");
+
+// Packet panel renderer is declared early so callbacks cannot crash if the definition ends up scoped.
+var renderNetPacketPanel = function(){ /* placeholder until defined */ };
+
+
 
 
     const themeButtons = Array.from(document.querySelectorAll(".theme-btn"));
@@ -2651,6 +3105,14 @@ const wmWallX = document.getElementById("wm-wall-x");
 const wmMenuWallpapers = document.getElementById("wm-menu-wallpapers");
 const wmMenuExit = document.getElementById("wm-menu-exit");
 
+const wmHkBtn = document.getElementById("wm-hk-btn");
+const wmHotkeys = document.getElementById("wm-hotkeys");
+const wmHkX = document.getElementById("wm-hk-x");
+const wmHkBody = document.getElementById("wm-hk-body");
+const wmHkEdit = document.getElementById("wm-hk-edit");
+const wmMenuHotkeys = document.getElementById("wm-menu-hotkeys");
+
+
 let wmFocusedId = null;
 let wmClockTimer = null;
 
@@ -2992,7 +3454,984 @@ function wmInitDesktopUI() {
     wmInitDesktopUI();
 
 
+/* ===== Hotkeys system (ISO/kiosk + desktop) ===== */
+function hkIsTypingContext() {
+  try {
+    const a = document.activeElement;
+    if (!a) return false;
+    const tag = (a.tagName || "").toLowerCase();
+    if (tag === "input" || tag === "textarea" || tag === "select") return true;
+    if (a.isContentEditable) return true;
+    if (a.closest && a.closest("#terminal")) return true;
+  } catch (e) {}
+  return false;
+}
 
+function wmToggleHotkeys(force) {
+  if (!wmHotkeys) return;
+  const isOpen = wmHotkeys.classList.contains("show");
+  const next = (typeof force === "boolean") ? force : !isOpen;
+  wmShow(wmHotkeys, next);
+  if (!next) { hkCapture = null; hkJsonOpen = false; }
+  if (next) {
+    try { wmRenderHotkeys(); } catch (e) {}
+    wmToggleStartMenu(false);
+    wmToggleWallPanel(false);
+  }
+}
+
+/* --- Rebindable hotkeys store + parsing --- */
+const HK_STORAGE_KEY = "chernos_hotkeys_v1";
+
+const HK_ACTIONS = [
+  // Core
+  { id:"core.hotkeys",   group:"Core",  title:"Toggle hotkeys overlay", defaults:["f1","ctrl+alt+keyh"] },
+  { id:"core.escape",    group:"Core",  title:"Close menus / hotkeys overlay", defaults:["escape"] },
+  { id:"wm.toggle",      group:"Core",  title:"Toggle Windows Mode", defaults:["ctrl+alt+keyw"] },
+  // Apps
+  { id:"app.reactor",      group:"Apps", title:"Open Reactor", defaults:["ctrl+alt+keyr"] },
+  { id:"app.terminal",     group:"Apps", title:"Open Terminal", defaults:["ctrl+alt+keyt"] },
+  { id:"app.netops",       group:"Apps", title:"Open NetOps", defaults:["ctrl+alt+keyn"] },
+  { id:"app.containment",  group:"Apps", title:"Open Containment", defaults:["ctrl+alt+keyc"] },
+  { id:"app.comms",        group:"Apps", title:"Open Comms", defaults:["ctrl+alt+keyo"] },
+  { id:"app.workstation",  group:"Apps", title:"Open Workstation", defaults:["ctrl+alt+keyx"] },
+  { id:"app.logs",         group:"Apps", title:"Open Logs", defaults:["ctrl+alt+keyg"] },
+  { id:"app.diagnostics",  group:"Apps", title:"Open Diagnostics", defaults:["ctrl+alt+keyd"] },
+  { id:"app.soundscape",   group:"Apps", title:"Open Soundscape", defaults:["ctrl+alt+keyp"] },
+  // Windows mode
+  { id:"wm.next",       group:"Windows", title:"Focus next window", defaults:["ctrl+alt+tab"] },
+  { id:"wm.prev",       group:"Windows", title:"Focus previous window", defaults:["ctrl+alt+shift+tab"] },
+  { id:"wm.max",        group:"Windows", title:"Maximize / restore focused window", defaults:["ctrl+alt+keyf"] },
+  { id:"wm.min",        group:"Windows", title:"Minimize focused window", defaults:["ctrl+alt+minus"] },
+  { id:"wm.close",      group:"Windows", title:"Close focused window", defaults:["ctrl+alt+keyq"] },
+  { id:"wm.start",      group:"Windows", title:"Toggle Start menu", defaults:["ctrl+alt+space"] },
+  { id:"wm.wall",       group:"Windows", title:"Toggle Wallpapers panel", defaults:["ctrl+alt+keyu"] },
+  { id:"wm.wall.1",     group:"Windows", title:"Wallpaper: Reactor Glow", defaults:["ctrl+alt+shift+digit1"] },
+  { id:"wm.wall.2",     group:"Windows", title:"Wallpaper: Containment Fog", defaults:["ctrl+alt+shift+digit2"] },
+  { id:"wm.wall.3",     group:"Windows", title:"Wallpaper: Black Chamber", defaults:["ctrl+alt+shift+digit3"] },
+  { id:"wm.wall.4",     group:"Windows", title:"Wallpaper: Grid Lines", defaults:["ctrl+alt+shift+digit4"] },
+  { id:"wm.wall.5",     group:"Windows", title:"Wallpaper: Blueprint", defaults:["ctrl+alt+shift+digit5"] },
+  { id:"wm.wall.0",     group:"Windows", title:"Wallpaper: Reset", defaults:["ctrl+alt+shift+digit0"] },
+  // Audio + Theme
+  { id:"sys.audio",     group:"Audio+Theme", title:"Toggle Audio (master)", defaults:["ctrl+alt+keya"] },
+  { id:"sys.music",     group:"Audio+Theme", title:"Toggle Music", defaults:["ctrl+alt+keym"] },
+  { id:"sys.black",     group:"Audio+Theme", title:"Toggle Black Chamber theme", defaults:["ctrl+alt+keyb"] },
+  { id:"sys.diag",      group:"Audio+Theme", title:"Toggle Diagnostics card (classic UI)", defaults:["ctrl+alt+shift+keyd"] },
+  { id:"sys.sound",     group:"Audio+Theme", title:"Toggle Soundscape mixer (classic UI)", defaults:["ctrl+alt+shift+keyp"] },
+];
+
+const HK_ALIASES = {
+  // short names
+  "hotkeys":"core.hotkeys",
+  "escape":"core.escape",
+  "wm":"wm.toggle",
+  "windows":"wm.toggle",
+
+  "reactor":"app.reactor",
+  "terminal":"app.terminal",
+  "netops":"app.netops",
+  "containment":"app.containment",
+  "comms":"app.comms",
+  "workstation":"app.workstation",
+  "logs":"app.logs",
+  "diagnostics":"app.diagnostics",
+  "soundscape":"app.soundscape",
+
+  "next":"wm.next",
+  "prev":"wm.prev",
+  "max":"wm.max",
+  "min":"wm.min",
+  "close":"wm.close",
+  "start":"wm.start",
+  "wall":"wm.wall",
+
+  "audio":"sys.audio",
+  "music":"sys.music",
+  "black":"sys.black",
+};
+
+function hkClampArr(a){
+  if (!Array.isArray(a)) return [];
+  return a.map(x => String(x||"").trim().toLowerCase()).filter(Boolean);
+}
+
+function hkLoadOverrides() {
+  try {
+    const raw = lsGet(HK_STORAGE_KEY);
+    if (!raw) return {};
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== "object") return {};
+    const out = {};
+    for (const k of Object.keys(obj)) out[k] = hkClampArr(obj[k]);
+    return out;
+  } catch (e) {
+    return {};
+  }
+}
+
+function hkSaveOverrides(obj) {
+  try { lsSet(HK_STORAGE_KEY, JSON.stringify(obj || {})); } catch (e) {}
+}
+
+function hkDefaultMap() {
+  const m = {};
+  for (const a of HK_ACTIONS) m[a.id] = hkClampArr(a.defaults);
+  return m;
+}
+
+function hkEffectiveMap() {
+  const base = hkDefaultMap();
+  const ov = hkLoadOverrides();
+  for (const id of Object.keys(ov)) {
+    if (base[id] !== undefined) base[id] = hkClampArr(ov[id]);
+  }
+  return base;
+}
+
+function hkBuildReverse(effMap) {
+  const rev = new Map(); // combo -> [actionId,...] in HK_ACTIONS order
+  const order = new Map(HK_ACTIONS.map((a,i)=>[a.id,i]));
+  for (const a of HK_ACTIONS) {
+    const combos = effMap[a.id] || [];
+    for (const c of combos) {
+      if (!rev.has(c)) rev.set(c, []);
+      rev.get(c).push(a.id);
+    }
+  }
+  // normalize ordering within each list
+  for (const [c, ids] of rev.entries()) {
+    ids.sort((x,y)=>(order.get(x)||0)-(order.get(y)||0));
+    rev.set(c, ids);
+  }
+  return rev;
+}
+
+function hkConflicts(effMap) {
+  const rev = hkBuildReverse(effMap);
+  const out = [];
+  for (const [combo, ids] of rev.entries()) {
+    if (ids.length > 1) out.push({ combo, ids: ids.slice() });
+  }
+  return out;
+}
+
+// Normalize combo tokens
+function hkKeyTokenFromLetter(ch) {
+  const up = String(ch || "").toUpperCase();
+  if (up.length !== 1) return "";
+  if (up >= "A" && up <= "Z") return "key" + up.toLowerCase();
+  if (up >= "0" && up <= "9") return "digit" + up;
+  return "";
+}
+
+function hkNormalizeCombo(raw) {
+  const s = String(raw || "").trim();
+  if (!s) return "";
+  const parts = s.split(/[\+\s]+/).filter(Boolean);
+  let ctrl=false, alt=false, shift=false, meta=false;
+  let key="";
+  for (const p0 of parts) {
+    const p = p0.trim().toLowerCase();
+    if (!p) continue;
+    if (p === "ctrl" || p === "control") { ctrl=true; continue; }
+    if (p === "alt" || p === "option") { alt=true; continue; }
+    if (p === "shift") { shift=true; continue; }
+    if (p === "meta" || p === "cmd" || p === "command" || p === "win" || p === "super") { meta=true; continue; }
+
+    // key token
+    if (p === "esc") { key="escape"; continue; }
+    if (p === "escape") { key="escape"; continue; }
+    if (p === "tab") { key="tab"; continue; }
+    if (p === "space" || p === "spacebar") { key="space"; continue; }
+    if (p === "-" || p === "minus") { key="minus"; continue; }
+    if (/^f\d{1,2}$/.test(p)) { key=p; continue; }
+    if (/^key[a-z]$/.test(p)) { key=p; continue; }
+    if (/^digit[0-9]$/.test(p)) { key=p; continue; }
+    if (/^[a-z0-9]$/.test(p)) { key=hkKeyTokenFromLetter(p); continue; }
+  }
+  if (!key) return "";
+  const mods = [];
+  if (ctrl) mods.push("ctrl");
+  if (alt) mods.push("alt");
+  if (shift) mods.push("shift");
+  if (meta) mods.push("meta");
+  return mods.concat([key]).join("+");
+}
+
+function hkPrettyCombo(norm) {
+  const s = String(norm || "");
+  if (!s) return "";
+  const parts = s.split("+").filter(Boolean);
+  const pretty = [];
+  for (const p of parts) {
+    if (p === "ctrl") pretty.push("Ctrl");
+    else if (p === "alt") pretty.push("Alt");
+    else if (p === "shift") pretty.push("Shift");
+    else if (p === "meta") pretty.push("Meta");
+    else if (p === "escape") pretty.push("Esc");
+    else if (p === "tab") pretty.push("Tab");
+    else if (p === "space") pretty.push("Space");
+    else if (p === "minus") pretty.push("-");
+    else if (p.startsWith("key")) pretty.push(p.slice(3).toUpperCase());
+    else if (p.startsWith("digit")) pretty.push(p.slice(5));
+    else if (p.startsWith("f")) pretty.push(p.toUpperCase());
+    else pretty.push(p);
+  }
+  return pretty.join("+");
+}
+
+function hkComboFromEvent(e) {
+  const code = (e.code || "").toLowerCase();
+  // ignore pure modifiers
+  if (code === "shiftleft" || code === "shiftright" || code === "controlleft" || code === "controlright" || code === "altleft" || code === "altright" || code === "metaleft" || code === "metaright") return "";
+
+  const mods = [];
+  if (e.ctrlKey) mods.push("ctrl");
+  if (e.altKey) mods.push("alt");
+  if (e.shiftKey) mods.push("shift");
+  if (e.metaKey) mods.push("meta");
+
+  let key = "";
+  if (code === "escape") key = "escape";
+  else if (code === "tab") key = "tab";
+  else if (code === "space") key = "space";
+  else if (code === "minus") key = "minus";
+  else if (code.startsWith("key")) key = code;          // keya..keyz
+  else if (code.startsWith("digit")) key = code;        // digit0..digit9
+  else if (code.startsWith("f")) key = code;            // f1..f12
+  else return "";
+
+  return mods.concat([key]).join("+");
+}
+
+function hkResolveAction(comboNorm) {
+  const eff = hkEffectiveMap();
+  const rev = hkBuildReverse(eff);
+  const ids = rev.get(comboNorm) || [];
+  return ids.length ? ids[0] : "";
+}
+
+function hkActionTitle(id) {
+  const a = HK_ACTIONS.find(x => x.id === id);
+  return a ? a.title : id;
+}
+
+function hkResolveActionIdOrAlias(token) {
+  const t = String(token || "").trim().toLowerCase();
+  if (!t) return "";
+  if (HK_ACTIONS.some(a => a.id === t)) return t;
+  if (HK_ALIASES[t]) return HK_ALIASES[t];
+  // allow "app.terminal" etc
+  const dotted = t.includes(".") ? t : "";
+  if (dotted && HK_ACTIONS.some(a => a.id === dotted)) return dotted;
+  return "";
+}
+
+/* --- Action execution --- */
+function wmOpenOrView(id) {
+  const appId = String(id || "").trim().toLowerCase();
+  if (!appId) return;
+
+  if (wmEnabled) {
+    wmOpen(appId);
+    wmFocus(appId);
+    wmTaskbarSync();
+    wmToast(`Opened ${APP_LABELS[appId] || appId}`);
+    return;
+  }
+
+  // Classic single-surface UI fallback
+  setAppView(appId);
+  ensureAuxPanelsForView();
+  wmToast(`View: ${APP_LABELS[appId] || appId}`);
+}
+
+function hkFocusCycle(dir) {
+  if (!wmEnabled) return;
+  const visible = Array.from(wmWins.keys()).filter(k => {
+    const w = wmWins.get(k);
+    return w && !w.state.min;
+  });
+  if (!visible.length) return;
+  let i = wmFocusedId ? visible.indexOf(wmFocusedId) : -1;
+  i = (i + (dir || 1) + visible.length) % visible.length;
+  wmFocus(visible[i]);
+  wmTaskbarSync();
+}
+
+function hkExec(actionId) {
+  const id = String(actionId || "").trim();
+  if (!id) return;
+
+  // Core
+  if (id === "core.hotkeys") { wmToggleHotkeys(); return; }
+  if (id === "core.escape") { wmToggleHotkeys(false); wmToggleStartMenu(false); wmToggleWallPanel(false); return; }
+  if (id === "wm.toggle") {
+    if (wmEnabled) wmDisable(); else wmEnable();
+    wmToast(wmEnabled ? "Windows Mode: ON" : "Windows Mode: OFF");
+    return;
+  }
+
+  // Apps
+  if (id === "app.reactor") return wmOpenOrView("reactor");
+  if (id === "app.terminal") return wmOpenOrView("terminal");
+  if (id === "app.netops") return wmOpenOrView("netops");
+  if (id === "app.containment") return wmOpenOrView("containment");
+  if (id === "app.comms") return wmOpenOrView("comms");
+  if (id === "app.workstation") return wmOpenOrView("workstation");
+  if (id === "app.logs") return wmOpenOrView("logs");
+  if (id === "app.diagnostics") return wmOpenOrView("diagnostics");
+  if (id === "app.soundscape") return wmOpenOrView("soundscape");
+
+  // WM window ops
+  if (id === "wm.next") { hkFocusCycle(1); return; }
+  if (id === "wm.prev") { hkFocusCycle(-1); return; }
+  if (id === "wm.max") { try { if (wmFocusedId) wmToggleMax(wmFocusedId); } catch (e) {} return; }
+  if (id === "wm.min") { try { if (wmFocusedId) wmMinimize(wmFocusedId); } catch (e) {} return; }
+  if (id === "wm.close") { try { if (wmFocusedId) wmClose(wmFocusedId); } catch (e) {} return; }
+  if (id === "wm.start") { try { wmToggleStartMenu(); } catch (e) {} return; }
+  if (id === "wm.wall") { try { wmToggleWallPanel(); } catch (e) {} return; }
+  if (id === "wm.wall.1") { try { wmSetWallpaper("reactor"); wmToast("Wallpaper: Reactor Glow"); } catch(e){} return; }
+  if (id === "wm.wall.2") { try { wmSetWallpaper("containment"); wmToast("Wallpaper: Containment Fog"); } catch(e){} return; }
+  if (id === "wm.wall.3") { try { wmSetWallpaper("black"); wmToast("Wallpaper: Black Chamber"); } catch(e){} return; }
+  if (id === "wm.wall.4") { try { wmSetWallpaper("grid"); wmToast("Wallpaper: Grid Lines"); } catch(e){} return; }
+  if (id === "wm.wall.5") { try { wmSetWallpaper("blueprint"); wmToast("Wallpaper: Blueprint"); } catch(e){} return; }
+  if (id === "wm.wall.0") { try { wmResetWallpaper(); wmToast("Wallpaper: Reset"); } catch(e){} return; }
+
+  // System toggles
+  if (id === "sys.black") { try { toggleBlackChamber(); } catch (e) {} return; }
+  if (id === "sys.audio") { try { state.audioOn = !state.audioOn; applyAudioState(); } catch (e) {} return; }
+  if (id === "sys.music") {
+    try {
+      state.musicOn = !state.musicOn;
+      try { localStorage.setItem("chernos_music_on", state.musicOn ? "1" : "0"); } catch (e2) {}
+      applyMusicState(); applyAudioState();
+    } catch (e) {}
+    return;
+  }
+  if (id === "sys.diag") { try { if (btnDiag) btnDiag.click(); } catch (e) {} return; }
+  if (id === "sys.sound") { try { if (btnSound) btnSound.click(); } catch (e) {} return; }
+}
+
+/* --- Rendering overlay from bindings --- */
+let hkUiMode = "view";       // "view" | "edit"
+let hkUiSearch = "";
+let hkUiForce = false;
+let hkCapture = null;        // { id, mode: "set"|"add", msg?:string }
+let hkJsonOpen = false;
+let hkJsonMode = "overrides"; // "overrides" | "all"
+let hkJsonText = "";
+
+function wmHotkeysUpdateEditBtn(){
+  if (!wmHkEdit) return;
+  wmHkEdit.textContent = (hkUiMode === "edit") ? "Done" : "Edit";
+  wmHkEdit.classList.toggle("active", hkUiMode === "edit");
+}
+
+function wmHotkeysSetMode(mode){
+  hkUiMode = (mode === "edit") ? "edit" : "view";
+  if (hkUiMode !== "edit") {
+    hkCapture = null;
+    hkJsonOpen = false;
+  }
+  wmHotkeysUpdateEditBtn();
+  try { wmRenderHotkeys(); } catch (e) {}
+}
+
+function wmHotkeysBeginCapture(actionId, mode){
+  const id = hkResolveActionIdOrAlias(actionId) || actionId;
+  hkCapture = { id, mode: (mode === "add") ? "add" : "set", msg: "" };
+  hkUiMode = "edit";
+  wmHotkeysUpdateEditBtn();
+  try { wmRenderHotkeys(); } catch (e) {}
+}
+
+function wmHotkeysCancelCapture(){
+  hkCapture = null;
+  try { wmRenderHotkeys(); } catch (e) {}
+}
+
+function wmHotkeysExport(mode){
+  hkJsonMode = (mode === "all") ? "all" : "overrides";
+  hkJsonOpen = true;
+  const obj = (hkJsonMode === "all") ? hkEffectiveMap() : hkLoadOverrides();
+  hkJsonText = JSON.stringify(obj, null, 2);
+  try { wmRenderHotkeys(); } catch (e) {}
+}
+
+function wmHotkeysApplyImport(text){
+  try {
+    const obj = JSON.parse(String(text || ""));
+    if (!obj || typeof obj !== "object") return { ok:false, msg:"Import expects a JSON object" };
+    const cleaned = {};
+    for (const k of Object.keys(obj)) cleaned[k] = hkClampArr(obj[k]).map(hkNormalizeCombo).filter(Boolean);
+    hkSaveOverrides(cleaned);
+    return { ok:true, msg:"Imported overrides OK" };
+  } catch (e) {
+    return { ok:false, msg:"Invalid JSON" };
+  }
+}
+
+function wmRenderHotkeys(){
+  wmHotkeysUpdateEditBtn();
+  if (hkUiMode === "edit") return wmRenderHotkeysEditor();
+  return wmRenderHotkeysView();
+}
+
+function wmRenderHotkeysView() {
+  if (!wmHkBody) return;
+
+  const eff = hkEffectiveMap();
+  const conflicts = hkConflicts(eff);
+  const conflictCombos = new Set(conflicts.map(c => c.combo));
+
+  // Group actions by group label in HK_ACTIONS order.
+  const groups = {};
+  const groupOrder = [];
+  for (const a of HK_ACTIONS) {
+    if (!groups[a.group]) { groups[a.group] = []; groupOrder.push(a.group); }
+    groups[a.group].push(a);
+  }
+
+  wmHkBody.innerHTML = "";
+
+  for (const g of groupOrder) {
+    const sec = document.createElement("div");
+    sec.className = "wm-hk-section";
+
+    const h = document.createElement("div");
+    h.className = "wm-hk-sec-title";
+    h.textContent = g;
+    sec.appendChild(h);
+
+    const grid = document.createElement("div");
+    grid.className = "wm-hk-grid";
+
+    for (const a of groups[g]) {
+      const keys = document.createElement("div");
+      const desc = document.createElement("div");
+      if (!(eff[a.id] || []).length) {
+        const k = document.createElement("span");
+        k.className = "kcap";
+        k.textContent = "—";
+        keys.appendChild(k);
+      } else {
+        for (const comboNorm of (eff[a.id] || [])) {
+          const k = document.createElement("span");
+          k.className = "kcap";
+          const pretty = hkPrettyCombo(comboNorm);
+          k.textContent = pretty;
+          if (conflictCombos.has(comboNorm)) k.classList.add("warn");
+          keys.appendChild(k);
+        }
+      }
+      desc.textContent = a.title;
+      grid.appendChild(keys);
+      grid.appendChild(desc);
+    }
+
+    sec.appendChild(grid);
+    wmHkBody.appendChild(sec);
+  }
+
+  if (conflicts.length) {
+    const warn = document.createElement("div");
+    warn.className = "wm-hk-warn";
+    warn.textContent = `⚠ Conflicts detected (${conflicts.length}). Use Edit (top-right) or terminal: hotkeys conflicts / hotkeys set ... --force`;
+    wmHkBody.appendChild(warn);
+  }
+}
+
+function wmHotkeysApplyFilter(){
+  if (!wmHkBody) return;
+  const q = String(hkUiSearch || "").trim().toLowerCase();
+  const rows = wmHkBody.querySelectorAll("[data-hk-row='1']");
+  for (const r of rows) {
+    const hay = (r.getAttribute("data-hk-hay") || "");
+    r.style.display = (!q || hay.includes(q)) ? "" : "none";
+  }
+  const secs = wmHkBody.querySelectorAll("[data-hk-sec='1']");
+  for (const s of secs) {
+    const any = Array.from(s.querySelectorAll("[data-hk-row='1']")).some(x => x.style.display !== "none");
+    s.style.display = any ? "" : "none";
+  }
+}
+
+function wmRenderHotkeysEditor() {
+  if (!wmHkBody) return;
+
+  const eff = hkEffectiveMap();
+  const conflicts = hkConflicts(eff);
+  const conflictCombos = new Set(conflicts.map(c => c.combo));
+
+  // Group actions by group label in HK_ACTIONS order.
+  const groups = {};
+  const groupOrder = [];
+  for (const a of HK_ACTIONS) {
+    if (!groups[a.group]) { groups[a.group] = []; groupOrder.push(a.group); }
+    groups[a.group].push(a);
+  }
+
+  wmHkBody.innerHTML = "";
+
+  // Tools row
+  const tools = document.createElement("div");
+  tools.className = "wm-hk-tools";
+  tools.innerHTML = `
+    <div class="wm-hk-tool-row">
+      <input id="wm-hk-search" class="wm-hk-search" placeholder="Search actions (title / id)..." />
+      <label class="wm-hk-check" title="Allow stealing conflicting combos automatically">
+        <input id="wm-hk-force" type="checkbox" />
+        Force
+      </label>
+      <button id="wm-hk-export-all" class="wm-hk-btn2" title="Export full effective map (defaults + overrides)">Export all</button>
+      <button id="wm-hk-export" class="wm-hk-btn2" title="Export overrides only (recommended for import)">Export overrides</button>
+      <button id="wm-hk-reset" class="wm-hk-btn2 danger" title="Clear overrides (restore defaults)">Reset</button>
+    </div>
+  `;
+  wmHkBody.appendChild(tools);
+
+  // Capture banner
+  if (hkCapture && hkCapture.id) {
+    const cap = document.createElement("div");
+    cap.className = "wm-hk-capture";
+    const title = hkActionTitle(hkCapture.id);
+    const mode = (hkCapture.mode === "add") ? "Add binding" : "Rebind";
+    cap.innerHTML = `
+      <div>
+        <div><strong>${mode}:</strong> ${title}</div>
+        <div class="sub">Press a key combo now. <span class="kcap">Esc</span> cancels.</div>
+        ${hkCapture.msg ? `<div class="sub" style="margin-top:6px; color: rgba(248,113,113,0.92);">${hkCapture.msg}</div>` : ``}
+      </div>
+      <button id="wm-hk-cancelcap" class="wm-hk-btn2" title="Cancel capture">Cancel</button>
+    `;
+    wmHkBody.appendChild(cap);
+  }
+
+  // JSON import/export panel
+  if (hkJsonOpen) {
+    const jp = document.createElement("div");
+    jp.className = "wm-hk-json";
+    jp.innerHTML = `
+      <textarea id="wm-hk-json" spellcheck="false"></textarea>
+      <div class="wm-hk-json-actions">
+        <button id="wm-hk-json-apply" class="wm-hk-btn2" title="Apply JSON as overrides">Apply import</button>
+        <button id="wm-hk-json-close" class="wm-hk-btn2" title="Close">Close</button>
+      </div>
+      <div class="wm-hk-json-hint">Tip: Import replaces overrides. Use <span class="kcap">Export overrides</span> for clean import format.</div>
+    `;
+    wmHkBody.appendChild(jp);
+  }
+
+  // List
+  for (const g of groupOrder) {
+    const sec = document.createElement("div");
+    sec.className = "wm-hk-section";
+    sec.setAttribute("data-hk-sec", "1");
+
+    const h = document.createElement("div");
+    h.className = "wm-hk-sec-title";
+    h.textContent = g;
+    sec.appendChild(h);
+
+    const list = document.createElement("div");
+    list.className = "wm-hk-edit-list";
+
+    for (const a of groups[g]) {
+      const row = document.createElement("div");
+      row.className = "wm-hk-row";
+      row.setAttribute("data-hk-row", "1");
+      row.setAttribute("data-hk-id", a.id);
+      row.setAttribute("data-hk-hay", (a.title + " " + a.id + " " + (a.group||"")).toLowerCase());
+
+      const left = document.createElement("div");
+      left.innerHTML = `<div class="wm-hk-row-title">${a.title}</div><div class="wm-hk-row-id">${a.id}</div>`;
+
+      const mid = document.createElement("div");
+      const pills = document.createElement("div");
+      pills.className = "wm-hk-pills";
+
+      const combos = (eff[a.id] || []);
+      if (!combos.length) {
+        const p = document.createElement("span");
+        p.className = "wm-hk-pill";
+        p.textContent = "—";
+        pills.appendChild(p);
+      } else {
+        for (const comboNorm of combos) {
+          const p = document.createElement("span");
+          p.className = "wm-hk-pill" + (conflictCombos.has(comboNorm) ? " warn" : "");
+          p.textContent = hkPrettyCombo(comboNorm);
+
+          const x = document.createElement("button");
+          x.className = "wm-hk-pill-x";
+          x.setAttribute("data-hk-remove", "1");
+          x.setAttribute("data-hk-id", a.id);
+          x.setAttribute("data-hk-combo", comboNorm);
+          x.title = "Remove this binding";
+          x.textContent = "×";
+          p.appendChild(x);
+          pills.appendChild(p);
+        }
+      }
+
+      mid.appendChild(pills);
+
+      const right = document.createElement("div");
+      right.className = "wm-hk-row-actions";
+      right.innerHTML = `
+        <button class="wm-hk-mini" data-hk-op="set" data-hk-id="${a.id}" title="Replace bindings by capturing a new combo">Rebind</button>
+        <button class="wm-hk-mini" data-hk-op="add" data-hk-id="${a.id}" title="Add another binding by capturing a new combo">Add</button>
+        <button class="wm-hk-mini" data-hk-op="restore" data-hk-id="${a.id}" title="Restore defaults for this action">Default</button>
+        <button class="wm-hk-mini danger" data-hk-op="unbind" data-hk-id="${a.id}" title="Remove all bindings for this action">Clear</button>
+      `;
+
+      row.appendChild(left);
+      row.appendChild(mid);
+      row.appendChild(right);
+
+      list.appendChild(row);
+    }
+
+    sec.appendChild(list);
+    wmHkBody.appendChild(sec);
+  }
+
+  if (conflicts.length) {
+    const warn = document.createElement("div");
+    warn.className = "wm-hk-warn";
+    warn.textContent = `⚠ Conflicts detected (${conflicts.length}). Enable Force to steal combos, or use terminal: hotkeys conflicts.`;
+    wmHkBody.appendChild(warn);
+  }
+
+  // Sync tool states + apply filter (no rerender on typing)
+  const search = document.getElementById("wm-hk-search");
+  if (search) search.value = hkUiSearch || "";
+  const force = document.getElementById("wm-hk-force");
+  if (force) force.checked = !!hkUiForce;
+  const ta = document.getElementById("wm-hk-json");
+  if (ta) ta.value = hkJsonText || "";
+
+  wmHotkeysApplyFilter();
+}
+
+/* --- Keydown dispatch --- */
+function hkHandleKeydown(e) {
+  // Hotkeys editor capture mode: record next combo instead of executing actions
+  if (hkCapture && wmHotkeys && wmHotkeys.classList.contains("show") && hkUiMode === "edit") {
+    const isEsc = ((e.code || "") === "Escape" || e.key === "Escape");
+    if (isEsc) {
+      e.preventDefault();
+      wmHotkeysCancelCapture();
+      return;
+    }
+    const comboCap = hkComboFromEvent(e);
+    if (!comboCap) return; // ignore pure modifiers
+    e.preventDefault();
+    e.stopPropagation();
+
+    const r = hkSetBinding(hkCapture.id, comboCap, hkCapture.mode, !!hkUiForce);
+    if (r.ok) {
+      wmToast(r.msg);
+      hkCapture = null;
+    } else {
+      hkCapture.msg = r.msg;
+      wmToast(r.msg);
+    }
+    try { wmRenderHotkeys(); } catch (e2) {}
+    return;
+  }
+
+
+  // ESC always closes menus/overlay (even if typing), but does not prevent default in typing contexts.
+  if ((e.code || "") === "Escape" || e.key === "Escape") {
+    // Only intercept ESC if an overlay/menu is actually open.
+    const anyOpen = (wmHotkeys && wmHotkeys.classList.contains("show")) ||
+                    (wmStartMenu && wmStartMenu.classList.contains("show")) ||
+                    (wmWallPanel && wmWallPanel.classList.contains("show"));
+    if (anyOpen) {
+      e.preventDefault();
+      hkExec("core.escape");
+    }
+    return;
+  }
+
+  // Ignore while typing (inputs/terminal)
+  if (hkIsTypingContext()) return;
+
+  const combo = hkComboFromEvent(e);
+  if (!combo) return;
+
+  const actionId = hkResolveAction(combo);
+  if (!actionId) return;
+
+  e.preventDefault();
+  hkExec(actionId);
+}
+
+/* --- Terminal hotkeys commands --- */
+function hkStealCombo(comboNorm, targetId) {
+  const eff = hkEffectiveMap();
+  const ov = hkLoadOverrides();
+  for (const a of HK_ACTIONS) {
+    if (a.id === targetId) continue;
+    const list = (eff[a.id] || []);
+    if (list.includes(comboNorm)) {
+      // remove combo from this action and store override
+      const next = list.filter(x => x !== comboNorm);
+      ov[a.id] = next;
+    }
+  }
+  hkSaveOverrides(ov);
+}
+
+function hkSetBinding(actionId, comboNorm, mode, force) {
+  // mode: "set" replace, "add" append, "remove" remove, "unbind" clear, "restore" delete override
+  const id = hkResolveActionIdOrAlias(actionId);
+  if (!id) return { ok:false, msg:`unknown action '${actionId}'` };
+
+  const ov = hkLoadOverrides();
+  const def = hkDefaultMap();
+
+  if (mode === "restore") {
+    delete ov[id];
+    hkSaveOverrides(ov);
+    return { ok:true, msg:`restored defaults for ${id}` };
+  }
+
+  if (mode === "unbind") {
+    ov[id] = [];
+    hkSaveOverrides(ov);
+    return { ok:true, msg:`unbound ${id}` };
+  }
+
+  const eff = hkEffectiveMap();
+  const current = (eff[id] || []).slice();
+
+  if (mode === "remove") {
+    const next = current.filter(x => x !== comboNorm);
+    ov[id] = next;
+    hkSaveOverrides(ov);
+    return { ok:true, msg:`removed ${hkPrettyCombo(comboNorm)} from ${id}` };
+  }
+
+  if (!comboNorm) return { ok:false, msg:"missing combo" };
+
+  // conflict check
+  const rev = hkBuildReverse(eff);
+  const usedBy = rev.get(comboNorm) || [];
+  const usedByOther = usedBy.filter(x => x !== id);
+  if (usedByOther.length && !force) {
+    return { ok:false, msg:`combo ${hkPrettyCombo(comboNorm)} already used by ${usedByOther.join(", ")} (use --force)` };
+  }
+  if (usedByOther.length && force) {
+    hkStealCombo(comboNorm, id);
+  }
+
+  let next = current.slice();
+  if (mode === "set") next = [comboNorm];
+  else if (mode === "add") { if (!next.includes(comboNorm)) next.push(comboNorm); }
+
+  ov[id] = next;
+  hkSaveOverrides(ov);
+  return { ok:true, msg:`${id} => ${next.map(hkPrettyCombo).join(", ") || "—"}` };
+}
+
+function hkTerminalCommand(rawCmd) {
+  const cmd = String(rawCmd || "").trim();
+  const lower = cmd.toLowerCase();
+  if (!lower.startsWith("hotkeys")) return false;
+
+  const rest = cmd.slice("hotkeys".length).trim();
+  const restLower = rest.toLowerCase();
+
+  function out(s, lvl){ try { termPrint(s, lvl||"info"); } catch (e) {} }
+
+  if (!rest || restLower === "help") {
+    out("hotkeys commands:");
+    out("  hotkeys list");
+    out("  hotkeys actions");
+    out("  hotkeys conflicts");
+    out("  hotkeys export [overrides]");
+    out("  hotkeys import <json>");
+    out("  hotkeys set <action|alias> <combo> [--force]");
+    out("  hotkeys add <action|alias> <combo> [--force]");
+    out("  hotkeys remove <action|alias> <combo>");
+    out("  hotkeys unbind <action|alias>");
+    out("  hotkeys restore <action|alias>");
+    out("  hotkeys reset");
+    out("combo examples: Ctrl+Alt+T | Ctrl Alt Shift 1 | F1 | Esc");
+    return true;
+  }
+
+  if (restLower === "actions") {
+    for (const a of HK_ACTIONS) out(`${a.id}  —  ${a.title}`);
+    return true;
+  }
+
+  if (restLower === "list") {
+    const eff = hkEffectiveMap();
+    for (const a of HK_ACTIONS) {
+      const combos = (eff[a.id] || []).map(hkPrettyCombo);
+      out(`${a.id}: ${combos.join(", ") || "—"}`);
+    }
+    return true;
+  }
+
+  if (restLower === "conflicts") {
+    const eff = hkEffectiveMap();
+    const conf = hkConflicts(eff);
+    if (!conf.length) { out("hotkeys: no conflicts"); return true; }
+    out(`hotkeys: ${conf.length} conflict(s)`);
+    for (const c of conf) out(`  ${hkPrettyCombo(c.combo)} -> ${c.ids.join(", ")}`, "err");
+    return true;
+  }
+
+  if (restLower.startsWith("export")) {
+    const parts = rest.split(/\s+/);
+    const overridesOnly = (parts[1] && parts[1].toLowerCase() === "overrides");
+    const obj = overridesOnly ? hkLoadOverrides() : hkEffectiveMap();
+    out(JSON.stringify(obj, null, 2));
+    return true;
+  }
+
+  if (restLower.startsWith("import ")) {
+    const jsonText = cmd.slice(cmd.toLowerCase().indexOf("import") + "import".length).trim();
+    try {
+      const obj = JSON.parse(jsonText);
+      if (!obj || typeof obj !== "object") { out("hotkeys import: expected JSON object", "err"); return true; }
+      const cleaned = {};
+      for (const k of Object.keys(obj)) cleaned[k] = hkClampArr(obj[k]).map(hkNormalizeCombo).filter(Boolean);
+      hkSaveOverrides(cleaned);
+      out("hotkeys: imported overrides OK");
+      return true;
+    } catch (e) {
+      out("hotkeys import: invalid JSON", "err");
+      return true;
+    }
+  }
+
+  if (restLower === "reset") {
+    hkSaveOverrides({});
+    out("hotkeys: overrides cleared (defaults restored)");
+    return true;
+  }
+
+  // set/add/remove/unbind/restore
+  const m = rest.match(/^(set|add|remove|unbind|restore)\s+(.+?)\s*(.*)$/i);
+  if (!m) { out("hotkeys: unknown subcommand (try `hotkeys help`)", "err"); return true; }
+  const op = m[1].toLowerCase();
+  const act = (m[2] || "").trim();
+  const tail = (m[3] || "").trim();
+
+  const force = /\s--force\s*$/i.test(" " + tail + " ");
+  const tailClean = tail.replace(/\s--force\s*$/i, "").trim();
+
+  if (op === "unbind") {
+    const r = hkSetBinding(act, "", "unbind", force);
+    out(r.msg, r.ok ? "ok" : "err");
+    return true;
+  }
+  if (op === "restore") {
+    const r = hkSetBinding(act, "", "restore", force);
+    out(r.msg, r.ok ? "ok" : "err");
+    return true;
+  }
+
+  const comboNorm = hkNormalizeCombo(tailClean);
+  if (!comboNorm && (op === "set" || op === "add" || op === "remove")) {
+    out("hotkeys: expected a combo (example: Ctrl+Alt+T)", "err");
+    return true;
+  }
+
+  const r = hkSetBinding(act, comboNorm, op, force);
+  out(r.msg, r.ok ? "ok" : "err");
+  return true;
+}
+
+function initHotkeysSystem() {
+  if (wmHkBtn) wmHkBtn.addEventListener("click", (e) => { e.stopPropagation(); wmToggleHotkeys(true); });
+  if (wmMenuHotkeys) wmMenuHotkeys.addEventListener("click", (e) => { e.stopPropagation(); wmToggleHotkeys(true); wmToggleStartMenu(false); });
+  if (wmHkX) wmHkX.addEventListener("click", (e) => { e.stopPropagation(); wmToggleHotkeys(false); });
+  if (wmHkEdit) wmHkEdit.addEventListener("click", (e) => { e.stopPropagation(); wmHotkeysSetMode(hkUiMode === "edit" ? "view" : "edit"); });
+
+  if (wmHotkeys) {
+    wmHotkeys.addEventListener("pointerdown", (e) => {
+      if (e.target === wmHotkeys) wmToggleHotkeys(false);
+    });
+  }
+
+  
+  // Hotkeys editor event delegation (safe across rerenders)
+  if (wmHkBody) {
+    wmHkBody.addEventListener("click", (e) => {
+      if (hkUiMode !== "edit") return;
+      const t = e.target;
+
+      // export/import/reset
+      if (t && t.id === "wm-hk-export") { e.preventDefault(); wmHotkeysExport("overrides"); return; }
+      if (t && t.id === "wm-hk-export-all") { e.preventDefault(); wmHotkeysExport("all"); return; }
+      if (t && t.id === "wm-hk-reset") { e.preventDefault(); hkSaveOverrides({}); wmToast("hotkeys: defaults restored"); try { wmRenderHotkeys(); } catch (e2) {} return; }
+      if (t && t.id === "wm-hk-json-close") { e.preventDefault(); hkJsonOpen = false; try { wmRenderHotkeys(); } catch (e2) {} return; }
+      if (t && t.id === "wm-hk-json-apply") {
+        e.preventDefault();
+        const ta = document.getElementById("wm-hk-json");
+        const r = wmHotkeysApplyImport(ta ? ta.value : "");
+        wmToast(r.msg);
+        if (r.ok) { hkJsonOpen = false; }
+        try { wmRenderHotkeys(); } catch (e2) {}
+        return;
+      }
+      if (t && t.id === "wm-hk-cancelcap") { e.preventDefault(); wmHotkeysCancelCapture(); return; }
+
+      // remove pill
+      const rem = t && t.closest ? t.closest("[data-hk-remove='1']") : null;
+      if (rem) {
+        e.preventDefault();
+        const id = rem.getAttribute("data-hk-id") || "";
+        const combo = rem.getAttribute("data-hk-combo") || "";
+        const r = hkSetBinding(id, combo, "remove", false);
+        wmToast(r.msg);
+        try { wmRenderHotkeys(); } catch (e2) {}
+        return;
+      }
+
+      // action buttons
+      const btn = t && t.closest ? t.closest("[data-hk-op]") : null;
+      if (btn) {
+        e.preventDefault();
+        const op = btn.getAttribute("data-hk-op") || "";
+        const id = btn.getAttribute("data-hk-id") || "";
+        if (op === "set" || op === "add") { wmHotkeysBeginCapture(id, op); return; }
+        if (op === "restore") {
+          const r = hkSetBinding(id, "", "restore", false);
+          wmToast(r.msg);
+          try { wmRenderHotkeys(); } catch (e2) {}
+          return;
+        }
+        if (op === "unbind") {
+          const r = hkSetBinding(id, "", "unbind", false);
+          wmToast(r.msg);
+          try { wmRenderHotkeys(); } catch (e2) {}
+          return;
+        }
+      }
+    });
+
+    wmHkBody.addEventListener("input", (e) => {
+      if (hkUiMode !== "edit") return;
+      const t = e.target;
+      if (!t) return;
+      if (t.id === "wm-hk-search") { hkUiSearch = t.value || ""; wmHotkeysApplyFilter(); return; }
+      if (t.id === "wm-hk-force") { hkUiForce = !!t.checked; return; }
+      if (t.id === "wm-hk-json") { hkJsonText = t.value || ""; return; }
+    });
+  }
+
+window.addEventListener("keydown", hkHandleKeydown);
+}
+
+initHotkeysSystem();
 
 
     const WM_APP_SIZES = {
@@ -3324,6 +4763,12 @@ function wmInitDesktopUI() {
       acts.appendChild(btnMax);
       acts.appendChild(btnClose);
 
+
+      // Ensure window control clicks aren’t swallowed by titlebar drag pointer-capture.
+      for (const b of [btnMin, btnMax, btnClose]) {
+        b.addEventListener("pointerdown", (e) => { try { e.stopPropagation(); e.preventDefault(); } catch (_) {} }, true);
+      }
+      acts.addEventListener("pointerdown", (e) => { try { e.stopPropagation(); } catch (_) {} }, true);
       titlebar.appendChild(title);
       titlebar.appendChild(acts);
 
@@ -3387,6 +4832,8 @@ function wmInitDesktopUI() {
       let drag = null;
       titlebar.addEventListener("pointerdown", (e) => {
         if (e.button !== 0) return;
+        // Don’t start drag when clicking window controls.
+        try { if (e.target && e.target.closest && e.target.closest(".wm-actions")) return; } catch (_) {}
         wmFocus(id);
         const ww = wmWins.get(id);
         if (!ww || ww.state.max) return;
@@ -3546,6 +4993,32 @@ function wmInitDesktopUI() {
       if (!net.lastTraceAt) net.lastTraceAt = 0;
       if (!net.lastTraceRoute) net.lastTraceRoute = null;
       if (!net.traceFlashUntil) net.traceFlashUntil = 0;
+// Packet bus (sim): inflight packets, log, sniffer state
+if (!net.pkt) {
+  net.pkt = {
+    enabled: true,
+    inflight: [],
+    log: [],
+    sniff: { on: true, filter: "" },
+    counters: { sent: 0, delivered: 0, dropped: 0 },
+    deliveredWindow: [],
+    rate: 0,
+    nextId: 1,
+    flowAcc: {},
+    flowWindowAt: Date.now(),
+    nodeFlow: {}
+  };
+}
+if (!net.pkt.sniff) net.pkt.sniff = { on: true, filter: "" };
+if (!net.pkt.counters) net.pkt.counters = { sent: 0, delivered: 0, dropped: 0 };
+if (!Array.isArray(net.pkt.inflight)) net.pkt.inflight = [];
+if (!Array.isArray(net.pkt.log)) net.pkt.log = [];
+if (!Array.isArray(net.pkt.deliveredWindow)) net.pkt.deliveredWindow = [];
+if (typeof net.pkt.rate !== "number") net.pkt.rate = 0;
+if (typeof net.pkt.nextId !== "number") net.pkt.nextId = 1;
+if (!net.pkt.flowAcc) net.pkt.flowAcc = {};
+if (!net.pkt.flowWindowAt) net.pkt.flowWindowAt = Date.now();
+if (!net.pkt.nodeFlow) net.pkt.nodeFlow = {};
     }
 
     function nodeDotClass(node) {
@@ -3583,6 +5056,346 @@ function wmInitDesktopUI() {
         }
       }
       return [start, goal];
+    }
+
+    // ----- Packet Bus Engine (sim) -----
+    function pktNormName(x) {
+      return String(x || "").trim().toUpperCase();
+    }
+    
+    function pktTypeNorm(t) {
+      const v = String(t || "DATA").trim().toUpperCase();
+      if (v === "PING" || v === "SCAN" || v === "ALERT" || v === "DATA") return v;
+      return "DATA";
+    }
+    
+    function pktColor(type) {
+      const t = pktTypeNorm(type);
+      if (t === "PING")  return "rgba(34,197,94,0.95)";
+      if (t === "SCAN")  return "rgba(250,204,107,0.95)";
+      if (t === "ALERT") return "rgba(251,113,133,0.95)";
+      return "rgba(59,130,246,0.92)"; // DATA
+    }
+    
+    function escapeHtml(s) {
+      return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => {
+        if (c === "&") return "&amp;";
+        if (c === "<") return "&lt;";
+        if (c === ">") return "&gt;";
+        if (c === "\"") return "&quot;";
+        return "&#39;";
+      });
+    }
+    
+    function pktLogEvent(kind, pkt, extra) {
+      ensureNetModel();
+      const net = state.net;
+      const bus = net.pkt;
+      if (!bus) return;
+    
+      const ts = new Date().toLocaleTimeString();
+      const type = pktTypeNorm(pkt?.type);
+      const src = pktNormName(pkt?.src);
+      const dst = pktNormName(pkt?.dst);
+      const status = String(kind || "evt").toLowerCase();
+    
+      const msg = `[${ts}] ${type} ${src} -> ${dst} ${status}${extra ? " · " + extra : ""}`;
+      bus.log.push({ t: Date.now(), ts, type, src, dst, status, msg });
+      // cap log size
+      if (bus.log.length > 220) bus.log.splice(0, bus.log.length - 220);
+    }
+    
+    function pktParseFilter(str) {
+      const s = String(str || "").trim();
+      if (!s) return [];
+      return s.split(/\s+/).map(tok => {
+        const m = tok.split("=");
+        if (m.length >= 2) return { k: m[0].toLowerCase(), v: m.slice(1).join("=").toLowerCase() };
+        return { k: "q", v: tok.toLowerCase() };
+      });
+    }
+    
+    function pktMatch(entry, filterStr) {
+      const parts = pktParseFilter(filterStr);
+      if (!parts.length) return true;
+      const e = entry || {};
+      const hay = (e.msg || "").toLowerCase();
+      for (const p of parts) {
+        if (!p.v) continue;
+        if (p.k === "q") {
+          if (!hay.includes(p.v)) return false;
+        } else if (p.k === "type") {
+          if (String(e.type || "").toLowerCase() !== p.v) return false;
+        } else if (p.k === "src") {
+          if (String(e.src || "").toLowerCase() !== p.v) return false;
+        } else if (p.k === "dst") {
+          if (String(e.dst || "").toLowerCase() !== p.v) return false;
+        } else if (p.k === "status") {
+          if (String(e.status || "").toLowerCase() !== p.v) return false;
+        } else {
+          // unknown key -> substring
+          if (!hay.includes(p.v)) return false;
+        }
+      }
+      return true;
+    }
+    
+    function netSpawnPacket(opts) {
+      ensureNetModel();
+      const net = state.net;
+      const bus = net.pkt;
+      if (!bus || !bus.enabled) return null;
+      if (net.mode === "offline") return null;
+    
+      const src = pktNormName(opts?.src || "OPS-TOWER");
+      const dst = pktNormName(opts?.dst || net.selected || "CORE-1");
+      const type = pktTypeNorm(opts?.type || "DATA");
+      const units = Math.max(1, Math.min(200, Number(opts?.units || 10)));
+      const ttl = Math.max(1, Math.min(32, Number(opts?.ttl || 12)));
+    
+      const route = Array.isArray(opts?.route) && opts.route.length ? opts.route : computeRoute(dst);
+      const id = bus.nextId++;
+    
+      const pkt = {
+        id,
+        type,
+        src,
+        dst,
+        units,
+        ttl,
+        createdAt: Date.now(),
+        route,
+        hop: 0,
+        t: 0,
+        hopDurMs: 0,
+        status: "inflight"
+      };
+    
+      bus.inflight.push(pkt);
+      bus.counters.sent += 1;
+      pktLogEvent("queued", pkt, `id=${id}`);
+    
+      // cap inflight
+      if (bus.inflight.length > 48) {
+        bus.inflight.splice(0, bus.inflight.length - 48);
+      }
+      return pkt;
+    }
+    
+    function netRecordFlow(a, b, units) {
+      ensureNetModel();
+      const net = state.net;
+      const bus = net.pkt;
+      if (!bus) return;
+    
+      const now = Date.now();
+      if (!bus.flowWindowAt) bus.flowWindowAt = now;
+      if (now - bus.flowWindowAt > 900) {
+        bus.nodeFlow = bus.flowAcc || {};
+        bus.flowAcc = {};
+        bus.flowWindowAt = now;
+      }
+    
+      const add = (node, dir) => {
+        const key = pktNormName(node);
+        if (!bus.flowAcc[key]) bus.flowAcc[key] = { rx: 0, tx: 0 };
+        bus.flowAcc[key][dir] += units;
+      };
+      add(a, "tx");
+      add(b, "rx");
+    }
+    
+    function netHopDurationMs(a, b) {
+      const net = state.net;
+      const nodes = net.nodes || {};
+      const na = nodes[a]; const nb = nodes[b];
+    
+      let base = Math.max(7, net.latencyMs * 0.55) + Math.max(0, (Math.random() - 0.5) * 2 * net.jitterMs);
+      if (net.mode === "degraded") base *= 1.35;
+    
+      const ta = (na?.throttle == null ? 100 : na.throttle);
+      const tb = (nb?.throttle == null ? 100 : nb.throttle);
+      const thr = Math.max(8, Math.min(100, Math.min(ta, tb)));
+      base *= (100 / thr);
+    
+      if (na?.status === "degraded" || nb?.status === "degraded") base *= 1.25;
+      if (na?.status === "offline"  || nb?.status === "offline")  base *= 3.0;
+    
+      return Math.max(10, Math.min(420, base));
+    }
+    
+    function netMaybeDrop(pkt, a, b) {
+      const net = state.net;
+      const nodes = net.nodes || {};
+      const na = nodes[a]; const nb = nodes[b];
+      if (net.mode === "offline") return true;
+      if (na?.status === "offline" || nb?.status === "offline") return true;
+    
+      let p = Math.max(0, net.lossPct) / 100;
+      if (na?.status === "degraded" || nb?.status === "degraded") p += 0.03;
+      // crisis influence: more chaos => more drops
+      p += Math.min(0.06, (state.crisisIndex || 0) / 1000);
+    
+      return Math.random() < Math.min(0.95, Math.max(0, p));
+    }
+    
+    function netUpdatePktRate(bus) {
+      const now = Date.now();
+      const w = bus.deliveredWindow || (bus.deliveredWindow = []);
+      // keep only last 4s
+      while (w.length && (now - w[0] > 4000)) w.shift();
+      const span = Math.max(0.5, Math.min(4.0, (w.length ? (now - w[0]) / 1000 : 1)));
+      bus.rate = w.length / span;
+    }
+    
+    function netStepPackets(dtMs) {
+      ensureNetModel();
+      const net = state.net;
+      const bus = net.pkt;
+      if (!bus || !bus.enabled) return;
+    
+      const dt = Math.max(8, Math.min(250, dtMs || 90));
+      const inflight = bus.inflight || [];
+      if (!inflight.length) {
+        netUpdatePktRate(bus);
+        if (isNetOpsVisible() && typeof renderNetPacketPanel === "function") renderNetPacketPanel();
+        return;
+      }
+    
+      for (let i = inflight.length - 1; i >= 0; i--) {
+        const pkt = inflight[i];
+        if (!pkt || pkt.status !== "inflight") { inflight.splice(i, 1); continue; }
+    
+        const route = pkt.route || [];
+        if (!Array.isArray(route) || route.length < 2) {
+          pkt.status = "delivered";
+          bus.counters.delivered += 1;
+          (bus.deliveredWindow || (bus.deliveredWindow=[])).push(Date.now());
+          pktLogEvent("delivered", pkt, "direct");
+          inflight.splice(i, 1);
+          continue;
+        }
+    
+        // TTL: hop budget
+        if (pkt.ttl <= 0) {
+          pkt.status = "dropped";
+          bus.counters.dropped += 1;
+          pktLogEvent("dropped", pkt, "ttl=0");
+          inflight.splice(i, 1);
+          continue;
+        }
+    
+        const hop = Math.max(0, Math.min(route.length - 2, pkt.hop || 0));
+        const a = pktNormName(route[hop]);
+        const b = pktNormName(route[hop + 1]);
+    
+        if (!pkt.hopDurMs || pkt.hopDurMs <= 0) {
+          pkt.hopDurMs = netHopDurationMs(a, b);
+        }
+    
+        pkt.t += dt / pkt.hopDurMs;
+    
+        if (pkt.t >= 1) {
+          // crossing to next hop: decide drop
+          pkt.ttl -= 1;
+    
+          if (netMaybeDrop(pkt, a, b)) {
+            pkt.status = "dropped";
+            bus.counters.dropped += 1;
+            pktLogEvent("dropped", pkt, `hop=${a}->${b}`);
+            inflight.splice(i, 1);
+            continue;
+          }
+    
+          netRecordFlow(a, b, pkt.units);
+    
+          pkt.hop = hop + 1;
+          pkt.t = 0;
+          pkt.hopDurMs = 0;
+    
+          // reached destination?
+          if (pkt.hop >= route.length - 1) {
+            pkt.status = "delivered";
+            bus.counters.delivered += 1;
+            (bus.deliveredWindow || (bus.deliveredWindow=[])).push(Date.now());
+            pktLogEvent("delivered", pkt, `id=${pkt.id}`);
+            inflight.splice(i, 1);
+            continue;
+          }
+        }
+      }
+    
+      netUpdatePktRate(bus);
+    
+      if (isNetOpsVisible()) {
+        // keep topology live while NetOps is visible
+        try { renderNetTopology(); } catch (e) {}
+      if (typeof renderNetPacketPanel === "function") renderNetPacketPanel();
+      }
+    }
+    
+    function isNetOpsVisible() {
+      const el = document.getElementById("netops-card");
+      if (!el) return false;
+      const r = el.getBoundingClientRect();
+      return r.width > 10 && r.height > 10 && getComputedStyle(el).display !== "none" && getComputedStyle(el).visibility !== "hidden";
+    }
+    
+    renderNetPacketPanel = function renderNetPacketPanel() {
+      if (!netpktLog || !netpktStats || !netpktSniffToggle || !netpktFilter || !netpktType || !netpktDst) return;
+      ensureNetModel();
+      const net = state.net;
+      const bus = net.pkt;
+      if (!bus) return;
+    
+      // populate dst options once
+      if (netpktDst.options.length === 0) {
+        for (const n of NET_NODE_NAMES) {
+          const opt = document.createElement("option");
+          opt.value = n;
+          opt.textContent = n;
+          netpktDst.appendChild(opt);
+        }
+      }
+    
+      // stats
+      const infl = (bus.inflight || []).length;
+      const del  = bus.counters?.delivered || 0;
+      const drop = bus.counters?.dropped || 0;
+      const rate = (bus.rate || 0);
+      netpktStats.textContent = `inflight=${infl} · delivered=${del} · dropped=${drop} · rate=${rate.toFixed(1)} pkt/s`;
+    
+      // sniffer toggle label
+      netpktSniffToggle.textContent = bus.sniff?.on ? "Sniff: ON" : "Sniff: OFF";
+    
+      // persist filter UI text
+      if (document.activeElement !== netpktFilter) {
+        netpktFilter.value = bus.sniff?.filter || "";
+      }
+    
+      // log view
+      const filter = bus.sniff?.filter || "";
+      const showAll = !!bus.sniff?.on;
+      const rows = (bus.log || []).filter(e => showAll ? pktMatch(e, filter) : false).slice(-70);
+    
+      if (!showAll) {
+        netpktLog.innerHTML = '<div class="dim">Sniffer is OFF — enable to view packets.</div>';
+        return;
+      }
+    
+      if (!rows.length) {
+        netpktLog.innerHTML = '<div class="dim">No packets match filter.</div>';
+        return;
+      }
+    
+      const html = rows.map(e => {
+        const st = e.status || "evt";
+        const cls = (st === "delivered") ? "ok" : (st === "dropped") ? "err" : (st === "queued") ? "warn" : "dim";
+        return `<div class="${cls}">${escapeHtml(e.msg)}</div>`;
+      }).join("");
+      netpktLog.innerHTML = html;
+      // auto-scroll to bottom
+      try { netpktLog.scrollTop = netpktLog.scrollHeight; } catch(e) {}
     }
 
     function renderNetOps() {
@@ -3626,6 +5439,7 @@ function wmInitDesktopUI() {
       const stamp = net.lastScan ? new Date(net.lastScan).toLocaleTimeString() : "—";
       netopsScanLine.textContent = `last scan: ${stamp}`;
       renderNetTopology(route);
+  if (typeof renderNetPacketPanel === "function") renderNetPacketPanel();
     }
 
 
@@ -3715,6 +5529,46 @@ function wmInitDesktopUI() {
       }
       netopsTopo.appendChild(gLinks);
 
+// packet dots layer (inflight packets)
+const gPkts = mk("g");
+gPkts.setAttribute("class", "topo-pkts");
+try {
+  const bus = (state.net && state.net.pkt) ? state.net.pkt : null;
+  const inflight = (bus && Array.isArray(bus.inflight)) ? bus.inflight : [];
+  const maxDots = 24;
+  let drawn = 0;
+  for (let i = inflight.length - 1; i >= 0; i--) {
+    const pkt = inflight[i];
+    if (!pkt || pkt.status !== "inflight") continue;
+    const r = pkt.route || [];
+    const hop = Math.max(0, Math.min((r.length || 0) - 2, pkt.hop || 0));
+    const a = r[hop]; const b = r[hop + 1];
+    const pa = POS[a]; const pb = POS[b];
+    if (!pa || !pb) continue;
+
+    // lane offset to reduce overlap
+    const lane = (pkt.id || 0) % 3;
+    const ox = lane === 0 ? -3 : lane === 1 ? 0 : 3;
+    const oy = lane === 0 ? 2 : lane === 1 ? -2 : 1;
+
+    const t = Math.max(0, Math.min(1, pkt.t || 0));
+    const x = pa[0] + (pb[0] - pa[0]) * t + ox;
+    const y = pa[1] + (pb[1] - pa[1]) * t + oy;
+
+    const c = mk("circle");
+    c.setAttribute("cx", x);
+    c.setAttribute("cy", y);
+    c.setAttribute("r", "3.2");
+    c.setAttribute("fill", pktColor(pkt.type));
+    c.setAttribute("class", "topo-pkt");
+    gPkts.appendChild(c);
+
+    drawn++;
+    if (drawn >= maxDots) break;
+  }
+} catch (e) {}
+netopsTopo.appendChild(gPkts);
+
       // nodes layer
       const gNodes = mk("g");
       for (const name of NET_NODE_NAMES) {
@@ -3778,6 +5632,16 @@ function wmInitDesktopUI() {
     function doNetScan(emitToTerminal = false) {
       ensureNetModel();
       state.net.lastScan = Date.now();
+
+      // Emit SCAN packets (visual + log)
+      try {
+        for (const name of NET_NODE_NAMES) {
+          if (name === "OPS-TOWER") continue;
+          netSpawnPacket({ type: "SCAN", src: "OPS-TOWER", dst: name, units: 6, ttl: 14 });
+        }
+        pktLogEvent("evt", { type:"SCAN", src:"OPS-TOWER", dst:"ALL" }, "scan burst");
+      } catch (e) {}
+
       if (emitToTerminal) termPrint(`scan: ok (${NET_NODE_NAMES.length} nodes)`, "ok");
       renderNetOps();
       return true;
@@ -3788,6 +5652,8 @@ function wmInitDesktopUI() {
       const target = String(targetRaw || state.net.selected || "CORE-1").trim().toUpperCase();
       const route = computeRoute(target);
       const net = state.net;
+// Emit a probe packet to visualize trace
+try { netSpawnPacket({ type: "PING", src: "OPS-TOWER", dst: target, units: 3, ttl: 16, route }); } catch (e) {}
 
       // simulated timings per hop
       const hopBase = (net.mode === "offline") ? 0 : Math.max(1, net.latencyMs / Math.max(1, route.length));
@@ -3808,6 +5674,7 @@ function wmInitDesktopUI() {
       renderNetOps();
 
       if (emitToTerminal) termPrint(out, net.mode === "offline" ? "err" : "dim");
+
       return route;
     }
 
@@ -3855,6 +5722,14 @@ function wmInitDesktopUI() {
         const base = Math.max(0, net.rate) * thr;
         n.rx = Math.max(0, base * (0.4 + Math.random() * 0.4));
         n.tx = Math.max(0, base * (0.4 + Math.random() * 0.4));
+// blend in real packet flow (if any)
+try {
+  const flow = (net.pkt && net.pkt.nodeFlow) ? net.pkt.nodeFlow[name] : null;
+  if (flow) {
+    n.rx = 0.65 * n.rx + 0.35 * Math.max(0, flow.rx || 0);
+    n.tx = 0.65 * n.tx + 0.35 * Math.max(0, flow.tx || 0);
+  }
+} catch (e) {}
       }
     }
 
@@ -4704,28 +6579,130 @@ function wmInitDesktopUI() {
       applyAudioState();
     });
 
-    // Simple diagnostic tone (confirms OS sink output in kiosk builds)
-    if (btnAudioTest) {
-      btnAudioTest.addEventListener("click", () => {
-        ensureAudio();
-        if (!audioCtx) return;
-        resumeAudioForGesture();
-        const o = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        o.type = "sine";
-        o.frequency.setValueAtTime(440, audioCtx.currentTime);
-        g.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-        o.connect(g); g.connect((masterBus || audioCtx.destination));
-        const t0 = audioCtx.currentTime + 0.01;
-        g.gain.exponentialRampToValueAtTime(0.35, t0 + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.55);
-        try { o.start(t0); o.stop(t0 + 0.6); } catch (e) {}
-        setTimeout(() => { try { o.disconnect(); g.disconnect(); } catch (e) {} }, 750);
-        refreshAudioDebug();
-      });
-    }
+    // Audio test helper (Terminal: `audio test <id>`)
+// ids:
+//   0 = tone (440Hz)
+//   1 = UI click chirp
+//   2 = alarm double-beep
+//   3 = siren sweep (short)
+//   4 = implosion thump
+//   5 = chord pulse (3-note)
+function doAudioTest(idRaw) {
+  ensureAudio();
+  if (!audioCtx) return { ok:false, label:"AudioCtx unavailable" };
+  resumeAudioForGesture();
 
-    if (btnMusic) {
+  // Always route tests directly to destination so they work even if master bus is muted.
+  const out = audioCtx.destination;
+  const now = audioCtx.currentTime;
+
+  const mkBeep = (t0, freq, dur, gain, type="sine") => {
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t0);
+    g.gain.setValueAtTime(0.0001, t0);
+    o.connect(g); g.connect(out);
+
+    // Soft envelope
+    g.gain.exponentialRampToValueAtTime(Math.max(0.0002, gain), t0 + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+
+    try { o.start(t0); o.stop(t0 + dur + 0.06); } catch (e) {}
+    setTimeout(() => { try { o.disconnect(); g.disconnect(); } catch (e) {} }, Math.max(200, (dur + 0.3) * 1000));
+  };
+
+  const idStr = String(idRaw ?? "0").trim().toLowerCase();
+  const num = parseInt(idStr, 10);
+  const id = (isNaN(num) ? idStr : String(num));
+
+  const t0 = now + 0.02;
+
+  // Numeric mapping (aliases below)
+  if (id === "0" || id === "tone") {
+    mkBeep(t0, 440, 0.55, 0.28, "sine");
+    refreshAudioDebug();
+    return { ok:true, label:"tone (440Hz)" };
+  }
+
+  if (id === "1" || id === "click") {
+    mkBeep(t0, 820, 0.06, 0.18, "square");
+    mkBeep(t0 + 0.04, 620, 0.05, 0.12, "square");
+    refreshAudioDebug();
+    return { ok:true, label:"ui click chirp" };
+  }
+
+  if (id === "2" || id === "beep" || id === "alarm") {
+    mkBeep(t0, 920, 0.09, 0.22, "square");
+    mkBeep(t0 + 0.18, 920, 0.09, 0.22, "square");
+    refreshAudioDebug();
+    return { ok:true, label:"alarm double-beep" };
+  }
+
+  if (id === "3" || id === "siren") {
+    // short sweep siren (no dependency on alarm level)
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = "sawtooth";
+    g.gain.setValueAtTime(0.0001, t0);
+    o.connect(g); g.connect(out);
+
+    try { o.start(t0); } catch (e) {}
+    const seq = [
+      [t0 + 0.00, 520, 0.10],
+      [t0 + 0.22, 740, 0.08],
+      [t0 + 0.44, 560, 0.10],
+      [t0 + 0.66, 760, 0.08],
+      [t0 + 0.88, 600, 0.10],
+    ];
+    for (const [tt, fq, gg] of seq) {
+      try { o.frequency.setValueAtTime(fq, tt); g.gain.exponentialRampToValueAtTime(Math.max(0.0002, gg), tt + 0.03); } catch (e) {}
+    }
+    try { g.gain.exponentialRampToValueAtTime(0.0001, t0 + 1.20); } catch (e) {}
+    try { o.stop(t0 + 1.30); } catch (e) {}
+    setTimeout(() => { try { o.disconnect(); g.disconnect(); } catch (e) {} }, 1700);
+    refreshAudioDebug();
+    return { ok:true, label:"siren sweep" };
+  }
+
+  if (id === "4" || id === "implosion" || id === "thump") {
+    // reuse the existing effect if audio is on; otherwise do a direct thump
+    try {
+      if (typeof playImplosion === "function") {
+        const was = !!state.audioOn;
+        if (!was) state.audioOn = true; // allow playImplosion guard to pass
+        playImplosion();
+        if (!was) state.audioOn = false;
+        refreshAudioDebug();
+        return { ok:true, label:"implosion thump" };
+      }
+    } catch (e) {}
+    mkBeep(t0, 90, 0.22, 0.35, "sine");
+    refreshAudioDebug();
+    return { ok:true, label:"implosion thump (fallback)" };
+  }
+
+  if (id === "5" || id === "chord") {
+    // 3-note chord pulse
+    mkBeep(t0, 110, 0.62, 0.18, "sine");
+    mkBeep(t0, 165, 0.62, 0.13, "sine");
+    mkBeep(t0, 220, 0.62, 0.10, "sine");
+    refreshAudioDebug();
+    return { ok:true, label:"chord pulse" };
+  }
+
+  refreshAudioDebug();
+  return { ok:false, label:"unknown id (use 0-5)" };
+}
+
+// Simple diagnostic tone (confirms OS sink output in kiosk builds)
+if (btnAudioTest) {
+  btnAudioTest.addEventListener("click", () => {
+    doAudioTest("0");
+  });
+}
+
+if (btnMusic) {
       btnMusic.addEventListener("click", () => {
         state.musicOn = !state.musicOn;
         try { localStorage.setItem("chernos_music_on", state.musicOn ? "1" : "0"); } catch (e) {}
@@ -5029,7 +7006,8 @@ function renderTelemetry() {
       netLatEl.textContent       = net.latencyMs.toFixed(1) + " ms";
       netJitterEl.textContent    = net.jitterMs.toFixed(1) + " ms";
       netLossEl.textContent      = net.lossPct.toFixed(2) + "%";
-      netRateEl.textContent      = net.rate.toFixed(0) + " pkt/s";
+const pktRate = (net.pkt && typeof net.pkt.rate === "number") ? net.pkt.rate : net.rate;
+netRateEl.textContent      = pktRate.toFixed(0) + " pkt/s";
       netIntegrityEl.textContent = net.integrity.toFixed(1) + "%";
 
       netDotEl.classList.remove("degraded","offline");
@@ -6038,13 +8016,56 @@ if (!state.aftermath.active) {
       net.integrity = integrity;
 
       stepNetNodes();
+      try { netBackgroundTraffic(); } catch (e) {}
       renderNet();
       pushHist(histNet, net.rate);
       renderGraphs();
     }
 
     setInterval(stepNetSim, 900);
+// Packet stepper (smooth topology dots + log updates when NetOps is visible)
+let _pktLastAt = performance.now();
+setInterval(() => {
+  const now = performance.now();
+  const dt = now - _pktLastAt;
+  _pktLastAt = now;
+  try { netStepPackets(dt); } catch (e) {}
+}, 90);
+
     // ----- NetOps UI hooks -----
+// ----- Packet Bus UI hooks -----
+if (netpktSniffToggle) netpktSniffToggle.addEventListener("click", () => {
+  ensureNetModel();
+  const bus = state.net.pkt;
+  bus.sniff.on = !bus.sniff.on;
+  if (typeof renderNetPacketPanel === "function") renderNetPacketPanel();
+});
+
+if (netpktFilter) netpktFilter.addEventListener("input", () => {
+  ensureNetModel();
+  const bus = state.net.pkt;
+  bus.sniff.filter = String(netpktFilter.value || "");
+  if (typeof renderNetPacketPanel === "function") renderNetPacketPanel();
+});
+
+if (netpktClear) netpktClear.addEventListener("click", () => {
+  ensureNetModel();
+  const bus = state.net.pkt;
+  bus.log = [];
+  if (typeof renderNetPacketPanel === "function") renderNetPacketPanel();
+  termPrint("packet log cleared.", "dim");
+});
+
+if (netpktSend) netpktSend.addEventListener("click", () => {
+  ensureNetModel();
+  const dst = pktNormName(netpktDst && netpktDst.value ? netpktDst.value : (state.net.selected || "CORE-1"));
+  const type = pktTypeNorm(netpktType && netpktType.value ? netpktType.value : "DATA");
+  const pkt = netSpawnPacket({ type, src: "OPS-TOWER", dst, units: type === "ALERT" ? 4 : 12, ttl: 16 });
+  if (pkt) termPrint(`sent: ${type} OPS-TOWER -> ${dst} (id=${pkt.id})`, "ok");
+  else termPrint("send failed: network offline or packet bus disabled.", "err");
+  if (typeof renderNetPacketPanel === "function") renderNetPacketPanel();
+});
+
     if (netopsScanBtn) netopsScanBtn.addEventListener("click", () => doNetScan(true));
     if (netopsTraceBtn) netopsTraceBtn.addEventListener("click", () => doNetTrace(state.net.selected, true));
     if (netopsResetBtn) netopsResetBtn.addEventListener("click", () => {
@@ -6310,7 +8331,11 @@ if (!state.aftermath.active) {
       "operator set","operator level","satlink on","satlink off",
       "ghost on","ghost off","black on","black off",
       "macro rec","macro stop","macro play",
-      "net status","net ping","net lookup","net stress","net reset"
+      "net status","net nodes","net scan","net trace","net throttle","net packets","net sniff","net send","net clear","net ping","net lookup","net stress","net reset",
+      "hotkeys","hotkeys help","hotkeys list","hotkeys actions","hotkeys conflicts","hotkeys export","hotkeys export overrides","hotkeys import","hotkeys set","hotkeys add","hotkeys remove","hotkeys unbind","hotkeys restore","hotkeys reset",
+      "simulate","simulate sensor","simulate pump","simulate pressure","simulate ghostrad",
+      "audio test 0","audio test 1","audio test 2","audio test 3","audio test 4","audio test 5"
+
     ];
 
     function runCommand(raw) {
@@ -6328,7 +8353,7 @@ if (!state.aftermath.active) {
       const lower = cmd.toLowerCase();
 
       if (lower === "help") {
-        termPrint("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, safeguard <n>, operator name <name>, operator level <0-3>, engine status, save-log, unlock 2049, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, net status, net nodes, net scan, net trace <target>, net ping <host>, net lookup <name>, net throttle <node> <0-100|off>, net stress, net reset, fault list, fault inject <type> [sev] [ttl], fault clear <type|all>, decon start, decon abort, decon status");
+        termPrint("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, safeguard <n>, operator name <name>, operator level <0-3>, engine status, save-log, unlock 2049, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, net status, net nodes, net scan, net trace <target>, net throttle <node> <0-100|off>, net packets, net sniff on/off [filter], net send <dst> [type] [units], net clear, net ping <host>, net lookup <name>, net stress, net reset, fault list, fault inject <type> [sev] [ttl], fault clear <type|all>, simulate <fault> [sev] [ttl], audio test <id>, decon start, decon abort, decon status");
         return;
       }
 
@@ -6410,6 +8435,15 @@ if (!state.aftermath.active) {
         if (state.audioOn) { state.audioOn = false; applyAudioState(); }
         return;
       }
+
+if (lower.startsWith("audio test")) {
+  const parts = cmd.split(/\s+/);
+  const id = parts[2] != null ? parts[2] : "0";
+  const res = (typeof doAudioTest === "function") ? doAudioTest(id) : { ok:false, label:"audio test unavailable" };
+  if (res && res.ok) termPrint("audio test: " + res.label, "ok");
+  else termPrint("audio test: " + (res && res.label ? res.label : "failed"), "err");
+  return;
+}
 
       if (lower === "music on") {
         if (!state.musicOn) { state.musicOn = true; try { localStorage.setItem("chernos_music_on", "1"); } catch (e) {} applyMusicState(); }
@@ -6581,6 +8615,106 @@ if (!state.aftermath.active) {
         return;
       }
 
+if (lower === "net nodes") {
+  ensureNetModel();
+  const net = state.net;
+  const nodes = net.nodes || {};
+  const out = NET_NODE_NAMES.map(n => {
+    const nn = nodes[n];
+    const hp = Math.round(nn?.health ?? 0);
+    const thr = (nn?.throttle == null ? "AUTO" : (Math.round(nn.throttle) + "%"));
+    return `${n}: ${String(nn?.status || "unknown").toUpperCase()} hp=${hp}% thr=${thr}`;
+  }).join("\n");
+  termPrint(out, "dim");
+  return;
+}
+
+if (lower === "net scan") {
+  doNetScan(true);
+  return;
+}
+
+if (lower.startsWith("net trace")) {
+  const parts = cmd.split(/\s+/);
+  const target = parts[2] || state.net.selected || "CORE-1";
+  doNetTrace(target, true);
+  return;
+}
+
+if (lower.startsWith("net throttle")) {
+  ensureNetModel();
+  const parts = cmd.split(/\s+/);
+  const node = pktNormName(parts[2] || "");
+  const rawv = String(parts[3] || "").toLowerCase();
+  if (!node) { termPrint("usage: net throttle <node> <0-100|off>", "err"); return; }
+  if (rawv === "off" || rawv === "auto" || rawv === "null") {
+    if (setThrottle(node, null)) termPrint(`throttle: ${node} -> AUTO`, "ok");
+    else termPrint("throttle: unknown node.", "err");
+  } else {
+    const v = parseInt(rawv, 10);
+    if (isNaN(v)) { termPrint("usage: net throttle <node> <0-100|off>", "err"); return; }
+    if (setThrottle(node, v)) termPrint(`throttle: ${node} -> ${Math.max(0, Math.min(100, v))}%`, "ok");
+    else termPrint("throttle: unknown node.", "err");
+  }
+  renderNetOps();
+  return;
+}
+
+if (lower === "net packets") {
+  ensureNetModel();
+  const bus = state.net.pkt;
+  if (!bus) { termPrint("net packets: packet bus not initialized.", "err"); return; }
+  const infl = (bus.inflight || []).length;
+  const sent = bus.counters?.sent || 0;
+  const del = bus.counters?.delivered || 0;
+  const drop = bus.counters?.dropped || 0;
+  const rate = (bus.rate || 0);
+  termPrint(`net packets: inflight=${infl}, sent=${sent}, delivered=${del}, dropped=${drop}, rate=${rate.toFixed(1)} pkt/s`, "dim");
+  return;
+}
+
+if (lower.startsWith("net sniff")) {
+  ensureNetModel();
+  const bus = state.net.pkt;
+  const parts = cmd.split(/\s+/);
+  const mode = (parts[2] || "").toLowerCase();
+  if (mode === "on") {
+    bus.sniff.on = true;
+    bus.sniff.filter = parts.slice(3).join(" ");
+    termPrint("sniffer: ON" + (bus.sniff.filter ? " · filter=" + bus.sniff.filter : ""), "ok");
+  } else if (mode === "off") {
+    bus.sniff.on = false;
+    termPrint("sniffer: OFF", "dim");
+  } else {
+    termPrint("usage: net sniff on/off [filter]", "err");
+  }
+  if (typeof renderNetPacketPanel === "function") renderNetPacketPanel();
+  return;
+}
+
+if (lower.startsWith("net send")) {
+  ensureNetModel();
+  const parts = cmd.split(/\s+/);
+  const dst = pktNormName(parts[2] || "");
+  const type = pktTypeNorm(parts[3] || "DATA");
+  const units = parts[4] != null ? parseInt(parts[4], 10) : 12;
+  if (!dst) { termPrint("usage: net send <dst> [type] [units]", "err"); return; }
+  const pkt = netSpawnPacket({ type, src: "OPS-TOWER", dst, units: isNaN(units) ? 12 : units, ttl: 16 });
+  if (pkt) termPrint(`sent: ${type} OPS-TOWER -> ${dst} (id=${pkt.id})`, "ok");
+  else termPrint("send failed: network offline or packet bus disabled.", "err");
+  if (typeof renderNetPacketPanel === "function") renderNetPacketPanel();
+  return;
+}
+
+if (lower === "net clear") {
+  ensureNetModel();
+  const bus = state.net.pkt;
+  if (bus) bus.log = [];
+  termPrint("packet log cleared.", "dim");
+  if (typeof renderNetPacketPanel === "function") renderNetPacketPanel();
+  return;
+}
+
       if (lower === "net status") {
         const net = state.net;
         termPrint(`net status: mode=${net.mode}, latency=${net.latencyMs.toFixed(1)}ms, jitter=${net.jitterMs.toFixed(1)}ms, loss=${net.lossPct.toFixed(2)}%, rate=${net.rate.toFixed(0)} pkt/s, integrity=${net.integrity.toFixed(1)}%`);
@@ -6608,6 +8742,53 @@ if (!state.aftermath.active) {
         btnNetReset.click();
         return;
       }
+
+
+// Quick scenario injection (syntactic sugar over `fault inject`)
+if (lower === "simulate") {
+  termPrint("usage: simulate <sensor|pump|pressure|ghostrad> [sev] [ttl]", "dim");
+  termPrint("example: simulate pump 2 220", "dim");
+  return;
+}
+
+if (lower.startsWith("simulate ")) {
+  const parts = cmd.split(/\s+/);
+  const rawFault = (parts[1] || "").trim().toLowerCase();
+  const sevIn = parts[2] != null ? parseInt(parts[2], 10) : 2;
+  const ttlIn = parts[3] != null ? parseInt(parts[3], 10) : 220;
+
+  if (!rawFault) {
+    termPrint("simulate: missing fault type.", "err");
+    termPrint("types: sensor, pump, pressure, ghostrad", "dim");
+    return;
+  }
+
+  const alias = {
+    "sensor-fail":"sensor","sensorfail":"sensor","sensors":"sensor","probe":"sensor","telemetry":"sensor",
+    "pump-fail":"pump","pumpfail":"pump","coolant":"pump","coolant-pump":"pump","coolantpump":"pump",
+    "overpressure":"pressure","valve":"pressure","steam":"pressure","pressure":"pressure",
+    "ghost":"ghostrad","ghost-rad":"ghostrad","ghostrad":"ghostrad","radiation":"ghostrad","rad":"ghostrad","radleak":"ghostrad"
+  };
+
+  const t = alias[rawFault] || rawFault;
+  const ok = injectFault(t, (isNaN(sevIn) ? 2 : sevIn), (isNaN(ttlIn) ? 220 : ttlIn));
+  const f = getFault(t);
+
+  if (ok && f) {
+    updateCrisisEngine();
+    updateAlarmEngine();
+    renderAll();
+    termPrint(`simulate: injected ${t} (sev=${f.sev}, ttl=${f.ttl})`, "ok");
+  } else if (ok) {
+    updateCrisisEngine();
+    updateAlarmEngine();
+    renderAll();
+    termPrint("simulate: injected " + t, "ok");
+  } else {
+    termPrint("simulate: failed", "err");
+  }
+  return;
+}
 
 // Fault tools
 if (lower === "fault" || lower === "faults" || lower === "fault list") {
@@ -6651,6 +8832,17 @@ if (lower === "decon status") {
   return;
 }
 
+      
+      // Hotkeys editor (rebindable)
+      if (lower.startsWith("hotkeys")) {
+        try {
+          if (typeof hkTerminalCommand === "function" && hkTerminalCommand(cmd)) return;
+        } catch (e) {
+          termPrint("hotkeys: error while processing command.", "err");
+          return;
+        }
+      }
+
       termPrint("Unknown command — try `help`.", "err");
     }
 
@@ -6692,6 +8884,988 @@ if (lower === "decon status") {
     updateCrisisEngine();
     loadWorkstationState();
     renderAll();
-  </script>
+
+    // Expose packet panel renderer (useful for debug tools and any late-bound callbacks)
+    try { window.renderNetPacketPanel = renderNetPacketPanel; } catch (e) {}
+
+  // ============================================================
+//  Persistence v3 — Profiles • States • Logs (localStorage)
+// ============================================================
+(function persistenceV3(){
+  try { if (typeof APP_LABELS === "object" && APP_LABELS) APP_LABELS.persistence = "Persistence"; } catch (e) {}
+  try { if (typeof WM_APP_SIZES === "object" && WM_APP_SIZES) WM_APP_SIZES.persistence = { w: 920, h: 620 }; } catch (e) {}
+  try { if (typeof WM_PANEL_PREFERRED === "object" && WM_PANEL_PREFERRED) WM_PANEL_PREFERRED.persistence = "persistence"; } catch (e) {}
+
+  const P3_SCHEMA = 3;
+  const P3_META_KEY = "chernos_p3_meta";
+  const P3_PROFILE_PREFIX = "chernos_p3_profile_";
+
+  const P3_PREF_AUTOSAVE = "chernos_p3_autosave";
+  const P3_PREF_LOGS = "chernos_p3_includelogs";
+  const P3_PREF_AUTORESTORE = "chernos_p3_autorestore";
+
+  const P3_AUTO_STATE_ID = "auto";
+  const P3_MAX_MANUAL_STATES = 10;
+  const P3_LOG_CAP = 650;
+
+  const P3_LS_KEYS = [
+    "chernos_app_view",
+    "chernos_audio_on",
+    "chernos_music_on",
+    "chernos_music_vol",
+    "chernos_master_vol",
+    "chernos_amb_vol",
+    "chernos_alarm_vol",
+    "chernos_ui_vol",
+    "chernos_mute_all",
+    "chernos_wallpaper_id",
+    "chernos_wallpaper_custom",
+    "chernos_wm_windows",
+    "chernos_wm_enabled",
+    "chernos_ws_notes",
+    "chernos_ws_tasks",
+    "chernos_ws_mode",
+    "chernos_hotkeys_v1"
+  ];
+
+  // in-memory rolling logs (captured from log/termPrint wrappers)
+  window.__p3logs = window.__p3logs || { event: [], term: [] };
+
+  function p3Cap(arr, cap) {
+    try {
+      if (!Array.isArray(arr)) return;
+      if (arr.length > cap) arr.splice(0, arr.length - cap);
+    } catch (e) {}
+  }
+
+  // Wrap log() and termPrint() to capture logs for persistence.
+  try {
+    if (typeof log === "function" && !log.__p3wrapped) {
+      const _log = log;
+      const wrapped = function(msg) {
+        try {
+          const t = new Date().toISOString().slice(11, 19);
+          const line = `[${t}] ${String(msg ?? "")}`;
+          window.__p3logs.event.push(line);
+          p3Cap(window.__p3logs.event, P3_LOG_CAP);
+        } catch (e) {}
+        return _log(msg);
+      };
+      wrapped.__p3wrapped = true;
+      log = wrapped;
+    }
+  } catch (e) {}
+
+  try {
+    if (typeof termPrint === "function" && !termPrint.__p3wrapped) {
+      const _tp = termPrint;
+      const wrapped = function(msg, level = "info") {
+        try {
+          const text = String(msg ?? "");
+          const lines = text.split(/\r?\n/);
+          for (const ln of lines) window.__p3logs.term.push({ t: ln, level: (level || "info") });
+          p3Cap(window.__p3logs.term, P3_LOG_CAP);
+        } catch (e) {}
+        return _tp(msg, level);
+      };
+      wrapped.__p3wrapped = true;
+      termPrint = wrapped;
+    }
+  } catch (e) {}
+
+  function p3NowIso() {
+    const d = new Date();
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  }
+
+  function p3Id(prefix = "p") {
+    return String(prefix) + "-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6);
+  }
+
+  function p3JsonParse(raw, fallback) {
+    try { return JSON.parse(raw); } catch (e) { return fallback; }
+  }
+
+  function p3LoadMeta() {
+    const raw = lsGet(P3_META_KEY);
+    const meta = raw ? p3JsonParse(raw, null) : null;
+    if (meta && meta.schema === P3_SCHEMA && Array.isArray(meta.profiles)) return meta;
+    return { schema: P3_SCHEMA, active: "default", profiles: [{ id: "default", name: "DEFAULT", createdAt: Date.now() }] };
+  }
+
+  function p3SaveMeta(meta) {
+    try { lsSet(P3_META_KEY, JSON.stringify(meta)); } catch (e) {}
+  }
+
+  function p3LoadProfile(id) {
+    const key = P3_PROFILE_PREFIX + String(id || "").trim().toLowerCase();
+    const raw = lsGet(key);
+    const p = raw ? p3JsonParse(raw, null) : null;
+    if (p && p.schema === P3_SCHEMA && p.id) return p;
+    return null;
+  }
+
+  function p3SaveProfile(p) {
+    if (!p || !p.id) return false;
+    try {
+      const key = P3_PROFILE_PREFIX + String(p.id).trim().toLowerCase();
+      lsSet(key, JSON.stringify(p));
+      return true;
+    } catch (e) { return false; }
+  }
+
+  function p3EnsureProfile(meta, id, name) {
+    const pid = String(id || "").trim().toLowerCase();
+    if (!pid) return null;
+
+    // Ensure meta has entry
+    if (!meta.profiles.some(x => String(x.id).toLowerCase() === pid)) {
+      meta.profiles.push({ id: pid, name: String(name || pid).toUpperCase(), createdAt: Date.now() });
+      p3SaveMeta(meta);
+    }
+
+    // Ensure profile object exists
+    let p = p3LoadProfile(pid);
+    if (!p) {
+      p = {
+        schema: P3_SCHEMA,
+        id: pid,
+        name: String(name || pid).toUpperCase(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        selectedStateId: null,
+        states: [] // array of {id,name,savedAt,snapshot}
+      };
+      p3SaveProfile(p);
+    }
+    return p;
+  }
+
+  function p3ListProfiles(meta) {
+    return (meta && Array.isArray(meta.profiles)) ? meta.profiles.slice() : [];
+  }
+
+  function p3GetActiveProfile(meta) {
+    const active = String((meta && meta.active) ? meta.active : "default").trim().toLowerCase() || "default";
+    return p3EnsureProfile(meta, active, active);
+  }
+
+  function p3SafeClone(obj) {
+    try { return JSON.parse(JSON.stringify(obj)); }
+    catch (e) {
+      try {
+        const seen = new WeakSet();
+        return JSON.parse(JSON.stringify(obj, (k, v) => {
+          if (v && typeof v === "object") {
+            if (seen.has(v)) return undefined;
+            seen.add(v);
+          }
+          return v;
+        }));
+      } catch (e2) {
+        return null;
+      }
+    }
+  }
+
+  function p3CaptureSnapshot(includeLogs) {
+    const ls = {};
+    for (const k of P3_LS_KEYS) ls[k] = lsGet(k);
+
+    const st = p3SafeClone(state) || {};
+    // avoid restoring in-flight animations/timers too literally
+    try { if (st.net && st.net.pkt && Array.isArray(st.net.pkt.inflight)) st.net.pkt.inflight = []; } catch (e) {}
+    try { if (st.alarm && typeof st.alarm === "object") st.alarm.nextBeepAt = 0; } catch (e) {}
+
+    const logs = includeLogs ? {
+      event: Array.isArray(window.__p3logs.event) ? window.__p3logs.event.slice(-P3_LOG_CAP) : [],
+      term:  Array.isArray(window.__p3logs.term) ? window.__p3logs.term.slice(-P3_LOG_CAP) : []
+    } : null;
+
+    return { schema: P3_SCHEMA, savedAt: Date.now(), savedAtIso: p3NowIso(), state: st, ls, logs };
+  }
+
+  // Deep-apply src into target WITHOUT replacing object identity.
+  function p3ApplyInPlace(target, src) {
+    if (src === null || src === undefined) return;
+    if (Array.isArray(src)) {
+      if (!Array.isArray(target)) return;
+      target.length = 0;
+      for (const it of src) target.push(it);
+      return;
+    }
+    if (typeof src !== "object") return;
+
+    // objects
+    for (const k of Object.keys(target)) {
+      if (!(k in src)) {
+        try { delete target[k]; } catch (e) {}
+      }
+    }
+    for (const k of Object.keys(src)) {
+      const v = src[k];
+      if (Array.isArray(v)) {
+        if (!Array.isArray(target[k])) target[k] = [];
+        p3ApplyInPlace(target[k], v);
+      } else if (v && typeof v === "object") {
+        if (!target[k] || typeof target[k] !== "object" || Array.isArray(target[k])) target[k] = {};
+        p3ApplyInPlace(target[k], v);
+      } else {
+        target[k] = v;
+      }
+    }
+  }
+
+  function p3RenderLogs(logs) {
+    try {
+      if (logs && Array.isArray(logs.event) && elLog) {
+        elLog.innerHTML = "";
+        // newest on top (prepend)
+        for (let i = logs.event.length - 1; i >= 0; i--) {
+          const div = document.createElement("div");
+          div.textContent = String(logs.event[i] || "");
+          elLog.prepend(div);
+        }
+      }
+    } catch (e) {}
+
+    try {
+      if (logs && Array.isArray(logs.term) && termOut) {
+        termOut.innerHTML = "";
+        const arr = logs.term.slice(-260); // match terminal cap
+        for (const it of arr) {
+          const div = document.createElement("div");
+          const lvl = (it && it.level) ? it.level : "info";
+          div.className = "term-line" +
+            (lvl === "dim" ? " dim" : "") +
+            (lvl === "err" ? " err" : "") +
+            (lvl === "ok"  ? " ok"  : "");
+          div.textContent = (it && it.t != null) ? String(it.t) : "";
+          termOut.appendChild(div);
+        }
+        termOut.scrollTop = termOut.scrollHeight;
+      }
+    } catch (e) {}
+  }
+
+  function p3ApplySnapshot(snap, opts = {}) {
+    if (!snap || snap.schema !== P3_SCHEMA) return { ok: false, msg: "invalid snapshot" };
+
+    // Apply localStorage bundle first
+    try {
+      const ls = snap.ls || {};
+      for (const k of P3_LS_KEYS) {
+        const v = (k in ls) ? ls[k] : null;
+        try {
+          if (v === null || v === undefined) localStorage.removeItem(k);
+          else localStorage.setItem(k, String(v));
+        } catch (e2) {}
+      }
+    } catch (e) {}
+
+    // Apply state in-place
+    try {
+      if (snap.state && typeof snap.state === "object") p3ApplyInPlace(state, snap.state);
+    } catch (e) {}
+
+    // Re-sync key systems
+    try { updateOperatorLines(); } catch (e) {}
+    try { renderBadges(); } catch (e) {}
+    try { syncSoundscapeUI(); } catch (e) {}
+    try { applySoundscape(false); } catch (e) {}
+    try { applyAudioState(); } catch (e) {}
+    try { applyMusicState(); } catch (e) {}
+    try { updateMusicVol(false); } catch (e) {}
+    try { wmApplyWallpaper(); } catch (e) {}
+
+    // Hotkeys overrides reload (if present)
+    try {
+      if (typeof hkLoadOverrides === "function" && typeof hkSaveOverrides === "function") {
+        const ov = hkLoadOverrides();
+        hkSaveOverrides(ov || {});
+        try { wmRenderHotkeys(); } catch (e2) {}
+      }
+    } catch (e) {}
+
+    // Workstation reload
+    try { loadWorkstationState(); } catch (e) {}
+
+    // Restore windows-mode state
+    const wantWm = (lsGet("chernos_wm_enabled") === "1");
+    try {
+      if (wantWm) {
+        if (!document.body.classList.contains("wm-mode")) {
+          wmEnable();
+        } else {
+          // re-open based on saved layout
+          for (const id of Array.from(wmWins.keys())) wmClose(id, { persist: false });
+        }
+        wmRestore();
+      } else {
+        if (document.body.classList.contains("wm-mode")) wmDisable();
+      }
+    } catch (e) {}
+
+    // Restore app view if not in WM mode
+    try {
+      const v = lsGet("chernos_app_view") || "reactor";
+      if (!document.body.classList.contains("wm-mode")) setAppView(v, { persist: false });
+      else setAppView("all", { persist: false });
+      applyAppView();
+    } catch (e) {}
+
+    try { renderAll(); } catch (e) {}
+
+    if (opts.renderLogs !== false) {
+      try { if (snap.logs) p3RenderLogs(snap.logs); } catch (e) {}
+    }
+
+    return { ok: true, msg: "restored" };
+  }
+
+  // State selection helpers on profile object
+  function p3StateList(p) {
+    if (!p || !Array.isArray(p.states)) return [];
+    return p.states.slice();
+  }
+
+  function p3FindState(p, sid) {
+    if (!p || !Array.isArray(p.states)) return null;
+    const id = String(sid || "").trim().toLowerCase();
+    return p.states.find(s => String(s.id).toLowerCase() === id) || null;
+  }
+
+  function p3UpsertState(p, stObj) {
+    if (!p || !stObj || !stObj.id) return;
+    const id = String(stObj.id).trim().toLowerCase();
+    const idx = p.states.findIndex(s => String(s.id).toLowerCase() === id);
+    if (idx >= 0) p.states[idx] = stObj;
+    else p.states.push(stObj);
+  }
+
+  function p3TrimManualStates(p) {
+    if (!p || !Array.isArray(p.states)) return;
+    const auto = p.states.find(s => s.id === P3_AUTO_STATE_ID) || null;
+    const manual = p.states.filter(s => s.id !== P3_AUTO_STATE_ID)
+      .sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+    const trimmed = manual.slice(0, P3_MAX_MANUAL_STATES);
+    p.states = (auto ? [auto] : []).concat(trimmed);
+  }
+
+  function p3SaveSnapshotToProfile(p, mode, name) {
+    const includeLogs = (lsGet(P3_PREF_LOGS) !== "0");
+    const snap = p3CaptureSnapshot(includeLogs);
+    const sid = (mode === "auto") ? P3_AUTO_STATE_ID : p3Id("s");
+    const stName = (mode === "auto")
+      ? "AUTO (rolling)"
+      : (String(name || "").trim() || ("Manual " + snap.savedAtIso));
+
+    const stObj = { id: sid, name: stName, savedAt: snap.savedAt, savedAtIso: snap.savedAtIso, snapshot: snap };
+    p3UpsertState(p, stObj);
+
+    if (mode !== "auto") {
+      p3TrimManualStates(p);
+      p.selectedStateId = sid;
+    }
+
+    p.updatedAt = Date.now();
+    p3SaveProfile(p);
+    return stObj;
+  }
+
+  function p3RestoreFromProfile(p, sid) {
+    if (!p) return { ok:false, msg:"no active profile" };
+    let st = null;
+
+    if (sid) st = p3FindState(p, sid);
+    if (!st && p.selectedStateId) st = p3FindState(p, p.selectedStateId);
+    if (!st) st = p3FindState(p, P3_AUTO_STATE_ID);
+    if (!st && Array.isArray(p.states) && p.states.length) {
+      st = p.states.slice().sort((a,b)=> (b.savedAt||0)-(a.savedAt||0))[0];
+    }
+    if (!st || !st.snapshot) return { ok:false, msg:"no saved state" };
+
+    p.selectedStateId = st.id;
+    p.updatedAt = Date.now();
+    p3SaveProfile(p);
+
+    return p3ApplySnapshot(st.snapshot);
+  }
+
+  // UI wiring
+  const elP3Profile = document.getElementById("p3-profile");
+  const elP3State = document.getElementById("p3-state");
+  const elP3Active = document.getElementById("p3-active");
+  const elP3Autosave = document.getElementById("p3-autosave");
+  const elP3IncludeLogs = document.getElementById("p3-includelogs");
+  const elP3AutoRestore = document.getElementById("p3-autorestore");
+
+  const elP3New = document.getElementById("p3-new");
+  const elP3Clone = document.getElementById("p3-clone");
+  const elP3Rename = document.getElementById("p3-rename");
+  const elP3Delete = document.getElementById("p3-delete");
+
+  const elP3Save = document.getElementById("p3-save");
+  const elP3Restore = document.getElementById("p3-restore");
+  const elP3StateRename = document.getElementById("p3-state-rename");
+  const elP3StateDelete = document.getElementById("p3-state-delete");
+
+  const elP3ExportActive = document.getElementById("p3-export-active");
+  const elP3ExportAll = document.getElementById("p3-export-all");
+  const elP3Copy = document.getElementById("p3-copy");
+  const elP3ApplyImport = document.getElementById("p3-apply-import");
+  const elP3Json = document.getElementById("p3-json");
+  const elP3Status = document.getElementById("p3-status");
+
+  let p3Meta = p3LoadMeta();
+  p3SaveMeta(p3Meta);
+  let p3ActiveProfile = p3GetActiveProfile(p3Meta);
+
+  function p3Status(msg) {
+    try { if (elP3Status) elP3Status.textContent = String(msg || ""); } catch (e) {}
+  }
+
+  function p3PrefGet(key, defOn = true) {
+    const v = lsGet(key);
+    if (v === null) return defOn;
+    return v !== "0";
+  }
+  function p3PrefSet(key, on) {
+    lsSet(key, on ? "1" : "0");
+  }
+
+  function p3RefreshProfileSelect() {
+    if (!elP3Profile) return;
+    const list = p3ListProfiles(p3Meta)
+      .slice()
+      .sort((a, b) => String(a.name || a.id).localeCompare(String(b.name || b.id)));
+    elP3Profile.innerHTML = "";
+    for (const it of list) {
+      const opt = document.createElement("option");
+      opt.value = String(it.id).toLowerCase();
+      opt.textContent = String(it.name || it.id);
+      elP3Profile.appendChild(opt);
+    }
+    elP3Profile.value = String(p3Meta.active || "default").toLowerCase();
+  }
+
+  function p3RefreshStateSelect() {
+    if (!elP3State) return;
+    const p = p3ActiveProfile;
+    const states = p3StateList(p).slice().sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0));
+    elP3State.innerHTML = "";
+    if (!states.length) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "(no saved states yet)";
+      elP3State.appendChild(opt);
+      elP3State.value = "";
+      return;
+    }
+    for (const st of states) {
+      const opt = document.createElement("option");
+      opt.value = st.id;
+      const tag = (st.id === P3_AUTO_STATE_ID) ? "AUTO" : "STATE";
+      opt.textContent = `${tag} • ${st.name} • ${st.savedAtIso || ""}`;
+      elP3State.appendChild(opt);
+    }
+    const wanted = p.selectedStateId && p3FindState(p, p.selectedStateId) ? p.selectedStateId : states[0].id;
+    elP3State.value = wanted;
+  }
+
+  function p3RefreshPrefs() {
+    if (elP3Autosave) elP3Autosave.checked = p3PrefGet(P3_PREF_AUTOSAVE, true);
+    if (elP3IncludeLogs) elP3IncludeLogs.checked = p3PrefGet(P3_PREF_LOGS, true);
+    if (elP3AutoRestore) elP3AutoRestore.checked = p3PrefGet(P3_PREF_AUTORESTORE, true);
+  }
+
+  function p3RefreshActiveLabel() {
+    try {
+      if (elP3Active) elP3Active.textContent = `${p3ActiveProfile.name || p3ActiveProfile.id} (${p3ActiveProfile.id})`;
+    } catch (e) {}
+  }
+
+  function p3RefreshAllUI() {
+    p3RefreshProfileSelect();
+    p3RefreshStateSelect();
+    p3RefreshPrefs();
+    p3RefreshActiveLabel();
+  }
+
+  function p3SwitchProfile(id) {
+    const pid = String(id || "").trim().toLowerCase();
+    if (!pid) return;
+
+    // Auto-save current profile to AUTO state before switch
+    try {
+      if (p3PrefGet(P3_PREF_AUTOSAVE, true)) p3SaveSnapshotToProfile(p3ActiveProfile, "auto");
+    } catch (e) {}
+
+    p3Meta.active = pid;
+    p3SaveMeta(p3Meta);
+    p3ActiveProfile = p3EnsureProfile(p3Meta, pid, pid);
+
+    p3RefreshAllUI();
+    p3Status(`active profile: ${p3ActiveProfile.name || p3ActiveProfile.id}`);
+  }
+
+  function p3MakeProfile(name) {
+    const base = String(name || "profile").trim();
+    const pid = p3Id("u").replace(/[^a-z0-9\-]/gi, "").toLowerCase().slice(0, 18);
+    const nm = base || ("PROFILE " + pid.toUpperCase());
+    p3EnsureProfile(p3Meta, pid, nm);
+    p3Meta.active = pid;
+    p3SaveMeta(p3Meta);
+    p3ActiveProfile = p3LoadProfile(pid) || p3EnsureProfile(p3Meta, pid, nm);
+    p3RefreshAllUI();
+    p3Status(`created: ${nm} (${pid})`);
+  }
+
+  function p3CloneActive() {
+    const src = p3ActiveProfile;
+    const pid = p3Id("c").replace(/[^a-z0-9\-]/gi, "").toLowerCase().slice(0, 18);
+    const nm = (src.name ? (src.name + " CLONE") : ("CLONE " + pid.toUpperCase()));
+    const p = {
+      schema: P3_SCHEMA,
+      id: pid,
+      name: nm,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      selectedStateId: src.selectedStateId,
+      states: p3SafeClone(src.states) || []
+    };
+    // add to meta
+    if (!p3Meta.profiles.some(x => String(x.id).toLowerCase() === pid)) p3Meta.profiles.push({ id: pid, name: nm, createdAt: Date.now() });
+    p3SaveMeta(p3Meta);
+    p3SaveProfile(p);
+    p3SwitchProfile(pid);
+    p3Status(`cloned to: ${nm} (${pid})`);
+  }
+
+  function p3RenameActive(newName) {
+    const nn = String(newName || "").trim();
+    if (!nn) return false;
+    const pid = String(p3ActiveProfile.id);
+    // meta entry
+    const m = p3Meta.profiles.find(x => String(x.id).toLowerCase() === pid.toLowerCase());
+    if (m) m.name = nn;
+    p3SaveMeta(p3Meta);
+
+    p3ActiveProfile.name = nn;
+    p3ActiveProfile.updatedAt = Date.now();
+    p3SaveProfile(p3ActiveProfile);
+
+    p3RefreshAllUI();
+    p3Status(`renamed: ${nn}`);
+    return true;
+  }
+
+  function p3DeleteActive() {
+    const pid = String(p3ActiveProfile.id || "").toLowerCase();
+    if (pid === "default") { p3Status("cannot delete DEFAULT"); return false; }
+
+    try { localStorage.removeItem(P3_PROFILE_PREFIX + pid); } catch (e) {}
+    p3Meta.profiles = p3Meta.profiles.filter(x => String(x.id).toLowerCase() !== pid);
+    p3Meta.active = "default";
+    p3SaveMeta(p3Meta);
+
+    p3ActiveProfile = p3GetActiveProfile(p3Meta);
+    p3RefreshAllUI();
+    p3Status(`deleted profile: ${pid}`);
+    return true;
+  }
+
+  function p3SaveManualState(name) {
+    const st = p3SaveSnapshotToProfile(p3ActiveProfile, "manual", name);
+    p3RefreshStateSelect();
+    p3RefreshActiveLabel();
+    p3Status(`saved: ${st.name}`);
+    return st;
+  }
+
+  function p3RestoreSelected() {
+    const sid = elP3State ? elP3State.value : null;
+    const res = p3RestoreFromProfile(p3ActiveProfile, sid);
+    if (res.ok) p3Status(`restored: ${p3ActiveProfile.selectedStateId || sid || ""}`);
+    else p3Status(`restore failed: ${res.msg}`);
+    p3RefreshAllUI();
+    return res;
+  }
+
+  function p3RenameSelectedState(newName) {
+    const sid = elP3State ? elP3State.value : "";
+    if (!sid) return false;
+    const st = p3FindState(p3ActiveProfile, sid);
+    if (!st) return false;
+    const nn = String(newName || "").trim();
+    if (!nn) return false;
+    st.name = nn;
+    p3ActiveProfile.updatedAt = Date.now();
+    p3SaveProfile(p3ActiveProfile);
+    p3RefreshStateSelect();
+    p3Status(`state renamed: ${nn}`);
+    return true;
+  }
+
+  function p3DeleteSelectedState() {
+    const sid = elP3State ? elP3State.value : "";
+    if (!sid) return false;
+    p3ActiveProfile.states = (p3ActiveProfile.states || []).filter(s => String(s.id) !== String(sid));
+    if (p3ActiveProfile.selectedStateId === sid) p3ActiveProfile.selectedStateId = null;
+    p3ActiveProfile.updatedAt = Date.now();
+    p3SaveProfile(p3ActiveProfile);
+    p3RefreshStateSelect();
+    p3Status(`state deleted: ${sid}`);
+    return true;
+  }
+
+  function p3Export(kind) {
+    if (kind === "all") {
+      const profiles = p3ListProfiles(p3Meta).map(x => p3LoadProfile(x.id)).filter(Boolean);
+      return { schema: P3_SCHEMA, kind: "all", meta: p3Meta, profiles };
+    }
+    return { schema: P3_SCHEMA, kind: "active", meta: { active: p3Meta.active }, profile: p3ActiveProfile };
+  }
+
+  function p3Import(obj) {
+    if (!obj || obj.schema !== P3_SCHEMA) return { ok:false, msg:"invalid import schema" };
+
+    if (obj.kind === "all" && Array.isArray(obj.profiles)) {
+      // overwrite meta
+      const meta = (obj.meta && obj.meta.schema === P3_SCHEMA) ? obj.meta : p3LoadMeta();
+      p3Meta = meta;
+      p3SaveMeta(p3Meta);
+      for (const p of obj.profiles) {
+        if (p && p.schema === P3_SCHEMA && p.id) {
+          // ensure meta entry
+          if (!p3Meta.profiles.some(x => String(x.id).toLowerCase() === String(p.id).toLowerCase())) {
+            p3Meta.profiles.push({ id: p.id, name: p.name || p.id, createdAt: p.createdAt || Date.now() });
+          }
+          p3SaveProfile(p);
+        }
+      }
+      p3SaveMeta(p3Meta);
+      p3ActiveProfile = p3GetActiveProfile(p3Meta);
+      p3RefreshAllUI();
+      return { ok:true, msg:"imported all" };
+    }
+
+    if (obj.kind === "active" && obj.profile && obj.profile.id) {
+      const p = obj.profile;
+      if (p.schema !== P3_SCHEMA) return { ok:false, msg:"invalid profile schema" };
+      // ensure meta
+      if (!p3Meta.profiles.some(x => String(x.id).toLowerCase() === String(p.id).toLowerCase())) {
+        p3Meta.profiles.push({ id: p.id, name: p.name || p.id, createdAt: p.createdAt || Date.now() });
+      }
+      p3Meta.active = String(p.id).toLowerCase();
+      p3SaveMeta(p3Meta);
+      p3SaveProfile(p);
+      p3ActiveProfile = p3GetActiveProfile(p3Meta);
+      p3RefreshAllUI();
+      return { ok:true, msg:"imported active profile" };
+    }
+
+    // raw single profile object
+    if (obj.id && obj.states) {
+      const p = obj;
+      if (p.schema !== P3_SCHEMA) return { ok:false, msg:"invalid profile object" };
+      if (!p3Meta.profiles.some(x => String(x.id).toLowerCase() === String(p.id).toLowerCase())) {
+        p3Meta.profiles.push({ id: p.id, name: p.name || p.id, createdAt: p.createdAt || Date.now() });
+      }
+      p3SaveMeta(p3Meta);
+      p3SaveProfile(p);
+      return { ok:true, msg:"imported profile" };
+    }
+
+    return { ok:false, msg:"unrecognized import format" };
+  }
+
+  // Attach UI listeners
+  function bindUi() {
+    if (elP3Profile) elP3Profile.addEventListener("change", () => p3SwitchProfile(elP3Profile.value));
+    if (elP3State) elP3State.addEventListener("change", () => {
+      p3ActiveProfile.selectedStateId = elP3State.value || null;
+      p3ActiveProfile.updatedAt = Date.now();
+      p3SaveProfile(p3ActiveProfile);
+      p3RefreshActiveLabel();
+    });
+
+    if (elP3Autosave) elP3Autosave.addEventListener("change", () => { p3PrefSet(P3_PREF_AUTOSAVE, !!elP3Autosave.checked); p3Status("autosave: " + (elP3Autosave.checked ? "on" : "off")); });
+    if (elP3IncludeLogs) elP3IncludeLogs.addEventListener("change", () => { p3PrefSet(P3_PREF_LOGS, !!elP3IncludeLogs.checked); p3Status("include logs: " + (elP3IncludeLogs.checked ? "on" : "off")); });
+    if (elP3AutoRestore) elP3AutoRestore.addEventListener("change", () => { p3PrefSet(P3_PREF_AUTORESTORE, !!elP3AutoRestore.checked); p3Status("auto-restore: " + (elP3AutoRestore.checked ? "on" : "off")); });
+
+    if (elP3New) elP3New.addEventListener("click", () => {
+      const nm = prompt("New profile name:", "Profile " + new Date().toISOString().slice(0,10));
+      if (nm === null) return;
+      p3MakeProfile(nm);
+    });
+
+    if (elP3Clone) elP3Clone.addEventListener("click", () => p3CloneActive());
+
+    if (elP3Rename) elP3Rename.addEventListener("click", () => {
+      const nm = prompt("Rename profile:", p3ActiveProfile.name || p3ActiveProfile.id);
+      if (nm === null) return;
+      if (!p3RenameActive(nm)) p3Status("rename cancelled");
+    });
+
+    if (elP3Delete) elP3Delete.addEventListener("click", () => {
+      if (String(p3ActiveProfile.id).toLowerCase() === "default") { p3Status("cannot delete DEFAULT"); return; }
+      if (!confirm("Delete profile '" + (p3ActiveProfile.name || p3ActiveProfile.id) + "' ?")) return;
+      p3DeleteActive();
+    });
+
+    if (elP3Save) elP3Save.addEventListener("click", () => {
+      const nm = prompt("State name (optional):", "");
+      if (nm === null) return;
+      p3SaveManualState(nm);
+    });
+
+    if (elP3Restore) elP3Restore.addEventListener("click", () => p3RestoreSelected());
+
+    if (elP3StateRename) elP3StateRename.addEventListener("click", () => {
+      const sid = elP3State ? elP3State.value : "";
+      if (!sid) { p3Status("no state selected"); return; }
+      const st = p3FindState(p3ActiveProfile, sid);
+      const nm = prompt("Rename state:", st ? st.name : "");
+      if (nm === null) return;
+      p3RenameSelectedState(nm);
+    });
+
+    if (elP3StateDelete) elP3StateDelete.addEventListener("click", () => {
+      const sid = elP3State ? elP3State.value : "";
+      if (!sid) { p3Status("no state selected"); return; }
+      if (sid === P3_AUTO_STATE_ID && !confirm("Delete AUTO state?")) return;
+      if (!confirm("Delete selected state?")) return;
+      p3DeleteSelectedState();
+    });
+
+    if (elP3ExportActive) elP3ExportActive.addEventListener("click", () => {
+      const obj = p3Export("active");
+      if (elP3Json) elP3Json.value = JSON.stringify(obj, null, 2);
+      p3Status("exported active profile");
+    });
+
+    if (elP3ExportAll) elP3ExportAll.addEventListener("click", () => {
+      const obj = p3Export("all");
+      if (elP3Json) elP3Json.value = JSON.stringify(obj, null, 2);
+      p3Status("exported all profiles");
+    });
+
+    if (elP3Copy) elP3Copy.addEventListener("click", async () => {
+      try {
+        if (!elP3Json) return;
+        const t = elP3Json.value || "";
+        if (!t) { p3Status("nothing to copy"); return; }
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(t);
+          p3Status("copied");
+        } else {
+          elP3Json.select();
+          document.execCommand("copy");
+          p3Status("copied");
+        }
+      } catch (e) { p3Status("copy failed"); }
+    });
+
+    if (elP3ApplyImport) elP3ApplyImport.addEventListener("click", () => {
+      if (!elP3Json) return;
+      const raw = elP3Json.value || "";
+      if (!raw.trim()) { p3Status("paste JSON to import"); return; }
+      const obj = p3JsonParse(raw, null);
+      if (!obj) { p3Status("invalid JSON"); return; }
+      const res = p3Import(obj);
+      p3Status(res.ok ? ("import: " + res.msg) : ("import failed: " + res.msg));
+      p3RefreshAllUI();
+    });
+  }
+
+  p3RefreshAllUI();
+  bindUi();
+
+  // Autosave timer (updates AUTO state)
+  try {
+    setInterval(() => {
+      try {
+        if (!p3PrefGet(P3_PREF_AUTOSAVE, true)) return;
+        // avoid autosaving inside WM child frames where we set noAudio (also reduces redundant writes)
+        if (typeof noAudio !== "undefined" && noAudio) return;
+        p3SaveSnapshotToProfile(p3ActiveProfile, "auto");
+        // do not spam UI status
+      } catch (e) {}
+    }, 12000);
+  } catch (e) {}
+
+  // Auto-restore on boot (once)
+  try {
+    setTimeout(() => {
+      try {
+        if (!p3PrefGet(P3_PREF_AUTORESTORE, true)) return;
+        // Only restore if there is at least one saved state
+        const has = p3ActiveProfile && Array.isArray(p3ActiveProfile.states) && p3ActiveProfile.states.some(s => s && s.snapshot);
+        if (!has) return;
+        const res = p3RestoreFromProfile(p3ActiveProfile);
+        if (res && res.ok) {
+          p3Status("auto-restored");
+          try { termPrint("persistence: auto-restored (" + (p3ActiveProfile.name || p3ActiveProfile.id) + ")", "ok"); } catch (e2) {}
+        }
+        p3RefreshAllUI();
+      } catch (e) {}
+    }, 900);
+  } catch (e) {}
+
+  // Terminal integration (wrap runCommand)
+  function p3HandleTerminal(cmd, lower) {
+    const raw = String(cmd || "").trim();
+    const lo = String(lower || raw.toLowerCase());
+    if (!raw) return false;
+
+    if (!(lo.startsWith("profile") || lo.startsWith("persist"))) return false;
+
+    // mimic runCommand prompt line
+    try { termPrint("> " + raw, "dim"); } catch (e) {}
+
+    const parts = raw.split(/\s+/);
+    const sub = (parts[1] || "help").toLowerCase();
+
+    if (lo === "persist open" || lo === "profile open") {
+      try { if (document.body.classList.contains("wm-mode")) wmOpen("persistence"); else setAppView("persistence"); } catch (e) {}
+      termPrint("persistence: opened", "ok");
+      return true;
+    }
+
+    if (sub === "help" || parts.length === 1) {
+      termPrint("profile commands:", "dim");
+      termPrint("  profile list", "dim");
+      termPrint("  profile use <id>", "dim");
+      termPrint("  profile new <name>", "dim");
+      termPrint("  profile clone", "dim");
+      termPrint("  profile rename <name>", "dim");
+      termPrint("  profile delete", "dim");
+      termPrint("  profile states", "dim");
+      termPrint("  profile save [state name]", "dim");
+      termPrint("  profile restore [stateId|latest|auto]", "dim");
+      termPrint("  profile export [active|all]", "dim");
+      termPrint("  profile import <json>", "dim");
+      termPrint("  profile open", "dim");
+      return true;
+    }
+
+    if (sub === "list") {
+      const list = p3ListProfiles(p3Meta);
+      termPrint("profiles:", "dim");
+      for (const it of list) {
+        const a = (String(it.id).toLowerCase() === String(p3Meta.active).toLowerCase()) ? "*" : " ";
+        termPrint(`${a} ${it.id} — ${it.name || it.id}`, a === "*" ? "ok" : "info");
+      }
+      return true;
+    }
+
+    if (sub === "use") {
+      const id = parts[2];
+      if (!id) { termPrint("usage: profile use <id>", "err"); return true; }
+      p3SwitchProfile(id);
+      termPrint("active profile: " + (p3ActiveProfile.name || p3ActiveProfile.id) + " (" + p3ActiveProfile.id + ")", "ok");
+      return true;
+    }
+
+    if (sub === "new") {
+      const nm = parts.slice(2).join(" ").trim();
+      if (!nm) { termPrint("usage: profile new <name>", "err"); return true; }
+      p3MakeProfile(nm);
+      termPrint("created profile: " + (p3ActiveProfile.name || p3ActiveProfile.id) + " (" + p3ActiveProfile.id + ")", "ok");
+      return true;
+    }
+
+    if (sub === "clone") {
+      p3CloneActive();
+      termPrint("cloned to: " + (p3ActiveProfile.name || p3ActiveProfile.id) + " (" + p3ActiveProfile.id + ")", "ok");
+      return true;
+    }
+
+    if (sub === "rename") {
+      const nm = parts.slice(2).join(" ").trim();
+      if (!nm) { termPrint("usage: profile rename <name>", "err"); return true; }
+      p3RenameActive(nm);
+      termPrint("renamed profile: " + nm, "ok");
+      return true;
+    }
+
+    if (sub === "delete") {
+      if (String(p3ActiveProfile.id).toLowerCase() === "default") { termPrint("cannot delete DEFAULT", "err"); return true; }
+      p3DeleteActive();
+      termPrint("deleted; active is now DEFAULT", "ok");
+      return true;
+    }
+
+    if (sub === "states") {
+      const states = p3StateList(p3ActiveProfile).slice().sort((a,b)=> (b.savedAt||0)-(a.savedAt||0));
+      if (!states.length) { termPrint("no saved states", "dim"); return true; }
+      termPrint("states (newest first):", "dim");
+      for (const st of states) {
+        const sel = (String(st.id) === String(p3ActiveProfile.selectedStateId)) ? "*" : " ";
+        termPrint(`${sel} ${st.id} — ${st.name} — ${st.savedAtIso || ""}`, sel === "*" ? "ok" : "info");
+      }
+      return true;
+    }
+
+    if (sub === "save") {
+      const nm = parts.slice(2).join(" ").trim();
+      const st = p3SaveManualState(nm);
+      termPrint("saved: " + st.id + " — " + st.name, "ok");
+      return true;
+    }
+
+    if (sub === "restore") {
+      const arg = (parts[2] || "").trim().toLowerCase();
+      let sid = null;
+      if (arg && arg !== "latest") {
+        sid = (arg === "auto") ? P3_AUTO_STATE_ID : arg;
+      }
+      const res = p3RestoreFromProfile(p3ActiveProfile, sid);
+      if (res.ok) termPrint("restored", "ok");
+      else termPrint("restore failed: " + res.msg, "err");
+      p3RefreshAllUI();
+      return true;
+    }
+
+    if (sub === "export") {
+      const kind = (parts[2] || "active").toLowerCase();
+      const obj = p3Export(kind === "all" ? "all" : "active");
+      termPrint(JSON.stringify(obj, null, 2), "dim");
+      return true;
+    }
+
+    if (sub === "import") {
+      const jsonTxt = raw.replace(/^profile\s+import\s+/i, "");
+      if (!jsonTxt.trim()) { termPrint("usage: profile import <json>", "err"); return true; }
+      const obj = p3JsonParse(jsonTxt, null);
+      if (!obj) { termPrint("invalid json", "err"); return true; }
+      const res = p3Import(obj);
+      termPrint(res.ok ? ("import: " + res.msg) : ("import failed: " + res.msg), res.ok ? "ok" : "err");
+      return true;
+    }
+
+    termPrint("unknown profile subcommand. try: profile help", "err");
+    return true;
+  }
+
+  try {
+    if (typeof runCommand === "function" && !runCommand.__p3wrapped) {
+      const _rc = runCommand;
+      const wrapped = function(raw) {
+        const cmd = String(raw || "").trim();
+        const lower = cmd.toLowerCase();
+        if (p3HandleTerminal(cmd, lower)) return;
+        return _rc(raw);
+      };
+      wrapped.__p3wrapped = true;
+      runCommand = wrapped;
+    }
+  } catch (e) {}
+
+})();
+
+</script>
 </body>
 </html>
