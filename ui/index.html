@@ -1659,6 +1659,15 @@ body.blackchamber .wm-hk-card{
 
     .standalone-app .wrap { padding-bottom: 10px !important; }
 
+
+    /* Perf mode: reduce GPU-heavy effects (recommended for VM/kiosk stability) */
+    body.perfmode .wm-window{ backdrop-filter: none !important; }
+    body.perfmode .wm-taskbar,
+    body.perfmode .wm-startmenu,
+    body.perfmode .wm-wallpanel,
+    body.perfmode .wm-hotkeys,
+    body.perfmode .wm-toast{ backdrop-filter: none !important; }
+    body.perfmode .wm-window{ box-shadow: 0 10px 32px rgba(0,0,0,0.55) !important; }
 </style>
 </head>
 <body class="theme-green">
@@ -2878,6 +2887,28 @@ persistEnabled: false,
     }
     function lsSet(key, val){
       try { localStorage.setItem(key, String(val)); } catch (e) {}
+
+    // Performance mode (stability for VM/kiosk)
+    // - Disables expensive blur/backdrop effects in WM mode (helps VMs / weak GPUs)
+    // - Defaults ON for kiosk unless user overrides chernos_perf_mode
+    function perfIsOn(){
+      try {
+        const v = localStorage.getItem("chernos_perf_mode");
+        if (v === null || v === undefined) return !!kioskMode;
+        return v === "1";
+      } catch (e) { return !!kioskMode; }
+    }
+    function perfApply(){
+      const on = perfIsOn();
+      document.body.classList.toggle("perfmode", !!on);
+      return !!on;
+    }
+    function perfSet(on){
+      try { localStorage.setItem("chernos_perf_mode", on ? "1" : "0"); } catch (e) {}
+      const v = perfApply();
+      try { if (typeof wmToast === "function") wmToast(v ? "Perf mode: ON" : "Perf mode: OFF"); } catch (e) {}
+      return v;
+    }
     }
 
     try {
@@ -3194,6 +3225,17 @@ function wmApplyWallpaper() {
   } catch (e) {}
   const preset = WM_WALLPAPERS.find(w => w.id === wpId) || WM_WALLPAPERS[0];
 
+
+  if (custom) {
+    const WM_MAXLEN = 850000;
+    if (custom.length > WM_MAXLEN) {
+      // Safety: huge wallpapers can crash VMs / GPU. Revert to preset.
+      try { localStorage.removeItem("chernos_wallpaper_custom"); } catch (e) {}
+      custom = "";
+      try { wmToast("Wallpaper too large; reverted."); } catch (e) {}
+    }
+  }
+
   if (custom) {
     wmWallpaper.style.background = 
       "linear-gradient(180deg, rgba(0,0,0,0.72), rgba(0,0,0,0.90))," +
@@ -3266,9 +3308,15 @@ function wmRenderWallpaperGrid() {
     prev.className = "wm-wall-prev";
     try {
       const cu = localStorage.getItem("chernos_wallpaper_custom") || "";
-      prev.style.backgroundImage = `url(${cu})`;
-      prev.style.backgroundSize = "cover";
-      prev.style.backgroundPosition = "center";
+      const WM_MAXLEN = 850000;
+      if (cu && cu.length <= WM_MAXLEN) {
+        prev.style.backgroundImage = `url(${cu})`;
+        prev.style.backgroundSize = "cover";
+        prev.style.backgroundPosition = "center";
+      } else {
+        // Avoid rendering massive data URLs in previews (can crash VMs / weak GPUs).
+        prev.style.background = "linear-gradient(180deg, rgba(2,6,23,0.95), rgba(0,0,0,0.85)), radial-gradient(600px 280px at 50% 10%, rgba(34,197,94,0.18), transparent 60%)";
+      }
     } catch (e) {}
     const name = document.createElement("div");
     name.className = "wm-wall-name";
@@ -3417,11 +3465,59 @@ function wmInitDesktopUI() {
     wmWallUpload.addEventListener("change", async (e) => {
       const f = (e.target && e.target.files) ? e.target.files[0] : null;
       if (!f) return;
+
+      const WM_MAXLEN = 850000; // ~0.85MB data URL string (keeps VM/GPU stable)
+      const downscaleDataUrl = (dataUrl) => new Promise((resolve) => {
+        try {
+          const img = new Image();
+          img.onload = () => {
+            try {
+              const maxW = 1920, maxH = 1080;
+              const iw = img.naturalWidth || img.width || 0;
+              const ih = img.naturalHeight || img.height || 0;
+              if (!iw || !ih) { resolve(dataUrl); return; }
+
+              const scale = Math.min(1, maxW / iw, maxH / ih);
+              const w = Math.max(1, Math.round(iw * scale));
+              const h = Math.max(1, Math.round(ih * scale));
+
+              const c = document.createElement("canvas");
+              c.width = w;
+              c.height = h;
+              const ctx = c.getContext("2d", { alpha: false });
+              if (!ctx) { resolve(dataUrl); return; }
+              ctx.drawImage(img, 0, 0, w, h);
+
+              // JPEG compress is widely supported and much smaller than PNG data URLs.
+              let out = "";
+              try { out = c.toDataURL("image/jpeg", 0.82); } catch (_) {}
+              resolve(out || dataUrl);
+            } catch (err) { resolve(dataUrl); }
+          };
+          img.onerror = () => resolve(dataUrl);
+          img.src = dataUrl;
+        } catch (err) { resolve(dataUrl); }
+      });
+
       try {
         const reader = new FileReader();
-        reader.onload = () => {
-          const dataUrl = String(reader.result || "");
-          if (dataUrl.startsWith("data:image/")) wmSetCustomWallpaper(dataUrl);
+        reader.onload = async () => {
+          let dataUrl = String(reader.result || "");
+          if (!dataUrl.startsWith("data:image/")) return;
+
+          // If huge, downscale/compress to avoid VM crashes.
+          if (dataUrl.length > WM_MAXLEN) {
+            const smaller = await downscaleDataUrl(dataUrl);
+            if (smaller) dataUrl = smaller;
+          }
+
+          if (dataUrl.length > WM_MAXLEN) {
+            try { wmToast("Wallpaper too large. Use a smaller image."); } catch (_) {}
+            return;
+          }
+
+          wmSetCustomWallpaper(dataUrl);
+          try { wmToast("Wallpaper applied"); } catch (_) {}
         };
         reader.readAsDataURL(f);
       } catch (err) {}
@@ -8445,6 +8541,22 @@ if (lower.startsWith("audio test")) {
   return;
 }
 
+if (lower === "perf" || lower === "perf toggle") {
+  const v = perfSet(!perfIsOn());
+  termPrint("perf: " + (v ? "on" : "off"), "ok");
+  return;
+}
+if (lower === "perf on") {
+  const v = perfSet(true);
+  termPrint("perf: " + (v ? "on" : "off"), "ok");
+  return;
+}
+if (lower === "perf off") {
+  const v = perfSet(false);
+  termPrint("perf: " + (v ? "on" : "off"), "ok");
+  return;
+}
+
       if (lower === "music on") {
         if (!state.musicOn) { state.musicOn = true; try { localStorage.setItem("chernos_music_on", "1"); } catch (e) {} applyMusicState(); }
         return;
@@ -8881,6 +8993,7 @@ if (lower === "decon status") {
 
     // ----- Init -----
     // Start in AUTO mode, engine will pick GREEN based on SAFE crisis state.
+    try { perfApply(); } catch (e) {}
     updateCrisisEngine();
     loadWorkstationState();
     renderAll();
