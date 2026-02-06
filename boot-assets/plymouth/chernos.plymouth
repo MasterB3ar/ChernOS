@@ -1,0 +1,8 @@
+[Plymouth Theme]
+Name=ChernOS Nuclear Glow
+Description=ChernOS boot splash with pulsing reactor ring
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/chernos
+ScriptFile=/usr/share/plymouth/themes/chernos/chernos.script

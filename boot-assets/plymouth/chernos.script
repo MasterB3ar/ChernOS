@@ -1,0 +1,56 @@
+# ChernOS Plymouth theme (script)
+
+bg = Image("background.png");
+ring = Image("ring.png");
+logo = Image("logo.png");
+
+bg_sprite = Sprite(bg);
+ring_sprite = Sprite(ring);
+logo_sprite = Sprite(logo);
+
+fun center_sprite(sprite, image, yOffset) {
+  sprite.SetX((Window.GetWidth()  - image.GetWidth())  / 2);
+  sprite.SetY((Window.GetHeight() - image.GetHeight()) / 2 + yOffset);
+}
+
+# Position elements
+bg_sprite.SetX(0);
+bg_sprite.SetY(0);
+
+center_sprite(ring_sprite, ring, -10);
+center_sprite(logo_sprite, logo, -10);
+
+# Initial opacity
+ring_alpha = 0.25;
+ring_dir = 1;
+
+ring_sprite.SetOpacity(ring_alpha);
+logo_sprite.SetOpacity(0.95);
+
+Window.SetBackgroundTopColor (0.0, 0.02, 0.01);
+Window.SetBackgroundBottomColor (0.0, 0.0, 0.0);
+
+fun refresh_callback() {
+
+  ring_alpha = ring_alpha + (ring_dir * 0.015);
+
+  if (ring_alpha > 0.85) {
+    ring_alpha = 0.85;
+    ring_dir = -1;
+  }
+
+  if (ring_alpha < 0.20) {
+    ring_alpha = 0.20;
+    ring_dir = 1;
+  }
+
+  ring_sprite.SetOpacity(ring_alpha);
+
+  # Re-center in case resolution changes
+  bg_sprite.SetX(0);
+  bg_sprite.SetY(0);
+  center_sprite(ring_sprite, ring, -10);
+  center_sprite(logo_sprite, logo, -10);
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
