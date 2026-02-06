@@ -411,6 +411,40 @@
       transition: box-shadow 0.3s ease-out, transform 0.25s ease-out, background 0.2s;
     }
 
+    /* --- Animated metric rings (Temp / Pressure / Rad) --- */
+    :root{
+      --cm-temp: var(--ch-accent);
+      --cm-press: rgba(148,163,184,0.85);
+      --cm-rad: rgba(148,163,184,0.70);
+    }
+
+    .core-metrics{
+      position:absolute;
+      inset:-10px;
+      width:120px;
+      height:120px;
+      pointer-events:none;
+      transform: rotate(-90deg);
+      opacity: 0.98;
+      filter: drop-shadow(0 0 10px rgba(0,0,0,0.55));
+    }
+    .cm-bg{ fill:none; stroke: rgba(148,163,184,0.14); stroke-width: 6; }
+    .cm-ring{
+      fill:none;
+      stroke-width: 6;
+      stroke-linecap: round;
+      transition: stroke-dashoffset 320ms ease, stroke 240ms ease, opacity 240ms ease;
+    }
+    .cm-temp{ stroke: var(--cm-temp); opacity: 0.95; }
+    .cm-press{ stroke: var(--cm-press); opacity: 0.78; }
+    .cm-rad{ stroke: var(--cm-rad); opacity: 0.68; }
+
+    body.blackchamber .cm-bg{ stroke: rgba(148,163,184,0.10); }
+    body.blackchamber .cm-press{ opacity: 0.55; }
+    body.blackchamber .cm-rad{ opacity: 0.55; }
+
+
+    
     @keyframes ringSpin {
       from { transform: rotate(0deg); }
       to { transform: rotate(360deg); }
@@ -586,6 +620,33 @@
       background: #4b5563;
     }
 
+    /* --- Secondary containment (Barrier-2) --- */
+    .sc-metric{
+      border: 1px solid rgba(148,163,184,0.18);
+      background: rgba(0,0,0,0.22);
+      border-radius: 14px;
+      padding: 10px 12px;
+    }
+    .sc-bar{
+      width:100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(148,163,184,0.22);
+      overflow: hidden;
+    }
+    .sc-bar-fill{
+      height: 100%;
+      background: var(--ch-accent);
+      opacity: 0.80;
+      width: 50%;
+      transition: width 260ms ease, opacity 260ms ease;
+      box-shadow: 0 0 10px var(--ch-accent-soft);
+    }
+    .sc-bar-fill.soft{
+      opacity: 0.55;
+    }
+
     .lockdown-active {
       box-shadow: 0 0 16px rgba(248,113,113,0.7);
       border-color: rgba(248,113,113,0.7) !important;
@@ -676,6 +737,100 @@
       border: 1px solid rgba(148,163,184,0.7);
       background: transparent;
       cursor: pointer;
+    }
+
+    /* Multitasking Supervisor (Workstation) */
+    .mt-launch{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      align-items:center;
+    }
+    .mt-select{
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:12px;
+      border:1px solid rgba(148,163,184,0.45);
+      background: rgba(2,6,23,0.72);
+      color:#e5e7eb;
+      outline:none;
+      min-width: 190px;
+    }
+    .mt-select:focus{
+      border-color: var(--ch-accent-soft);
+      box-shadow: 0 0 0 2px rgba(34,197,94,0.18);
+    }
+    .mt-list{
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-height: 54px;
+    }
+    .mt-item{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding:7px 9px;
+      border-radius:12px;
+      background: rgba(2,6,23,0.55);
+      border: 1px solid rgba(148,163,184,0.22);
+    }
+    .mt-item.focused{
+      border-color: var(--ch-accent-soft);
+      box-shadow: 0 0 10px rgba(34,197,94,0.10);
+    }
+    .mt-item .left{
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+      min-width:0;
+      flex: 1;
+    }
+    .mt-item .title{
+      font-size:11px;
+      color: rgba(226,232,240,0.94);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .mt-item .meta{
+      font-size:10px;
+      color: rgba(148,163,184,0.85);
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .mt-actions{
+      display:flex;
+      gap:6px;
+      flex-shrink:0;
+    }
+    .mt-mini{
+      font-size:10px;
+      padding:3px 9px;
+      border-radius:999px;
+      border: 1px solid rgba(148,163,184,0.45);
+      background: rgba(15,23,42,0.85);
+      color: rgba(226,232,240,0.95);
+      cursor:pointer;
+      transition: all 0.12s;
+      user-select:none;
+    }
+    .mt-mini:hover{
+      filter: brightness(1.10);
+    }
+    .mt-mini.danger{
+      border-color: rgba(248,113,113,0.60);
+      color: rgba(248,113,113,0.95);
+    }
+    .mt-empty{
+      font-size:11px;
+      color: rgba(148,163,184,0.78);
+      padding:10px;
+      border-radius:12px;
+      border: 1px dashed rgba(148,163,184,0.28);
+      background: rgba(2,6,23,0.35);
     }
 
     /* NetSim pills */
@@ -1786,6 +1941,16 @@ body.blackchamber .wm-hk-card{
             <div class="core-ring"></div>
             <div class="core-ring inner"></div>
             <div class="core-dot" id="core-dot"></div>
+
+            <svg class="core-metrics" viewBox="0 0 120 120" aria-hidden="true">
+              <circle class="cm-bg" cx="60" cy="60" r="52"></circle>
+              <circle class="cm-ring cm-temp" id="cm-temp" cx="60" cy="60" r="52"></circle>
+              <circle class="cm-bg" cx="60" cy="60" r="45"></circle>
+              <circle class="cm-ring cm-press" id="cm-press" cx="60" cy="60" r="45"></circle>
+              <circle class="cm-bg" cx="60" cy="60" r="38"></circle>
+              <circle class="cm-ring cm-rad" id="cm-rad" cx="60" cy="60" r="38"></circle>
+            </svg>
+
           </div>
           <div class="flex flex-col gap-2 items-end">
             <div class="flex gap-2">
@@ -1998,6 +2163,87 @@ body.blackchamber .wm-hk-card{
       </div>
     </div>
 
+
+    <!-- SECONDARY CONTAINMENT SIM -->
+    <div class="card mt-1" id="secondary-containment-card" data-panel="reactor containment">
+      <div class="label">SECONDARY CONTAINMENT — BARRIER-2</div>
+
+      <div class="mt-2 grid grid-cols-4 gap-2">
+        <div class="sc-metric">
+          <div class="text-[10px] text-slate-400">Integrity</div>
+          <div class="text-lg font-semibold" id="sc-integrity">100%</div>
+          <div class="text-[10px] text-slate-400" id="sc-state">SEALED</div>
+        </div>
+
+        <div class="sc-metric">
+          <div class="text-[10px] text-slate-400">ΔP (kPa)</div>
+          <div class="text-lg font-semibold" id="sc-dp">0.25</div>
+          <div class="text-[10px] text-slate-500" id="sc-dp-hint">balanced</div>
+        </div>
+
+        <div class="sc-metric">
+          <div class="text-[10px] text-slate-400">Internal Rad</div>
+          <div class="text-lg font-semibold" id="sc-inrad">0.08</div>
+          <div class="text-[10px] text-slate-500" id="sc-inrad-hint">filtered</div>
+        </div>
+
+        <div class="sc-metric">
+          <div class="text-[10px] text-slate-400">Filter Load</div>
+          <div class="text-lg font-semibold" id="sc-filter">0%</div>
+          <div class="text-[10px] text-slate-500" id="sc-filter-hint">fresh</div>
+        </div>
+      </div>
+
+      <div class="mt-2 grid grid-cols-2 gap-3">
+        <div>
+          <div class="text-[10px] text-slate-400 flex justify-between">
+            <span>Integrity</span><span id="sc-integrity-bar-pct">100%</span>
+          </div>
+          <div class="sc-bar">
+            <div class="sc-bar-fill" id="sc-integrity-bar" style="width:100%"></div>
+          </div>
+
+          <div class="text-[10px] text-slate-400 flex justify-between mt-2">
+            <span>Filter</span><span id="sc-filter-bar-pct">0%</span>
+          </div>
+          <div class="sc-bar">
+            <div class="sc-bar-fill soft" id="sc-filter-bar" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="space-y-2">
+          <div class="flex flex-wrap gap-2">
+            <button class="btn btn-small" id="btn-sc-auto">Auto: ON</button>
+            <button class="btn btn-small" id="btn-sc-seal">Seal Doors</button>
+            <button class="btn btn-small" id="btn-sc-scrub">Scrubbers</button>
+            <button class="btn btn-small" id="btn-sc-purge">Purge</button>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] text-slate-400 w-14">Vent</span>
+            <input id="sc-vent" type="range" min="0" max="100" value="25" class="flex-1 lever">
+            <span class="pill text-[10px]" id="sc-vent-val">25%</span>
+          </div>
+
+          <div class="text-[10px] text-slate-400">
+            Secondary containment is a *building layer* simulation: it accumulates internal radiation and pressure stress,
+            then uses sealing + scrubbers + venting to keep integrity stable.
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-2 text-[10px] text-slate-400">
+        Terminal shortcuts:
+        <span class="pill text-[10px]">containment status</span>
+        <span class="pill text-[10px]">sc auto on/off</span>
+        <span class="pill text-[10px]">sc seal on/off</span>
+        <span class="pill text-[10px]">sc scrub on/off</span>
+        <span class="pill text-[10px]">sc vent &lt;0-100&gt;</span>
+        <span class="pill text-[10px]">sc purge</span>
+      </div>
+    </div>
+
+
     <!-- COMMS / BLACK CHAMBER PANEL -->
     <div class="card mt-1" id="comms-card" data-panel="reactor comms">
       <div class="label">COMMS / BLACK CHAMBER</div>
@@ -2157,6 +2403,52 @@ body.blackchamber .wm-hk-card{
           <div id="ws-task-list" class="space-y-1 max-h-24 overflow-y-auto text-[11px]"></div>
         </div>
       </div>
+
+
+    <!-- WORKSTATION: Multitasking Supervisor -->
+    <div class="mt-3 card" id="mt-card" data-panel="workstation">
+      <div class="label">MULTITASKING SUPERVISOR — INTERNAL WM + ELECTRON DESKTOP</div>
+      <div class="mt-2 flex flex-wrap gap-2 items-center">
+        <span class="pill text-[10px]" id="mt-env">Env: —</span>
+        <button class="btn btn-small" id="mt-refresh">Refresh</button>
+        <button class="btn btn-small" id="mt-toggle-wm">Toggle Windows Mode</button>
+      </div>
+
+      <div class="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Launch</div>
+          <div class="mt-launch">
+            <select id="mt-app" class="mt-select"></select>
+            <button class="btn btn-small" id="mt-open-view" title="Show app in single-surface view">Open View</button>
+            <button class="btn btn-small" id="mt-open-wm" title="Open app as an internal window (ISO/kiosk)">Open Window</button>
+            <button class="btn btn-small" id="mt-open-desktop" title="Open/focus app as an Electron window">Desktop</button>
+            <button class="btn btn-small" id="mt-open-desktop-new" title="Open a NEW Electron window instance">Desktop +</button>
+          </div>
+          <div class="mt-2 text-[10px] text-slate-500">
+            Tips: In Electron mode, Shift+click any dock icon opens a new desktop window. In ISO WM mode, the dock opens windows by default.
+          </div>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Status</div>
+          <div class="pill w-full" id="mt-status">—</div>
+          <div class="mt-2 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+            <div class="pill text-[10px]" id="mt-internal-count">Internal: 0</div>
+            <div class="pill text-[10px]" id="mt-desktop-count">Desktop: 0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-3 grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-3">
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Internal Windows (WM)</div>
+          <div id="mt-internal-list" class="mt-list"></div>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-400 mb-1">Desktop Windows (Electron)</div>
+          <div id="mt-desktop-list" class="mt-list"></div>
+        </div>
+      </div>
+    </div>
     </div>
 
     <!-- CONTROLS + TERMINAL + LOG -->
@@ -2639,6 +2931,33 @@ const elLog       = document.getElementById("log");
     const pillBeta   = document.getElementById("pill-beta");
     const pillGamma  = document.getElementById("pill-gamma");
 
+    // Animated metric rings (SVG)
+    const cmTemp  = document.getElementById("cm-temp");
+    const cmPress = document.getElementById("cm-press");
+    const cmRad   = document.getElementById("cm-rad");
+
+    // Secondary containment (Barrier-2) DOM
+    const scElIntegrity = document.getElementById("sc-integrity");
+    const scElState     = document.getElementById("sc-state");
+    const scElDp        = document.getElementById("sc-dp");
+    const scElDpHint    = document.getElementById("sc-dp-hint");
+    const scElInRad     = document.getElementById("sc-inrad");
+    const scElInRadHint = document.getElementById("sc-inrad-hint");
+    const scElFilter    = document.getElementById("sc-filter");
+    const scElFilterHint= document.getElementById("sc-filter-hint");
+
+    const scElIntPct    = document.getElementById("sc-integrity-bar-pct");
+    const scElIntBar    = document.getElementById("sc-integrity-bar");
+    const scElFilPct    = document.getElementById("sc-filter-bar-pct");
+    const scElFilBar    = document.getElementById("sc-filter-bar");
+
+    const btnScAuto   = document.getElementById("btn-sc-auto");
+    const btnScSeal   = document.getElementById("btn-sc-seal");
+    const btnScScrub  = document.getElementById("btn-sc-scrub");
+    const btnScPurge  = document.getElementById("btn-sc-purge");
+    const scVent      = document.getElementById("sc-vent");
+    const scVentVal   = document.getElementById("sc-vent-val");
+
     const pillSat    = document.getElementById("pill-satlink");
     const pillGhost  = document.getElementById("pill-ghost");
     const pillBlack  = document.getElementById("pill-black");
@@ -2904,6 +3223,23 @@ var renderNetPacketPanel = function(){ /* placeholder until defined */ };
     const wsTaskAdd   = document.getElementById("ws-task-add");
     const wsTaskList  = document.getElementById("ws-task-list");
 
+
+    // Multitasking supervisor elements
+    const mtCard = document.getElementById("mt-card");
+    const mtAppSel = document.getElementById("mt-app");
+    const mtRefreshBtn = document.getElementById("mt-refresh");
+    const mtToggleWmBtn = document.getElementById("mt-toggle-wm");
+    const mtOpenViewBtn = document.getElementById("mt-open-view");
+    const mtOpenWmBtn = document.getElementById("mt-open-wm");
+    const mtOpenDeskBtn = document.getElementById("mt-open-desktop");
+    const mtOpenDeskNewBtn = document.getElementById("mt-open-desktop-new");
+    const mtEnvPill = document.getElementById("mt-env");
+    const mtStatusPill = document.getElementById("mt-status");
+    const mtInternalCount = document.getElementById("mt-internal-count");
+    const mtDesktopCount = document.getElementById("mt-desktop-count");
+    const mtInternalList = document.getElementById("mt-internal-list");
+    const mtDesktopList = document.getElementById("mt-desktop-list");
+
     const panelElems  = Array.from(document.querySelectorAll("[data-panel]"));
 
     // NetSim DOM refs
@@ -2968,6 +3304,19 @@ persistEnabled: false,
         betaLatched: false,
         gamma: false
       },
+      secondaryContainment: {
+        mode: "auto",        // "auto" | "manual"
+        sealed: true,
+        scrubbers: true,
+        vent: 25,            // 0..100
+        purgeTicks: 0,
+        dp: 0.25,            // kPa-ish (sim)
+        internalRad: 0.08,   // mSv/h-ish (sim)
+        filterLoad: 0,       // 0..100
+        integrity: 100,      // 0..100
+        _lastAutoLog: 0
+      },
+
       operatorName: "ANON",
       operatorLevel: 1,
       satLink: false,
@@ -3455,11 +3804,12 @@ persistEnabled: false,
       applyAppView();
     }
 
-    function openAppWindow(view) {
+    function openAppWindow(view, opts) {
       const id = String(view || "").trim().toLowerCase();
       if (!id || id === "all") return false;
       try {
-        return !!window.chernosDesktop.openAppWindow(id, {});
+        if (!window.chernosDesktop || !window.chernosDesktop.openAppWindow) return false;
+        return !!window.chernosDesktop.openAppWindow(id, opts || {});
       } catch (e) {
         return false;
       }
@@ -5502,8 +5852,9 @@ initHotkeysSystem();
           }
 
           const canWindow = desktopMode && !standaloneMode && hasDesktopBridge && v !== "all";
-          if (canWindow && !e.shiftKey) {
-            if (!openAppWindow(v)) setAppView(v);
+          if (canWindow) {
+            const ok = openAppWindow(v, e.shiftKey ? { newInstance: true } : {});
+            if (!ok) setAppView(v);
             return;
           }
 
@@ -7589,6 +7940,244 @@ function renderTelemetry() {
       elCoreDot.style.background = `radial-gradient(circle, ${colorShift}, transparent)`;
     }
 
+    // ----- Animated metric rings (Temp/Pressure/Rad) -----
+    function setRing(circleEl, pct) {
+      if (!circleEl) return;
+      const r = Number(circleEl.getAttribute("r") || 0);
+      const c = 2 * Math.PI * r;
+      circleEl.style.strokeDasharray = String(c);
+      circleEl.style.strokeDashoffset = String(c * (1 - clamp01(pct)));
+    }
+
+    function renderMetricRings() {
+      // Map values to 0..1 progress
+      const tPct = clamp01((state.temp - 260) / (1450 - 260));
+      const pPct = clamp01((state.pressure - 0.9) / (6.2 - 0.9));
+      const rPct = clamp01((state.rad - 0.05) / (4.2 - 0.05));
+
+      setRing(cmTemp, tPct);
+      setRing(cmPress, pPct);
+      setRing(cmRad, rPct);
+
+      // Dynamic ring colors by severity (keeps UI readable across themes)
+      const root = document.documentElement.style;
+
+      let tCol = "var(--ch-accent)";
+      if (state.temp > 1150) tCol = "#fb7185";
+      else if (state.temp > 730) tCol = "#facc6b";
+
+      let pCol = "rgba(148,163,184,0.85)";
+      if (state.pressure > 6.2) pCol = "#fb7185";
+      else if (state.pressure > 3.3) pCol = "#facc6b";
+
+      let rCol = "rgba(148,163,184,0.70)";
+      if (state.rad > 4.0) rCol = "#fb7185";
+      else if (state.rad > 0.8) rCol = "#facc6b";
+
+      root.setProperty("--cm-temp", tCol);
+      root.setProperty("--cm-press", pCol);
+      root.setProperty("--cm-rad", rCol);
+    }
+
+    // ----- Secondary containment (Barrier-2) -----
+    function scEnsure() {
+      if (!state.secondaryContainment) {
+        state.secondaryContainment = {
+          mode: "auto",
+          sealed: true,
+          scrubbers: true,
+          vent: 25,
+          purgeTicks: 0,
+          dp: 0.25,
+          internalRad: 0.08,
+          filterLoad: 0,
+          integrity: 100,
+          _lastAutoLog: 0
+        };
+      }
+      return state.secondaryContainment;
+    }
+
+    function scLogOnce(msg) {
+      const sc = scEnsure();
+      const now = state.ticks || 0;
+      if (now - (sc._lastAutoLog || 0) < 8) return;
+      sc._lastAutoLog = now;
+      log(msg);
+    }
+
+    function tickSecondaryContainment() {
+      const sc = scEnsure();
+
+      // Inputs (from core simulation)
+      const t = state.temp;
+      const p = state.pressure;
+      const r = state.rad;
+      const stage = state.meltdownStage || 0;
+
+      // Auto control (before physics) — gentle, avoids spam
+      if (sc.mode === "auto") {
+        const wantSeal = (stage >= 2) || (r > 0.9) || (p > 2.6);
+        const wantScrub = (r > 0.7) || (sc.internalRad > 0.7) || (stage >= 2);
+        if (wantSeal && !sc.sealed) { sc.sealed = true; scLogOnce("SECONDARY CONTAINMENT: seals engaged (auto)."); }
+        if (!wantSeal && sc.sealed && stage === 0 && r < 0.6 && p < 2.2) { sc.sealed = false; scLogOnce("SECONDARY CONTAINMENT: seals relaxed (auto)."); }
+
+        if (wantScrub && !sc.scrubbers) { sc.scrubbers = true; scLogOnce("SECONDARY CONTAINMENT: scrubbers ON (auto)."); }
+        if (sc.filterLoad > 92 && sc.scrubbers) { sc.scrubbers = false; scLogOnce("SECONDARY CONTAINMENT: scrubbers OFF (filter saturated)."); }
+
+        // Vent tuning: open more under dp / high internal rad
+        const openTarget =
+          (sc.dp > 1.6 || sc.internalRad > 1.6) ? 60 :
+          (sc.dp > 1.0 || sc.internalRad > 1.0) ? 40 : 25;
+        sc.vent += (openTarget - sc.vent) * 0.12;
+        sc.vent = clampInt(sc.vent, 0, 100);
+      }
+
+      // Purge timer
+      if (sc.purgeTicks > 0) {
+        sc.purgeTicks -= 1;
+        if (sc.purgeTicks <= 0) sc.purgeTicks = 0;
+      }
+
+      const purgeOn = (sc.purgeTicks > 0);
+
+      // Radiation accumulation inside secondary containment
+      const src = Math.max(0, (r - 0.10));
+      const sealGain = sc.sealed ? 0.85 : 0.45;
+      const stageGain = (stage >= 4) ? 1.25 : (stage >= 3) ? 0.75 : (stage >= 2) ? 0.35 : 0.0;
+
+      sc.internalRad += (src * (0.16 + 0.22 * sealGain)) + stageGain * 0.08;
+
+      // Scrubbers remove internal radiation but load filters
+      if (sc.scrubbers) {
+        const eff = 0.06 + 0.04 * (sc.vent / 100);
+        const sat = 1.0 - (sc.filterLoad / 115);
+        const remove = eff * Math.max(0.15, sat);
+        sc.internalRad = Math.max(0, sc.internalRad - remove);
+        sc.filterLoad = Math.min(100, sc.filterLoad + (0.28 + 0.10 * sealGain));
+      } else {
+        // natural decay + slow filter recovery
+        sc.internalRad = Math.max(0, sc.internalRad - 0.012);
+        sc.filterLoad = Math.max(0, sc.filterLoad - 0.05);
+      }
+
+      // Vent/purge reduce internal load, but stress integrity
+      if (purgeOn) {
+        sc.internalRad = Math.max(0, sc.internalRad - (0.18 + 0.06 * (sc.vent / 100)));
+      }
+
+      // Differential pressure (dp) dynamics
+      const dpTarget =
+        (sc.sealed ? 0.65 : 0.20) +
+        Math.max(0, (p - 1.2)) * 0.33 -
+        (sc.vent / 100) * 0.62 -
+        (purgeOn ? 0.85 : 0);
+      sc.dp += (dpTarget - sc.dp) * 0.24 + (Math.random() - 0.5) * 0.03;
+
+      // Integrity damage model
+      let dmg = 0;
+      dmg += Math.max(0, (Math.abs(sc.dp) - 1.35)) * 0.12;
+      dmg += Math.max(0, (sc.internalRad - 1.25)) * 0.08;
+      if (stage >= 4) dmg += 0.24;
+      else if (stage >= 3) dmg += 0.08;
+
+      const fp = getFault("pressure");
+      if (fp) dmg += 0.08 * (fp.sev || 1);
+
+      if (purgeOn) dmg += 0.06;
+
+      sc.integrity = Math.max(0, sc.integrity - dmg);
+
+      // Self-recovery in stable conditions (slow)
+      const stable =
+        stage === 0 &&
+        !state.lockdown &&
+        !state.overdrive &&
+        t < 720 && p < 2.2 && r < 0.9 &&
+        faultActiveCount() === 0;
+
+      if (stable && !purgeOn) {
+        sc.integrity = Math.min(100, sc.integrity + (sc.sealed ? 0.010 : 0.032));
+        sc.internalRad = Math.max(0, sc.internalRad - (sc.sealed ? 0.018 : 0.032));
+      }
+
+      // Clamp
+      sc.dp = Math.max(-3.0, Math.min(3.0, sc.dp));
+      sc.internalRad = Math.max(0, Math.min(9.9, sc.internalRad));
+      sc.filterLoad = Math.max(0, Math.min(100, sc.filterLoad));
+      sc.integrity = Math.max(0, Math.min(100, sc.integrity));
+    }
+
+    function renderSecondaryContainmentUI() {
+      const sc = scEnsure();
+      if (scVent && scVentVal) {
+        scVent.value = String(clampInt(sc.vent, 0, 100));
+        scVentVal.textContent = String(clampInt(sc.vent, 0, 100)) + "%";
+      }
+
+      const i = Math.round(sc.integrity);
+      const dp = sc.dp;
+      const ir = sc.internalRad;
+      const fl = Math.round(sc.filterLoad);
+
+      const breached = (i <= 10);
+      const leaking = (i <= 40) || (ir >= 2.2);
+
+      let modeText = sc.sealed ? "SEALED" : "OPEN";
+      if (breached) modeText = "BREACH";
+      else if (leaking) modeText = "LEAK";
+      else if (sc.scrubbers) modeText = "ACTIVE";
+
+      if (scElIntegrity) scElIntegrity.textContent = i + "%";
+      if (scElState) scElState.textContent = modeText;
+
+      if (scElDp) scElDp.textContent = dp.toFixed(2);
+      if (scElDpHint) {
+        if (Math.abs(dp) < 0.6) scElDpHint.textContent = "balanced";
+        else if (dp > 0) scElDpHint.textContent = "overpressure";
+        else scElDpHint.textContent = "underpressure";
+      }
+
+      if (scElInRad) scElInRad.textContent = ir.toFixed(2);
+      if (scElInRadHint) scElInRadHint.textContent = sc.scrubbers ? "scrubbers engaged" : "unfiltered";
+
+      if (scElFilter) scElFilter.textContent = fl + "%";
+      if (scElFilterHint) {
+        if (fl < 30) scElFilterHint.textContent = "fresh";
+        else if (fl < 70) scElFilterHint.textContent = "loading";
+        else scElFilterHint.textContent = "near saturation";
+      }
+
+      if (scElIntBar && scElIntPct) {
+        scElIntBar.style.width = i + "%";
+        scElIntPct.textContent = i + "%";
+        scElIntBar.style.opacity = breached ? "0.45" : "0.80";
+      }
+      if (scElFilBar && scElFilPct) {
+        scElFilBar.style.width = fl + "%";
+        scElFilPct.textContent = fl + "%";
+      }
+
+      // Button states
+      try {
+        if (btnScAuto) btnScAuto.textContent = "Auto: " + (sc.mode === "auto" ? "ON" : "OFF");
+        if (btnScAuto) btnScAuto.classList.toggle("active", sc.mode === "auto");
+
+        if (btnScSeal) {
+          btnScSeal.textContent = sc.sealed ? "Seal Doors: ON" : "Seal Doors: OFF";
+          btnScSeal.classList.toggle("active", !!sc.sealed);
+        }
+        if (btnScScrub) {
+          btnScScrub.textContent = sc.scrubbers ? "Scrubbers: ON" : "Scrubbers: OFF";
+          btnScScrub.classList.toggle("active", !!sc.scrubbers);
+        }
+        if (btnScPurge) {
+          btnScPurge.textContent = (sc.purgeTicks > 0) ? "Purge: ACTIVE" : "Purge";
+          btnScPurge.classList.toggle("active", sc.purgeTicks > 0);
+        }
+      } catch(e) {}
+    }
+
     function updateContainPills() {
       function setPill(el, active, crit) {
         el.classList.remove("off");
@@ -7666,13 +8255,22 @@ netRateEl.textContent      = pktRate.toFixed(0) + " pkt/s";
       elBadgeSim.textContent = "SIM-CORE ONLINE";
 
       const anyContain = state.containment.alpha || state.containment.betaLatched || state.containment.gamma;
-      elBadgeContain.textContent = "CONTAINMENT: " +
-        (state.meltdownStage >= 4 && !state.containment.gamma ? "BREACH" :
-         state.meltdownStage >= 2 ? "ENGAGED" :
-         anyContain ? "ARMED" : "STABLE");
+      const sc = (state.secondaryContainment || {});
+      const scBreach = (typeof sc.integrity === "number" && sc.integrity <= 10);
+      const scLeak   = (typeof sc.integrity === "number" && sc.integrity <= 40) || (typeof sc.internalRad === "number" && sc.internalRad >= 2.2);
+
+      const primaryBreach = (state.meltdownStage >= 4 && !state.containment.gamma);
+
+      let label = "STABLE";
+      if (primaryBreach || scBreach) label = "BREACH";
+      else if (state.meltdownStage >= 2) label = "ENGAGED";
+      else if (scLeak) label = "LEAK";
+      else if (anyContain || (sc && (sc.sealed || sc.scrubbers))) label = "ARMED";
+
+      elBadgeContain.textContent = "CONTAINMENT: " + label;
       elBadgeContain.style.color =
-        (state.meltdownStage >= 4 && !state.containment.gamma) ? "#fb7185" :
-        (state.meltdownStage >= 2 || anyContain) ? "#facc6b" :
+        (label === "BREACH") ? "#fb7185" :
+        (label === "ENGAGED" || label === "LEAK" || label === "ARMED") ? "#facc6b" :
         "#bbf7d0";
 
       elBadgeLockdown.textContent = "LOCKDOWN: " + (state.lockdown ? "ON" : "OFF");
@@ -7706,6 +8304,8 @@ netRateEl.textContent      = pktRate.toFixed(0) + " pkt/s";
 
     function renderAll() {
       renderTelemetry();
+      renderMetricRings();
+      renderSecondaryContainmentUI();
       renderBadges();
       renderGammaOverlay();
       renderBlackOverlay();
@@ -7732,6 +8332,12 @@ netRateEl.textContent      = pktRate.toFixed(0) + " pkt/s";
       if (state.aftermath && state.aftermath.active) return { level: 2, reason: "AFTERMATH" };
       if (state.meltdownStage >= 4) return { level: 3, reason: "MELTDOWN" };
       if (state.meltdownStage >= 2) return { level: 2, reason: "CORE UNSTABLE" };
+
+      const sc = (state.secondaryContainment || {});
+      if (typeof sc.integrity === "number" && sc.integrity <= 10) return { level: 3, reason: "CONTAINMENT BREACH" };
+      if ((typeof sc.integrity === "number" && sc.integrity <= 40) || (typeof sc.internalRad === "number" && sc.internalRad >= 2.2)) {
+        return { level: 2, reason: "CONTAINMENT LEAK" };
+      }
 
       if (state.rad >= 3.0) return { level: 2, reason: "RADIATION SPIKE" };
       if (state.pressure >= 3.2) return { level: 2, reason: "PRESSURE OVERRANGE" };
@@ -8070,6 +8676,264 @@ netRateEl.textContent      = pktRate.toFixed(0) + " pkt/s";
       renderTasks();
     }
 
+    // ----- Workstation: multitasking supervisor (internal WM + Electron desktop) -----
+    function mtEnvString(){
+      const pieces = [];
+      pieces.push(kioskMode ? "kiosk" : "ui");
+      if (desktopMode) pieces.push("electron");
+      if (standaloneMode) pieces.push("standalone");
+      if (wmMode) pieces.push("wm");
+      return pieces.join(" · ");
+    }
+
+    function mtPopulateApps(){
+      if (!mtAppSel) return;
+      mtAppSel.innerHTML = "";
+      const keys = Object.keys(APP_LABELS || {}).filter(k => k && k !== "all");
+      keys.sort((a,b) => (APP_LABELS[a]||a).localeCompare(APP_LABELS[b]||b));
+      for (const k of keys){
+        const opt = document.createElement("option");
+        opt.value = k;
+        opt.textContent = (APP_LABELS[k] || k);
+        mtAppSel.appendChild(opt);
+      }
+      // sensible default
+      const pref = lsGet("chernos_mt_app") || "reactor";
+      if (keys.includes(pref)) mtAppSel.value = pref;
+    }
+
+    function mtSetPill(el, text){
+      if (!el) return;
+      el.textContent = text;
+    }
+
+    function mtRenderEmpty(el, msg){
+      if (!el) return;
+      el.innerHTML = "";
+      const d = document.createElement("div");
+      d.className = "mt-empty";
+      d.textContent = msg;
+      el.appendChild(d);
+    }
+
+    function mtMakeItem({ title, meta, focused }, actions){
+      const row = document.createElement("div");
+      row.className = "mt-item" + (focused ? " focused" : "");
+
+      const left = document.createElement("div");
+      left.className = "left";
+
+      const t = document.createElement("div");
+      t.className = "title";
+      t.textContent = title;
+
+      const m = document.createElement("div");
+      m.className = "meta";
+      m.textContent = meta || "";
+
+      left.appendChild(t);
+      left.appendChild(m);
+
+      const act = document.createElement("div");
+      act.className = "mt-actions";
+      (actions || []).forEach(btn => act.appendChild(btn));
+
+      row.appendChild(left);
+      row.appendChild(act);
+      return row;
+    }
+
+    function mtBtn(label, { danger=false, title="", onClick } = {}){
+      const b = document.createElement("button");
+      b.className = "mt-mini" + (danger ? " danger" : "");
+      b.textContent = label;
+      if (title) b.title = title;
+      b.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); try { onClick && onClick(); } catch(_){} });
+      return b;
+    }
+
+    function mtListInternal(){
+      const out = [];
+      try {
+        if (!wmWins || !(wmWins instanceof Map)) return out;
+        for (const [id, w] of wmWins.entries()){
+          const label = APP_LABELS[id] || id;
+          const st = w && w.state ? w.state : { min:false, max:false };
+          out.push({
+            id,
+            label,
+            min: !!st.min,
+            max: !!st.max,
+            focused: (wmFocusedId === id)
+          });
+        }
+      } catch (e) {}
+      return out;
+    }
+
+    async function mtListDesktop(){
+      try {
+        if (!window.chernosDesktop || !window.chernosDesktop.listWindows) return [];
+        const arr = await window.chernosDesktop.listWindows();
+        if (!Array.isArray(arr)) return [];
+        return arr;
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function mtRenderInternal(){
+      const items = mtListInternal();
+      mtSetPill(mtInternalCount, `Internal: ${items.length}`);
+
+      if (!wmEnabled && items.length === 0){
+        if (desktopMode) mtRenderEmpty(mtInternalList, "Internal WM disabled in Electron desktop mode.");
+        else if (wmMode) mtRenderEmpty(mtInternalList, "Windows mode not started yet. Use Toggle Windows Mode.");
+        else mtRenderEmpty(mtInternalList, "Windows mode is OFF. Use Toggle Windows Mode.");
+        return;
+      }
+
+      if (!items.length){
+        mtRenderEmpty(mtInternalList, "No internal windows open.");
+        return;
+      }
+
+      mtInternalList.innerHTML = "";
+      items.sort((a,b) => (a.label).localeCompare(b.label));
+      for (const it of items){
+        const actions = [];
+        actions.push(mtBtn("Focus", { title: "Focus window", onClick: () => wmFocus(it.id) }));
+        actions.push(mtBtn(it.min ? "Restore" : "Min", { title: it.min ? "Restore" : "Minimize", onClick: () => it.min ? wmRestoreFromMin(it.id) : wmMinimize(it.id) }));
+        actions.push(mtBtn("Close", { danger: true, title: "Close window", onClick: () => wmClose(it.id) }));
+        const meta = `id=${it.id} · ${it.min ? "min" : "open"}${it.max ? " · max" : ""}`;
+        mtInternalList.appendChild(mtMakeItem({ title: it.label, meta, focused: it.focused }, actions));
+      }
+    }
+
+    async function mtRenderDesktop(){
+      const items = await mtListDesktop();
+      mtSetPill(mtDesktopCount, `Desktop: ${items.length}`);
+
+      if (!desktopMode){
+        mtRenderEmpty(mtDesktopList, "Not in Electron desktop mode (desktop=1).");
+        return;
+      }
+      if (!hasDesktopBridge){
+        mtRenderEmpty(mtDesktopList, "Desktop bridge not available.");
+        return;
+      }
+      if (!items.length){
+        mtRenderEmpty(mtDesktopList, "No desktop windows reported.");
+        return;
+      }
+
+      mtDesktopList.innerHTML = "";
+      const sorted = items.slice().sort((a,b) => String(a.key||"").localeCompare(String(b.key||"")));
+      for (const w of sorted){
+        const key = String(w.key || "");
+        const appId = String(w.appId || "");
+        const instance = (w.instance !== undefined && w.instance !== null) ? String(w.instance) : "";
+        const title = w.title || (appId ? (APP_LABELS[appId] || appId) : "Window");
+        const isMain = !!w.isMain;
+
+        const actions = [];
+        actions.push(mtBtn("Focus", { title: "Bring to front", onClick: () => {
+          try {
+            if (isMain) window.chernosDesktop.focusMainWindow();
+            else window.chernosDesktop.focusWindow(key);
+          } catch(_){}
+        }}));
+
+        if (!isMain) {
+          actions.push(mtBtn("Close", { danger: true, title: "Close window", onClick: () => {
+            try { window.chernosDesktop.closeWindow(key); } catch(_){}
+          }}));
+        }
+
+        const meta = `${isMain ? "main" : ("key="+key)}${appId ? (" · app="+appId) : ""}${instance ? (" · inst="+instance) : ""}`;
+        mtDesktopList.appendChild(mtMakeItem({ title, meta, focused: false }, actions));
+      }
+    }
+
+    async function mtRefresh(){
+      try { mtSetPill(mtEnvPill, "Env: " + mtEnvString()); } catch(e) {}
+      const statusBits = [];
+      statusBits.push(`view=${appView}`);
+      statusBits.push(`wm=${wmEnabled ? "ON" : "OFF"}`);
+      statusBits.push(`desktop=${desktopMode ? "ON" : "OFF"}`);
+      mtSetPill(mtStatusPill, statusBits.join(" · "));
+      mtRenderInternal();
+      await mtRenderDesktop();
+    }
+
+    function initMultitaskingSupervisor(){
+      if (!mtCard) return;
+
+      mtPopulateApps();
+      try { mtSetPill(mtEnvPill, "Env: " + mtEnvString()); } catch(e) {}
+
+      if (mtAppSel) {
+        mtAppSel.addEventListener("change", () => {
+          try { lsSet("chernos_mt_app", mtAppSel.value || "reactor"); } catch(e) {}
+        });
+      }
+
+      if (mtRefreshBtn) mtRefreshBtn.addEventListener("click", () => { mtRefresh(); });
+      if (mtToggleWmBtn) mtToggleWmBtn.addEventListener("click", () => {
+        if (desktopMode) {
+          try { wmToast("Internal WM is disabled in Electron desktop mode."); } catch(_){}
+          mtRefresh();
+          return;
+        }
+        try {
+          if (wmEnabled) wmDisable();
+          else wmEnable();
+        } catch(e) {}
+        mtRefresh();
+      });
+
+      const getSel = () => (mtAppSel && mtAppSel.value) ? mtAppSel.value : "reactor";
+
+      if (mtOpenViewBtn) mtOpenViewBtn.addEventListener("click", () => {
+        const id = getSel();
+        setAppView(id, { persist: true });
+        mtRefresh();
+      });
+
+      if (mtOpenWmBtn) mtOpenWmBtn.addEventListener("click", () => {
+        const id = getSel();
+        if (desktopMode) { try { wmToast("Internal WM not available in Electron mode."); } catch(_){}; return; }
+        try { if (!wmEnabled) wmEnable(); } catch(e) {}
+        try { wmOpen(id); wmFocus(id); } catch(e) {}
+        mtRefresh();
+      });
+
+      if (mtOpenDeskBtn) mtOpenDeskBtn.addEventListener("click", () => {
+        const id = getSel();
+        const ok = openAppWindow(id, {});
+        if (!ok) { try { wmToast("Desktop bridge not available."); } catch(_){} }
+        mtRefresh();
+      });
+
+      if (mtOpenDeskNewBtn) mtOpenDeskNewBtn.addEventListener("click", () => {
+        const id = getSel();
+        const ok = openAppWindow(id, { newInstance: true });
+        if (!ok) { try { wmToast("Desktop bridge not available."); } catch(_){} }
+        mtRefresh();
+      });
+
+      // periodic refresh (low-cost)
+      try {
+        let t = setInterval(() => {
+          // only refresh if workstation view is active (or card is visible)
+          if (appView === "workstation" || !mtCard.classList.contains("panel-hidden")) mtRefresh();
+        }, 1500);
+        window.__mtSupervisorTimer = t;
+      } catch(e) {}
+
+      mtRefresh();
+    }
+
     // ----- Containment actions -----
     function toggleLockdown(forceOn) {
       const target = (typeof forceOn === "boolean") ? forceOn : !state.lockdown;
@@ -8138,6 +9002,68 @@ netRateEl.textContent      = pktRate.toFixed(0) + " pkt/s";
     btnLockdown.addEventListener("click", () => {
       toggleLockdown();
     });
+
+
+    // ----- Secondary containment (Barrier-2) actions -----
+    function scSetModeAuto(on){
+      const sc = scEnsure();
+      sc.mode = on ? "auto" : "manual";
+      if (sc.mode === "auto") log("SECONDARY CONTAINMENT: AUTO mode enabled.");
+      else log("SECONDARY CONTAINMENT: MANUAL mode enabled.");
+      renderSecondaryContainmentUI();
+    }
+    function scToggleSeal(force){
+      const sc = scEnsure();
+      const next = (typeof force === "boolean") ? force : !sc.sealed;
+      sc.sealed = next;
+      log("SECONDARY CONTAINMENT: seals " + (sc.sealed ? "ENGAGED" : "RELEASED") + " (sim).");
+      renderSecondaryContainmentUI();
+    }
+    function scToggleScrub(force){
+      const sc = scEnsure();
+      const next = (typeof force === "boolean") ? force : !sc.scrubbers;
+      sc.scrubbers = next;
+      log("SECONDARY CONTAINMENT: scrubbers " + (sc.scrubbers ? "ON" : "OFF") + " (sim).");
+      renderSecondaryContainmentUI();
+    }
+    function scPurge(){
+      const sc = scEnsure();
+      sc.purgeTicks = 6; // short burst
+      log("SECONDARY CONTAINMENT: purge burst triggered (sim).");
+      renderSecondaryContainmentUI();
+    }
+    function scSetVent(v){
+      const sc = scEnsure();
+      sc.vent = clampInt(v, 0, 100);
+      renderSecondaryContainmentUI();
+    }
+
+    if (btnScAuto) btnScAuto.addEventListener("click", () => {
+      const sc = scEnsure();
+      scSetModeAuto(sc.mode !== "auto");
+      renderAll();
+    });
+    if (btnScSeal) btnScSeal.addEventListener("click", () => {
+      scToggleSeal();
+      renderAll();
+    });
+    if (btnScScrub) btnScScrub.addEventListener("click", () => {
+      scToggleScrub();
+      renderAll();
+    });
+    if (btnScPurge) btnScPurge.addEventListener("click", () => {
+      scPurge();
+      renderAll();
+    });
+    if (scVent) scVent.addEventListener("input", () => {
+      scSetVent(scVent.value);
+      if (scVentVal) scVentVal.textContent = clampInt(scVent.value, 0, 100) + "%";
+    });
+    if (scVent) scVent.addEventListener("change", () => {
+      scSetVent(scVent.value);
+      renderAll();
+    });
+
 
     // ----- COMMS / BLACK CHAMBER actions -----
     btnSatlink.addEventListener("click", () => {
@@ -8312,6 +9238,18 @@ function tickAftermath() {
       state.lockdown = false;
       state.meltdownStage = 0;
       state.implosionPlayed = false;
+      state.secondaryContainment = {
+        mode: "auto",
+        sealed: true,
+        scrubbers: true,
+        vent: 25,
+        purgeTicks: 0,
+        dp: 0.25,
+        internalRad: 0.08,
+        filterLoad: 0,
+        integrity: 100,
+        _lastAutoLog: 0
+      };
       state._m5ticks = 0;
       clearFault("all");
       state.temp = Math.min(state.temp, 520);
@@ -8535,6 +9473,9 @@ if (fGhost) {
       if (state.temp < 260) state.temp = 260;
       if (state.pressure < 0.9) state.pressure = 0.9;
       if (state.rad < 0.05) state.rad = 0.05;
+
+      // Secondary containment (Barrier-2)
+      tickSecondaryContainment();
 
 
       // Safeguard recharge (only when stable)
@@ -8994,9 +9935,58 @@ if (netpktSend) netpktSend.addEventListener("click", () => {
       }
 
       if (lower === "containment status") {
+        const sc = scEnsure();
         termPrint(`containment: alpha=${state.containment.alpha}, betaLatched=${state.containment.betaLatched}, gamma=${state.containment.gamma}, lockdown=${state.lockdown}`);
+        termPrint(`secondary: mode=${sc.mode}, sealed=${sc.sealed}, scrubbers=${sc.scrubbers}, vent=${clampInt(sc.vent,0,100)}%, dp=${sc.dp.toFixed(2)}, internalRad=${sc.internalRad.toFixed(2)}, filter=${Math.round(sc.filterLoad)}%, integrity=${Math.round(sc.integrity)}%`);
         return;
       }
+
+      // Secondary containment commands
+      if (lower === "sc purge") {
+        scPurge();
+        renderAll();
+        return;
+      }
+      if (lower === "sc auto on") {
+        scSetModeAuto(true);
+        renderAll();
+        return;
+      }
+      if (lower === "sc auto off") {
+        scSetModeAuto(false);
+        renderAll();
+        return;
+      }
+      if (lower === "sc seal on") {
+        scToggleSeal(true);
+        renderAll();
+        return;
+      }
+      if (lower === "sc seal off") {
+        scToggleSeal(false);
+        renderAll();
+        return;
+      }
+      if (lower === "sc scrub on") {
+        scToggleScrub(true);
+        renderAll();
+        return;
+      }
+      if (lower === "sc scrub off") {
+        scToggleScrub(false);
+        renderAll();
+        return;
+      }
+      if (lower.startsWith("sc vent ")) {
+        const v = parseInt(lower.split(" ").pop(), 10);
+        if (isNaN(v)) { termPrint("sc vent: expected 0-100", "err"); return; }
+        scSetVent(v);
+        log("SECONDARY CONTAINMENT: vent -> " + clampInt(v,0,100) + "% (sim).");
+        renderAll();
+        return;
+      }
+
+
 
       if (lower === "scram") { doScram(); return; }
       if (lower === "relief") { doRelief(); return; }
@@ -9525,6 +10515,7 @@ if (lower === "decon status") {
     try { perfApply(); } catch (e) {}
     updateCrisisEngine();
     loadWorkstationState();
+    try { initMultitaskingSupervisor(); } catch (e) {}
     renderAll();
 
     // Expose packet panel renderer (useful for debug tools and any late-bound callbacks)
