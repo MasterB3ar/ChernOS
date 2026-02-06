@@ -101,7 +101,7 @@
       nativeBuildInputs = [ (if pkgs ? tailwindcss then pkgs.tailwindcss else pkgs.nodePackages.tailwindcss) ];
 
       buildPhase = ''
-        set -e
+        set -eu
 
         cp $src/index.html ./index.html
 
@@ -139,7 +139,7 @@ CSS
 
         cat > $out/bin/chernos-desktop <<'SH'
         #!/bin/sh
-        set -eu
+        set -e
         # Prefer Wayland on Sway.
         exec env NIXOS_OZONE_WL=1 ${pkgs.electron}/bin/electron --enable-features=UseOzonePlatform --ozone-platform=wayland "$(dirname "$0")/.."/electron "$@"
         SH
