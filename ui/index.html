@@ -3019,7 +3019,9 @@ persistEnabled: false,
         hint.textContent = "Install to disk: press Ctrl+Alt+I (or Super+I)";
         hint.style.position = "fixed";
         hint.style.left = "14px";
-        hint.style.bottom = "14px";
+        // Keep clear of the WM taskbar (bottom bar) and never block clicks.
+        hint.style.bottom = "72px";
+        hint.style.pointerEvents = "none";
         hint.style.zIndex = "99999";
         hint.style.padding = "8px 10px";
         hint.style.borderRadius = "10px";
