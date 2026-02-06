@@ -1,3 +1,17 @@
+## v44 — UI fixes (Diagnostics + install hint)
+- Fixed **Diagnostics** showing blank in internal WM: the legacy diagnostics panel is only hidden in WM when it is *not* hosted inside a window.
+- Made the **Install to disk** hint auto-fade so it doesn't cover UI text.
+  - Disable: `?hideInstallHint=1`
+  - Keep visible: `?installHint=sticky`
+  - Change duration: `?installHintMs=12000`
+- Fixed `chernos-desktop` ISO build: removed `set -u` from the desktop derivation/script to prevent `patchShebangs` from failing during `fixupPhase`.
+
+## v42 — Fix ISO build (escaped comment)
+- Removed an unescaped `${...}` sequence inside the generated `/etc/chernos-kiosk.sh` comments that still triggered Nix string interpolation.
+
+## v41 — Fix ISO build (shell selector)
+- Fixed a Nix parsing error in `/etc/chernos-kiosk.sh` generation by escaping shell `${...}` expansions inside the Nix indented string.
+
 ## v40 — Multitasking Supervisor + Electron Desktop Suite
 - Added **Workstation → Multitasking Supervisor**: launch apps as View / Internal WM windows / Electron desktop windows; list + focus + close running windows.
 - Upgraded **Electron Desktop Suite** with multi-window + multi-instance app windows, plus a safe IPC bridge (`listWindows/focus/close`).
