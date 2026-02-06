@@ -306,8 +306,7 @@ CSS
 
 
               # Optional shell selector: "electron" boots the Desktop Suite instead of Chromium.
-              # NOTE: In Nix indented strings, `${...}` triggers Nix interpolation.
-              # Use `''${...}` so the shell receives its own parameter expansion literally.
+              # (Nix string interpolation conflicts with shell parameter expansion; keep expansions escaped here.)
               SHELL_MODE="''${CHERNOS_SHELL:-}"
               if [ -z "$SHELL_MODE" ] && [ "x''${CHERNOS_PERSIST:-0}" = "x1" ] && [ -f /persist/chernos-shell ]; then
                 SHELL_MODE="$(cat /persist/chernos-shell 2>/dev/null | tr -d "$(printf '\r\n')" | tr '[:upper:]' '[:lower:]')"
