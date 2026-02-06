@@ -2,77 +2,72 @@
 
 const { ipcMain, shell } = require('electron');
 
-function registerIpc({ app, getMainWindow, showAbout, openAppWindow }) {
-  ipcMain.handle('chernos:getAppInfo', async () => {
-    return {
-      name: app.getName(),
-      version: app.getVersion(),
-      platform: process.platform,
-      arch: process.arch,
-      packaged: app.isPackaged
-    };
+function registerIpc({
+  openAppWindow,
+  focusMainWindow,
+  showAbout,
+  listWindows,
+  focusWindow,
+  closeWindow,
+  openExternal,
+}) {
+  // Backward compatible: payload can be a string appId or { appId, opts }
+  ipcMain.on('chernos:openAppWindow', (_event, payload) => {
+    try {
+      let appId = '';
+      let opts = {};
+
+      if (typeof payload === 'string') {
+        appId = payload;
+      } else if (payload && typeof payload === 'object') {
+        appId = String(payload.appId || payload.id || '');
+        opts = payload.opts || payload.options || {};
+      }
+
+      appId = String(appId || '').trim();
+      if (!appId) return;
+      openAppWindow(appId, opts);
+    } catch (_) {}
   });
 
-  ipcMain.handle('chernos:openExternal', async (_evt, url) => {
+  ipcMain.handle('chernos:listWindows', async () => {
     try {
-      const u = String(url || '');
-      if (!u) return { ok: false, error: 'empty-url' };
-      await shell.openExternal(u);
-      return { ok: true };
-    } catch (e) {
-      return { ok: false, error: String(e) };
+      return listWindows ? listWindows() : [];
+    } catch (_) {
+      return [];
     }
   });
 
-  ipcMain.handle('chernos:toggleFullscreen', async () => {
-    const w = getMainWindow();
-    if (!w) return { ok: false, error: 'no-window' };
-    w.setFullScreen(!w.isFullScreen());
-    return { ok: true, fullScreen: w.isFullScreen() };
+  ipcMain.on('chernos:focusWindow', (_event, key) => {
+    try {
+      if (!focusWindow) return;
+      focusWindow(String(key || ''));
+    } catch (_) {}
   });
 
-  ipcMain.handle('chernos:setFullscreen', async (_evt, enabled) => {
-    const w = getMainWindow();
-    if (!w) return { ok: false, error: 'no-window' };
-    w.setFullScreen(!!enabled);
-    return { ok: true, fullScreen: w.isFullScreen() };
+  ipcMain.on('chernos:closeWindow', (_event, key) => {
+    try {
+      if (!closeWindow) return;
+      closeWindow(String(key || ''));
+    } catch (_) {}
   });
 
-  ipcMain.handle('chernos:toggleKiosk', async () => {
-    const w = getMainWindow();
-    if (!w) return { ok: false, error: 'no-window' };
-    const next = !w.isKiosk();
-    w.setKiosk(next);
-    if (next) w.setFullScreen(true);
-    return { ok: true, kiosk: w.isKiosk() };
+  ipcMain.on('chernos:focusMainWindow', () => {
+    try { focusMainWindow(); } catch (_) {}
   });
 
-  ipcMain.handle('chernos:setKiosk', async (_evt, enabled) => {
-    const w = getMainWindow();
-    if (!w) return { ok: false, error: 'no-window' };
-    const next = !!enabled;
-    w.setKiosk(next);
-    if (next) w.setFullScreen(true);
-    return { ok: true, kiosk: w.isKiosk() };
-  });
-
-  ipcMain.handle('chernos:showAbout', async () => {
+  ipcMain.on('chernos:showAbout', () => {
     try { showAbout(); } catch (_) {}
-    return { ok: true };
   });
 
-  ipcMain.handle('chernos:openAppWindow', async (_evt, appId, options) => {
+  ipcMain.on('chernos:openExternal', (_event, url) => {
     try {
-      if (typeof openAppWindow !== 'function') return { ok: false, error: 'unsupported' };
-      const id = String(appId || '').trim();
-      if (!id) return { ok: false, error: 'empty-app' };
-      const opts = (options && typeof options === 'object') ? options : {};
-      const win = openAppWindow(id, opts);
-      return { ok: !!win };
-    } catch (e) {
-      return { ok: false, error: String(e) };
-    }
+      const u = openExternal ? openExternal(url) : url;
+      if (u) shell.openExternal(String(u));
+    } catch (_) {}
   });
 }
 
-module.exports = { registerIpc };
+module.exports = {
+  registerIpc,
+};
