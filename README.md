@@ -45,3 +45,10 @@ npm run dist
 - Fast boot pipeline: quieter boot, 0-second GRUB timeout, reduced systemd overhead.
 - Real persistence (overlayfs): optional persistent state via a `CHERNOS_PERSIST` partition.
 - Background music system with UI controls and terminal commands (`music on/off`, `music vol`).
+
+## Boot theming
+- Plymouth splash: **ChernOS Nuclear Glow** (pulsing reactor ring).
+- GRUB theme: **Blackchamber** background + logo.
+
+## Installer
+- Launch Calamares from the live session: **Ctrl+Alt+I** (or **Super+I**).
