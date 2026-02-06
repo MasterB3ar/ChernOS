@@ -1,3 +1,15 @@
+## v40 — Multitasking Supervisor + Electron Desktop Suite
+- Added **Workstation → Multitasking Supervisor**: launch apps as View / Internal WM windows / Electron desktop windows; list + focus + close running windows.
+- Upgraded **Electron Desktop Suite** with multi-window + multi-instance app windows, plus a safe IPC bridge (`listWindows/focus/close`).
+- Added `chernos-desktop` package to the ISO and Sway hotkeys: **Mod+E** / **Ctrl+Alt+E**.
+- Optional: boot directly into Electron by setting `CHERNOS_SHELL=electron` or writing `electron` to `/persist/chernos-shell`.
+
+## v39 — Metric rings + Secondary containment
+- Added **animated metric rings** around the core (Temp / Pressure / Radiation), with severity color shifts.
+- Added **Secondary Containment (Barrier-2) simulation**: integrity + ΔP + internal radiation + filter load.
+- New containment controls: Seal Doors, Scrubbers, Purge burst, Vent slider, Auto/Manual.
+- Terminal integration: `containment status` now includes secondary containment; added `sc ...` commands.
+
 ## v38 — Plymouth + GRUB theme
 - Added nuclear-glow Plymouth splash (pulsing reactor ring + logo).
 - Added custom GRUB theme (Blackchamber) with background + logo + highlight.
