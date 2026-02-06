@@ -1295,6 +1295,57 @@ body.blackchamber .wm-wall-item.active{ border-color: rgba(34,211,238,0.55); box
 }
 
 
+.wm-wall-row{ display:flex; gap:10px; width:100%; align-items:center; }
+.wm-wall-url{
+  flex:1;
+  min-width: 190px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.22);
+  background: rgba(2,6,23,0.60);
+  color: rgba(226,232,240,0.92);
+  font-size: 12px;
+}
+body.blackchamber .wm-wall-url{
+  border-color: rgba(34,211,238,0.22);
+  background: rgba(0,0,0,0.62);
+}
+.wm-wall-drop{
+  width:100%;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px dashed rgba(148,163,184,0.30);
+  background: rgba(148,163,184,0.05);
+  color: rgba(226,232,240,0.72);
+  font-size: 11px;
+  line-height: 1.25;
+  user-select:none;
+}
+.wm-wall-drop:focus{
+  outline: none;
+  border-color: rgba(34,197,94,0.55);
+}
+body.blackchamber .wm-wall-drop:focus{ border-color: rgba(34,211,238,0.55); }
+.wm-check{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(148,163,184,0.18);
+  background: rgba(148,163,184,0.04);
+  color: rgba(226,232,240,0.62);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.wm-check input{ accent-color: rgb(34,197,94); }
+body.blackchamber .wm-check input{ accent-color: rgb(34,211,238); }
+.wm-upload.disabled{ opacity: 0.55; pointer-events:none; }
+
+
 /* ===== Hotkeys overlay ===== */
 .wm-hotkeys{
   position: fixed;
@@ -2331,14 +2382,30 @@ body.blackchamber .wm-hk-card{
   </div>
   <div id="wm-wall-grid" class="wm-wall-grid"></div>
   <div class="wm-wall-actions">
-    <label class="wm-upload">
-      <input id="wm-wall-upload" type="file" accept="image/*" />
-      Upload image
-    </label>
-    <button class="wm-mini-btn" id="wm-wall-clear" title="Remove uploaded wallpaper">Clear upload</button>
-    <button class="wm-mini-btn" id="wm-wall-reset" title="Reset to default">Reset</button>
+  <div class="wm-wall-row">
+    <input id="wm-wall-url" class="wm-wall-url" type="text" inputmode="url" placeholder="Paste image URL (https://… or file:///…)" />
+    <button class="wm-mini-btn" id="wm-wall-url-apply" title="Apply URL wallpaper">Import URL</button>
   </div>
-  <div class="wm-wall-hint">Tip: Uploaded wallpaper is stored locally in the browser profile (localStorage).</div>
+
+  <div id="wm-wall-drop" class="wm-wall-drop" tabindex="0" title="Paste (Ctrl+V) or drop an image">
+    Drop an image here or paste with <span class="kcap">Ctrl</span>+<span class="kcap">V</span>.
+    <div style="margin-top:6px; opacity:0.85;">VirtualBox tip: URL/paste is usually more stable than the native file picker.</div>
+  </div>
+
+  <label class="wm-check" title="File upload can be unstable on some VM GPU/portal setups">
+    <input id="wm-wall-upload-enable" type="checkbox" />
+    Enable file upload (experimental)
+  </label>
+
+  <label class="wm-upload" id="wm-wall-upload-wrap">
+    <input id="wm-wall-upload" type="file" accept="image/*" />
+    Upload file
+  </label>
+
+  <button class="wm-mini-btn" id="wm-wall-clear" title="Remove custom wallpaper">Clear</button>
+  <button class="wm-mini-btn" id="wm-wall-reset" title="Reset to default">Reset</button>
+</div>
+<div class="wm-wall-hint">Stored locally in the browser profile (localStorage). In VMs, huge images or file pickers may crash — prefer URL/paste.</div>
 </div>
 
 <!-- HOTKEYS OVERLAY -->
@@ -3132,6 +3199,11 @@ const wmWallGrid = document.getElementById("wm-wall-grid");
 const wmWallUpload = document.getElementById("wm-wall-upload");
 const wmWallClear = document.getElementById("wm-wall-clear");
 const wmWallReset = document.getElementById("wm-wall-reset");
+const wmWallUrl = document.getElementById("wm-wall-url");
+const wmWallUrlApply = document.getElementById("wm-wall-url-apply");
+const wmWallDrop = document.getElementById("wm-wall-drop");
+const wmWallUploadEnable = document.getElementById("wm-wall-upload-enable");
+const wmWallUploadWrap = document.getElementById("wm-wall-upload-wrap");
 const wmWallX = document.getElementById("wm-wall-x");
 const wmMenuWallpapers = document.getElementById("wm-menu-wallpapers");
 const wmMenuExit = document.getElementById("wm-menu-exit");
@@ -3146,6 +3218,10 @@ const wmMenuHotkeys = document.getElementById("wm-menu-hotkeys");
 
 let wmFocusedId = null;
 let wmClockTimer = null;
+
+const WM_WALL_CUSTOM_MAXLEN = 850000; // data URL string cap (VM/GPU safety)
+const WM_WALL_URL_KEY = "chernos_wallpaper_url";
+const WM_WALL_UPLOAD_ENABLED_KEY = "chernos_wallpaper_upload_enabled";
 
 const WM_WALLPAPERS = [
   {
@@ -3219,42 +3295,59 @@ function wmApplyWallpaper() {
   if (!wmWallpaper) return;
   let wpId = "reactor";
   let custom = "";
+  let url = "";
   try {
     wpId = localStorage.getItem("chernos_wallpaper_id") || "reactor";
     custom = localStorage.getItem("chernos_wallpaper_custom") || "";
+    url = localStorage.getItem(WM_WALL_URL_KEY) || "";
   } catch (e) {}
+
   const preset = WM_WALLPAPERS.find(w => w.id === wpId) || WM_WALLPAPERS[0];
 
-
   if (custom) {
-    const WM_MAXLEN = 850000;
-    if (custom.length > WM_MAXLEN) {
-      // Safety: huge wallpapers can crash VMs / GPU. Revert to preset.
+    if (custom.length > WM_WALL_CUSTOM_MAXLEN) {
       try { localStorage.removeItem("chernos_wallpaper_custom"); } catch (e) {}
       custom = "";
       try { wmToast("Wallpaper too large; reverted."); } catch (e) {}
     }
   }
+  if (url) {
+    // Basic sanity cap to avoid absurd strings.
+    if (url.length > 4096) {
+      try { localStorage.removeItem(WM_WALL_URL_KEY); } catch (e) {}
+      url = "";
+      try { wmToast("Wallpaper URL too long; cleared."); } catch (e) {}
+    }
+  }
 
-  if (custom) {
-    wmWallpaper.style.background = 
+  const applyUrl = (u) => {
+    wmWallpaper.style.background =
       "linear-gradient(180deg, rgba(0,0,0,0.72), rgba(0,0,0,0.90))," +
-      `url(${custom})`;
+      `url(${u})`;
     wmWallpaper.style.backgroundSize = "cover";
     wmWallpaper.style.backgroundPosition = "center";
     wmWallpaper.style.backgroundRepeat = "no-repeat";
+  };
+
+  if (custom) {
+    applyUrl(custom);
+    return;
+  }
+  if (url) {
+    applyUrl(url);
+    return;
+  }
+
+  wmWallpaper.style.background = preset.bg;
+  // For grid wallpapers, make the grid visible.
+  if (wpId === "grid" || wpId === "blueprint") {
+    wmWallpaper.style.backgroundSize = "auto, 44px 44px, 44px 44px";
+    wmWallpaper.style.backgroundPosition = "center, center, center";
+    wmWallpaper.style.backgroundRepeat = "no-repeat, repeat, repeat";
   } else {
-    wmWallpaper.style.background = preset.bg;
-    // For grid wallpapers, make the grid visible.
-    if (wpId === "grid" || wpId === "blueprint") {
-      wmWallpaper.style.backgroundSize = "auto, 44px 44px, 44px 44px";
-      wmWallpaper.style.backgroundPosition = "center, center, center";
-      wmWallpaper.style.backgroundRepeat = "no-repeat, repeat, repeat";
-    } else {
-      wmWallpaper.style.backgroundSize = "";
-      wmWallpaper.style.backgroundPosition = "";
-      wmWallpaper.style.backgroundRepeat = "";
-    }
+    wmWallpaper.style.backgroundSize = "";
+    wmWallpaper.style.backgroundPosition = "";
+    wmWallpaper.style.backgroundRepeat = "";
   }
 }
 
@@ -3262,6 +3355,7 @@ function wmSetWallpaper(id) {
   try {
     localStorage.setItem("chernos_wallpaper_id", String(id || "reactor"));
     localStorage.removeItem("chernos_wallpaper_custom");
+    localStorage.removeItem(WM_WALL_URL_KEY);
   } catch (e) {}
   wmApplyWallpaper();
   wmRenderWallpaperGrid();
@@ -3270,13 +3364,28 @@ function wmSetWallpaper(id) {
 function wmSetCustomWallpaper(dataUrl) {
   try {
     localStorage.setItem("chernos_wallpaper_custom", String(dataUrl || ""));
+    localStorage.removeItem(WM_WALL_URL_KEY);
+  } catch (e) {}
+  wmApplyWallpaper();
+  wmRenderWallpaperGrid();
+}
+
+function wmSetUrlWallpaper(url) {
+  const u = String(url || "").trim();
+  if (!u) return;
+  try {
+    localStorage.setItem(WM_WALL_URL_KEY, u);
+    localStorage.removeItem("chernos_wallpaper_custom");
   } catch (e) {}
   wmApplyWallpaper();
   wmRenderWallpaperGrid();
 }
 
 function wmClearWallpaperUpload() {
-  try { localStorage.removeItem("chernos_wallpaper_custom"); } catch (e) {}
+  try {
+    localStorage.removeItem("chernos_wallpaper_custom");
+    localStorage.removeItem(WM_WALL_URL_KEY);
+  } catch (e) {}
   wmApplyWallpaper();
   wmRenderWallpaperGrid();
 }
@@ -3284,6 +3393,7 @@ function wmClearWallpaperUpload() {
 function wmResetWallpaper() {
   try {
     localStorage.removeItem("chernos_wallpaper_custom");
+    localStorage.removeItem(WM_WALL_URL_KEY);
     localStorage.setItem("chernos_wallpaper_id", "reactor");
   } catch (e) {}
   wmApplyWallpaper();
@@ -3293,34 +3403,35 @@ function wmResetWallpaper() {
 function wmRenderWallpaperGrid() {
   if (!wmWallGrid) return;
   let activeId = "reactor";
-  let hasUpload = false;
+  let hasCustom = false;
+  let hasUrl = false;
   try {
     activeId = localStorage.getItem("chernos_wallpaper_id") || "reactor";
-    hasUpload = !!(localStorage.getItem("chernos_wallpaper_custom") || "");
+    hasCustom = !!(localStorage.getItem("chernos_wallpaper_custom") || "");
+    hasUrl = !!(localStorage.getItem(WM_WALL_URL_KEY) || "");
   } catch (e) {}
   wmWallGrid.innerHTML = "";
 
-  // Uploaded option (if present)
-  if (hasUpload) {
+  // Custom option (data URL or URL)
+  if (hasCustom || hasUrl) {
     const item = document.createElement("div");
     item.className = "wm-wall-item active";
     const prev = document.createElement("div");
     prev.className = "wm-wall-prev";
     try {
       const cu = localStorage.getItem("chernos_wallpaper_custom") || "";
-      const WM_MAXLEN = 850000;
-      if (cu && cu.length <= WM_MAXLEN) {
+      if (cu && cu.length <= WM_WALL_CUSTOM_MAXLEN) {
         prev.style.backgroundImage = `url(${cu})`;
         prev.style.backgroundSize = "cover";
         prev.style.backgroundPosition = "center";
       } else {
-        // Avoid rendering massive data URLs in previews (can crash VMs / weak GPUs).
+        // Avoid rendering massive data URLs / remote URLs in previews (VM safety).
         prev.style.background = "linear-gradient(180deg, rgba(2,6,23,0.95), rgba(0,0,0,0.85)), radial-gradient(600px 280px at 50% 10%, rgba(34,197,94,0.18), transparent 60%)";
       }
     } catch (e) {}
     const name = document.createElement("div");
     name.className = "wm-wall-name";
-    name.textContent = "Uploaded";
+    name.textContent = hasCustom ? "Uploaded" : "URL";
     item.appendChild(prev);
     item.appendChild(name);
     item.addEventListener("click", () => { wmApplyWallpaper(); });
@@ -3329,7 +3440,7 @@ function wmRenderWallpaperGrid() {
 
   for (const w of WM_WALLPAPERS) {
     const item = document.createElement("div");
-    item.className = "wm-wall-item" + ((!hasUpload && w.id === activeId) ? " active" : "");
+    item.className = "wm-wall-item" + ((!hasCustom && !hasUrl && w.id === activeId) ? " active" : "");
     const prev = document.createElement("div");
     prev.className = "wm-wall-prev";
     prev.style.background = w.bg;
@@ -3459,73 +3570,150 @@ function wmInitDesktopUI() {
       wmToggleStartMenu(false);
     });
   }
-
-  // Wallpaper upload
-  if (wmWallUpload) {
-    wmWallUpload.addEventListener("change", async (e) => {
-      const f = (e.target && e.target.files) ? e.target.files[0] : null;
-      if (!f) return;
-
-      const WM_MAXLEN = 850000; // ~0.85MB data URL string (keeps VM/GPU stable)
-      const downscaleDataUrl = (dataUrl) => new Promise((resolve) => {
-        try {
-          const img = new Image();
-          img.onload = () => {
-            try {
-              const maxW = 1920, maxH = 1080;
-              const iw = img.naturalWidth || img.width || 0;
-              const ih = img.naturalHeight || img.height || 0;
-              if (!iw || !ih) { resolve(dataUrl); return; }
-
-              const scale = Math.min(1, maxW / iw, maxH / ih);
-              const w = Math.max(1, Math.round(iw * scale));
-              const h = Math.max(1, Math.round(ih * scale));
-
-              const c = document.createElement("canvas");
-              c.width = w;
-              c.height = h;
-              const ctx = c.getContext("2d", { alpha: false });
-              if (!ctx) { resolve(dataUrl); return; }
-              ctx.drawImage(img, 0, 0, w, h);
-
-              // JPEG compress is widely supported and much smaller than PNG data URLs.
-              let out = "";
-              try { out = c.toDataURL("image/jpeg", 0.82); } catch (_) {}
-              resolve(out || dataUrl);
-            } catch (err) { resolve(dataUrl); }
-          };
-          img.onerror = () => resolve(dataUrl);
-          img.src = dataUrl;
-        } catch (err) { resolve(dataUrl); }
-      });
-
-      try {
-        const reader = new FileReader();
-        reader.onload = async () => {
-          let dataUrl = String(reader.result || "");
-          if (!dataUrl.startsWith("data:image/")) return;
-
-          // If huge, downscale/compress to avoid VM crashes.
-          if (dataUrl.length > WM_MAXLEN) {
-            const smaller = await downscaleDataUrl(dataUrl);
-            if (smaller) dataUrl = smaller;
-          }
-
-          if (dataUrl.length > WM_MAXLEN) {
-            try { wmToast("Wallpaper too large. Use a smaller image."); } catch (_) {}
-            return;
-          }
-
-          wmSetCustomWallpaper(dataUrl);
-          try { wmToast("Wallpaper applied"); } catch (_) {}
-        };
-        reader.readAsDataURL(f);
-      } catch (err) {}
-      try { e.target.value = ""; } catch (_) {}
-    });
+// Wallpapers: safer in VMs (URL/paste recommended)
+const wmIsUploadEnabled = () => {
+  try {
+    let v = localStorage.getItem(WM_WALL_UPLOAD_ENABLED_KEY);
+    if (v === null || v === undefined) {
+      // Default OFF on kiosk to avoid VM crashes from file pickers/portals.
+      v = (typeof kioskMode !== "undefined" && kioskMode) ? "0" : "1";
+      localStorage.setItem(WM_WALL_UPLOAD_ENABLED_KEY, v);
+    }
+    return String(v) === "1";
+  } catch (e) {
+    return !(typeof kioskMode !== "undefined" && kioskMode);
   }
+};
 
-  if (wmWallClear) wmWallClear.addEventListener("click", (e) => { e.stopPropagation(); wmClearWallpaperUpload(); });
+const wmSyncUploadUI = () => {
+  const on = wmIsUploadEnabled();
+  if (wmWallUploadEnable) wmWallUploadEnable.checked = on;
+  if (wmWallUploadWrap) wmWallUploadWrap.style.display = on ? "inline-flex" : "none";
+};
+
+if (wmWallUploadEnable) {
+  wmWallUploadEnable.addEventListener("change", (e) => {
+    e.stopPropagation();
+    const on = !!(e.target && e.target.checked);
+    try { localStorage.setItem(WM_WALL_UPLOAD_ENABLED_KEY, on ? "1" : "0"); } catch (e2) {}
+    wmSyncUploadUI();
+    try { wmToast(on ? "File upload enabled (experimental)" : "File upload disabled"); } catch (e2) {}
+  });
+}
+
+const wmDownscaleDataUrl = (dataUrl) => new Promise((resolve) => {
+  try {
+    const img = new Image();
+    img.onload = () => {
+      try {
+        const maxW = 1920, maxH = 1080;
+        const iw = img.naturalWidth || img.width || 0;
+        const ih = img.naturalHeight || img.height || 0;
+        if (!iw || !ih) { resolve(dataUrl); return; }
+        const scale = Math.min(1, maxW / iw, maxH / ih);
+        const w = Math.max(1, Math.round(iw * scale));
+        const h = Math.max(1, Math.round(ih * scale));
+        const c = document.createElement("canvas");
+        c.width = w;
+        c.height = h;
+        const ctx = c.getContext("2d", { alpha: false });
+        if (!ctx) { resolve(dataUrl); return; }
+        ctx.drawImage(img, 0, 0, w, h);
+        let out = "";
+        try { out = c.toDataURL("image/jpeg", 0.82); } catch (_) {}
+        resolve(out || dataUrl);
+      } catch (err) { resolve(dataUrl); }
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  } catch (err) { resolve(dataUrl); }
+});
+
+const wmImportFileAsWallpaper = async (file) => {
+  const f = file || null;
+  if (!f) return;
+  try {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      let dataUrl = String(reader.result || "");
+      if (!dataUrl.startsWith("data:image/")) { try { wmToast("Not an image"); } catch (e) {} return; }
+      if (dataUrl.length > WM_WALL_CUSTOM_MAXLEN) {
+        const smaller = await wmDownscaleDataUrl(dataUrl);
+        if (smaller) dataUrl = smaller;
+      }
+      if (dataUrl.length > WM_WALL_CUSTOM_MAXLEN) {
+        try { wmToast("Wallpaper too large. Use a smaller image or URL."); } catch (e) {}
+        return;
+      }
+      wmSetCustomWallpaper(dataUrl);
+      try { wmToast("Wallpaper applied"); } catch (e) {}
+    };
+    reader.readAsDataURL(f);
+  } catch (err) {
+    try { wmToast("Import failed"); } catch (e) {}
+  }
+};
+
+// URL import (works without native file pickers/portals)
+if (wmWallUrlApply) {
+  wmWallUrlApply.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const u = String((wmWallUrl && wmWallUrl.value) ? wmWallUrl.value : "").trim();
+    if (!u) { try { wmToast("Paste a URL first"); } catch (e2) {} return; }
+    if (u.startsWith("data:image/")) {
+      if (u.length > WM_WALL_CUSTOM_MAXLEN) { try { wmToast("Data URL too large"); } catch (e2) {} return; }
+      wmSetCustomWallpaper(u);
+    } else {
+      wmSetUrlWallpaper(u);
+    }
+    try { wmToast("Wallpaper applied"); } catch (e2) {}
+  });
+}
+if (wmWallUrl) {
+  wmWallUrl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") { e.preventDefault(); if (wmWallUrlApply) wmWallUrlApply.click(); }
+  });
+}
+
+// Drop/paste import
+const wmHandlePaste = async (e) => {
+  try {
+    const cd = e && e.clipboardData ? e.clipboardData : null;
+    if (!cd || !cd.items) return;
+    for (const it of cd.items) {
+      if (it && it.type && it.type.startsWith("image/")) {
+        const blob = it.getAsFile ? it.getAsFile() : null;
+        if (blob) { await wmImportFileAsWallpaper(blob); e.preventDefault(); return; }
+      }
+    }
+  } catch (err) {}
+};
+
+if (wmWallDrop) {
+  wmWallDrop.addEventListener("dragover", (e) => { e.preventDefault(); });
+  wmWallDrop.addEventListener("drop", async (e) => {
+    e.preventDefault();
+    const dt = e.dataTransfer;
+    const f = dt && dt.files ? dt.files[0] : null;
+    if (f) await wmImportFileAsWallpaper(f);
+  });
+  wmWallDrop.addEventListener("paste", (e) => { wmHandlePaste(e); });
+  wmWallDrop.addEventListener("click", () => { try { wmWallDrop.focus(); } catch (err) {} });
+}
+if (wmWallPanel) wmWallPanel.addEventListener("paste", (e) => { wmHandlePaste(e); });
+
+// File upload (optional)
+wmSyncUploadUI();
+if (wmWallUpload) {
+  wmWallUpload.addEventListener("change", async (e) => {
+    if (!wmIsUploadEnabled()) { try { wmToast("Enable file upload first"); } catch (e2) {} return; }
+    const f = (e.target && e.target.files) ? e.target.files[0] : null;
+    if (f) await wmImportFileAsWallpaper(f);
+    try { e.target.value = ""; } catch (e2) {}
+  });
+}
+
+if (wmWallClear) wmWallClear.addEventListener("click", (e) => { e.stopPropagation(); wmClearWallpaperUpload(); });
   if (wmWallReset) wmWallReset.addEventListener("click", (e) => { e.stopPropagation(); wmResetWallpaper(); });
 
   // Close menus on outside click
@@ -9033,6 +9221,8 @@ if (lower === "decon status") {
     "chernos_mute_all",
     "chernos_wallpaper_id",
     "chernos_wallpaper_custom",
+    "chernos_wallpaper_url",
+    "chernos_wallpaper_upload_enabled",
     "chernos_wm_windows",
     "chernos_wm_enabled",
     "chernos_ws_notes",
