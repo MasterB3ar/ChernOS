@@ -1,5 +1,21 @@
 # Changelog
 
+## v28 — Persistence v3 (profiles, states, logs)
+- Added Persistence v3 app (Profiles / States / Logs) with UI panel + WM start menu + dock.
+- Saves/restores full sim state + key local settings (audio/music/mixer, wallpaper, WM layout, hotkeys, workstation).
+- Rolling AUTO state (autosave) + manual state snapshots; export/import JSON.
+- Terminal integration: `profile ...` commands.
+
+## 2.0.0 (2026-02-05) — Patch v21
+
+### Added
+- **Network Packet Bus (sim)**: inflight packet model with delivery/drop outcomes, plus moving packet dots on the NetOps topology map.
+- **NetOps Packet Panel**: sniffer toggle, filter, quick-send controls, and a scrolling packet log.
+- **Terminal network tooling**: `net packets`, `net sniff on/off [filter]`, `net send <dst> [type] [units]`, `net clear` (plus working `net nodes/scan/trace/throttle`).
+
+### Changed
+- Net rate display now reflects *delivered* packet rate when the packet bus is active.
+
 ## 2.0.0 (2026-01-18)
 
 ### Added
