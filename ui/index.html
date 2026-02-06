@@ -2219,7 +2219,92 @@ body.blackchamber .wm-hk-card{
     </div>
   </div>
 
-    <!-- SOUNDSCAPE -->
+    
+    <!-- MESSAGE BUS -->
+    <div class="card mt-1" id="bus-card" data-panel="bus">
+      <div class="label">MESSAGE BUS — LIVE EVENTS</div>
+      <div class="flex gap-2 items-center mt-2">
+        <button class="btn" id="bus-clear">Clear</button>
+        <button class="btn" id="bus-pause">Pause</button>
+        <input id="bus-filter" autocomplete="off"
+          placeholder="filter (topic contains)…"
+          class="flex-1 bg-slate-900/60 border border-slate-700 rounded px-2 py-1 text-xs text-slate-100" />
+        <span id="bus-stats" class="text-[10px] text-slate-400"></span>
+      </div>
+      <div id="bus-log" class="term-out mt-2" style="max-height:240px; overflow:auto;"></div>
+    
+
+    <!-- PLUGINS -->
+    <div class="card mt-1" id="plugins-card" data-panel="plugins">
+      <div class="label">PLUGINS — EXTENSIONS</div>
+      <div class="soft text-xs mt-1">
+        Plugins are local scripts that can extend ChernOS (commands, automations, UI hooks). Use with care.
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 mt-2">
+        <div class="card">
+          <div class="label text-xs">Installed plugins</div>
+          <div id="plugins-list" class="mt-2 space-y-2"></div>
+
+          <div class="flex gap-2 mt-2 items-center">
+            <button class="btn" id="plugins-export">Export</button>
+            <button class="btn" id="plugins-import">Import</button>
+            <button class="btn" id="plugins-reset">Reset</button>
+            <span id="plugins-stat" class="text-[10px] text-slate-400 ml-auto"></span>
+          </div>
+
+          <textarea id="plugins-io" class="term-input mt-2" style="height:130px; width:100%;"
+            placeholder="Export/Import JSON here (plugins store)."></textarea>
+        </div>
+
+        <div class="card">
+          <div class="label text-xs">Add / edit plugin</div>
+
+          <div class="grid grid-cols-3 gap-2 mt-2">
+            <input id="plugin-id" autocomplete="off"
+              placeholder="id (e.g. ops.pinger)"
+              class="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 text-xs text-slate-100" />
+            <input id="plugin-name" autocomplete="off"
+              placeholder="name"
+              class="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 text-xs text-slate-100" />
+            <input id="plugin-version" autocomplete="off"
+              placeholder="version"
+              class="bg-slate-900/60 border border-slate-700 rounded px-2 py-1 text-xs text-slate-100" />
+          </div>
+
+          <textarea id="plugin-code" class="term-input mt-2" style="height:220px; width:100%;"
+            placeholder="Plugin JS (must RETURN a plugin object)
+Example:
+return {
+  id: 'ops.hello',
+  name: 'Hello',
+  version: '1.0.0',
+  init(api){
+    api.toast('Hello from plugin');
+    api.command('hello', (args)=>api.term('hello ' + (args[0]||'world')));
+    api.subscribe('fault.**', (p,m)=>api.log('fault event: ' + m.topic));
+  },
+  tick(api, dt){ /* optional */ },
+  dispose(api){ /* optional */ }
+};"></textarea>
+
+          <div class="flex gap-2 mt-2 items-center">
+            <button class="btn" id="plugin-validate">Validate</button>
+            <button class="btn" id="plugin-install">Install/Update</button>
+            <button class="btn" id="plugin-runonce">Run once</button>
+            <button class="btn" id="plugin-clear">Clear</button>
+            <span id="plugin-status" class="text-[10px] text-slate-400 ml-auto"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="label text-xs mt-3">Plugin log</div>
+      <div id="plugins-log" class="term-out mt-2" style="max-height:220px; overflow:auto;"></div>
+    </div>
+
+</div>
+
+<!-- SOUNDSCAPE -->
     <div class="card mt-1" id="sound-card" style="display:none" data-panel="reactor soundscape">
       <div class="label flex items-center justify-between">
         <span>SOUNDSCAPE — MIX SETTINGS</span>
@@ -2365,6 +2450,7 @@ body.blackchamber .wm-hk-card{
     <button class="wm-menu-item" data-wm-open="diagnostics">Diagnostics</button>
     <button class="wm-menu-item" data-wm-open="soundscape">Soundscape</button>
       <button class="wm-menu-item" data-wm-open="persistence">Persistence</button>
+    <button class="wm-menu-item" data-wm-open="plugins">Plugins</button>
 </div>
 
   <div class="wm-menu-title mt">Desktop</div>
@@ -2434,6 +2520,8 @@ body.blackchamber .wm-hk-card{
     <button class="dock-btn" data-view="logs">Logs</button>
     <button class="dock-btn" data-view="diagnostics">Diagnostics</button>
     <button class="dock-btn" data-view="soundscape">Soundscape</button>
+    <button class="dock-btn" data-view="bus">Bus</button>
+    <button class="dock-btn" data-view="plugins">Plugins</button>
         <button class="dock-btn" data-view="persistence">Persistence</button>
 <button class="dock-btn" data-view="wm">Windows</button>
     <button class="dock-btn" data-view="all">All</button>
@@ -2922,6 +3010,30 @@ persistEnabled: false,
     const standaloneMode = (params.get("standalone") === "1");
     const appParam = String(params.get("app") || "").toLowerCase();
 
+    // Installer hint (live ISO): Calamares is bound in Sway.
+    // Hide with: ?hideInstallHint=1
+    try {
+      if (kioskMode && params.get("hideInstallHint") !== "1") {
+        const hint = document.createElement("div");
+        hint.id = "chernos-install-hint";
+        hint.textContent = "Install to disk: press Ctrl+Alt+I (or Super+I)";
+        hint.style.position = "fixed";
+        hint.style.left = "14px";
+        hint.style.bottom = "14px";
+        hint.style.zIndex = "99999";
+        hint.style.padding = "8px 10px";
+        hint.style.borderRadius = "10px";
+        hint.style.background = "rgba(0,0,0,0.55)";
+        hint.style.border = "1px solid rgba(255,215,0,0.35)";
+        hint.style.color = "rgba(255,215,0,0.95)";
+        hint.style.fontFamily = "system-ui, -apple-system, Segoe UI, Roboto, sans-serif";
+        hint.style.fontSize = "12px";
+        hint.style.letterSpacing = "0.2px";
+        hint.style.backdropFilter = "blur(6px)";
+        document.body.appendChild(hint);
+      }
+    } catch (e) {}
+
     const wmMode = ((params.get("wm") === "1") || (kioskMode && !desktopMode && !standaloneMode));
 	    const wmChild = (params.get("wmchild") === "1");
 	    noAudio = (params.get("noaudio") === "1");
@@ -3052,6 +3164,171 @@ persistEnabled: false,
       maybePersist(line + "\n");
     }
 
+    // ============================================================
+    // Internal Message Bus (pub/sub) — topics, wildcards, history
+    // ============================================================
+    const Bus = (() => {
+      const MAX_DEFAULT = 600;
+      let maxHistory = MAX_DEFAULT;
+      let seq = 0;
+      let subSeq = 0;
+
+      /** @type {{topic:string, payload:any, meta:any}[]} */
+      const history = [];
+      /** @type {Map<string, any>} */
+      const retained = new Map();
+      /** @type {Map<number, {id:number, pattern:string, re:RegExp, fn:Function, once:boolean, created:number}>} */
+      const subs = new Map();
+
+      function normTopic(t) {
+        return String(t ?? "").trim();
+      }
+
+      // Pattern syntax:
+      //   "a.b.*"  => matches one segment
+      //   "a.**"   => matches any remainder (including empty)
+      function patternToRegex(pattern) {
+        const p = normTopic(pattern);
+        if (!p) return /^$/;
+        // escape regex special chars except * and .
+        const esc = p.replace(/[-[\]{}()+?^$|\\]/g, "\\$&");
+        const parts = esc.split(".");
+        const rx = parts.map(seg => {
+          if (seg === "**") return "(?:.*)?";
+          if (seg === "*") return "[^.]+";
+          return seg;
+        }).join("\\.");
+        return new RegExp("^" + rx + "$");
+      }
+
+      function pushHistory(topic, payload, meta) {
+        history.push({ topic, payload, meta });
+        if (history.length > maxHistory) history.splice(0, history.length - maxHistory);
+      }
+
+      function publish(topicRaw, payload, opts = {}) {
+        const topic = normTopic(topicRaw);
+        if (!topic) return false;
+        const meta = {
+          topic,
+          ts: Date.now(),
+          perf: (typeof performance !== "undefined" && performance.now) ? performance.now() : 0,
+          seq: ++seq,
+          retain: !!opts.retain,
+          level: String(opts.level || "info")
+        };
+
+        if (meta.retain) retained.set(topic, payload);
+        pushHistory(topic, payload, meta);
+
+        // Dispatch
+        for (const [id, sub] of subs) {
+          try {
+            if (sub.re.test(topic)) {
+              sub.fn(payload, meta);
+              if (sub.once) subs.delete(id);
+            }
+          } catch (e) {
+            // never allow bus listener to crash the OS
+            try { console.warn("Bus subscriber error:", e); } catch (_) {}
+          }
+        }
+        return true;
+      }
+
+      function subscribe(pattern, fn, opts = {}) {
+        const id = ++subSeq;
+        const sub = {
+          id,
+          pattern: String(pattern || "").trim() || "**",
+          re: patternToRegex(pattern || "**"),
+          fn: (typeof fn === "function") ? fn : (() => {}),
+          once: !!opts.once,
+          created: Date.now()
+        };
+        subs.set(id, sub);
+
+        // immediate replay retained
+        if (opts.replayRetained) {
+          try {
+            for (const [t, v] of retained.entries()) {
+              if (sub.re.test(t)) sub.fn(v, { topic: t, ts: Date.now(), perf: 0, seq: ++seq, retain: true, level: "retained" });
+            }
+          } catch (e) {}
+        }
+
+        return function unsubscribe() { subs.delete(id); };
+      }
+
+      function once(pattern, fn, opts = {}) {
+        return subscribe(pattern, fn, { ...opts, once: true });
+      }
+
+      function clearHistory() {
+        history.length = 0;
+      }
+
+      function stats() {
+        return {
+          seq,
+          subs: subs.size,
+          history: history.length,
+          retained: retained.size,
+          maxHistory
+        };
+      }
+
+      function setMax(n) {
+        const v = Math.max(50, Math.min(5000, Number(n) || MAX_DEFAULT));
+        maxHistory = v;
+        if (history.length > maxHistory) history.splice(0, history.length - maxHistory);
+      }
+
+      // request/reply helper
+      function request(topic, payload, timeoutMs = 1500) {
+        const id = "req_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+        const replyTopic = "bus.reply." + id;
+        return new Promise((resolve, reject) => {
+          let done = false;
+          const off = subscribe(replyTopic, (p) => {
+            done = true;
+            off();
+            resolve(p);
+          }, { once: true });
+
+          publish(topic, { id, replyTopic, payload }, { level: "request" });
+
+          setTimeout(() => {
+            if (done) return;
+            try { off(); } catch (_) {}
+            reject(new Error("timeout"));
+          }, Math.max(50, timeoutMs | 0));
+        });
+      }
+
+      function reply(replyTopic, payload) {
+        publish(replyTopic, payload, { level: "reply" });
+      }
+
+      return {
+        publish,
+        emit: publish,
+        subscribe,
+        on: subscribe,
+        once,
+        request,
+        reply,
+        history,
+        retained,
+        clearHistory,
+        stats,
+        setMax
+      };
+    })();
+    window.Bus = Bus;
+
+
+
     // ----- Terminal Output Panel (dedicated) -----
     const termMaxLines = 260;
 
@@ -3099,7 +3376,10 @@ persistEnabled: false,
       terminal: "Terminal",
       logs: "Event Log",
       diagnostics: "Diagnostics",
-      soundscape: "Soundscape"
+      soundscape: "Soundscape",
+      bus: "Message Bus",
+      plugins: "Plugins",
+      persistence: "Persistence"
     };
 
     const hasDesktopBridge = !!(window.chernosDesktop && typeof window.chernosDesktop.openAppWindow === "function");
@@ -4727,7 +5007,8 @@ initHotkeysSystem();
       workstation:{ w: 980, h: 640 },
       logs:      { w: 920, h: 600 },
       diagnostics:{ w: 860, h: 520 },
-      soundscape:{ w: 860, h: 520 }
+      soundscape:{ w: 860, h: 520 },
+      bus:       { w: 920, h: 560 }
     };
 
     // Prefer specific root panels for certain apps to avoid stealing nested sections.
@@ -4741,6 +5022,7 @@ initHotkeysSystem();
       logs: "reactor logs",
       diagnostics: "reactor diagnostics",
       soundscape: "reactor soundscape",
+      bus: "bus"
     };
 
 
@@ -5612,9 +5894,9 @@ if (!net.pkt.nodeFlow) net.pkt.nodeFlow = {};
       netUpdatePktRate(bus);
     
       if (isNetOpsVisible()) {
-        // keep topology live while NetOps is visible
-        try { renderNetTopology(); } catch (e) {}
-      if (typeof renderNetPacketPanel === "function") renderNetPacketPanel();
+        // keep packet dots live while NetOps is visible (full topology updates are not rebuilt each tick)
+        try { renderNetPacketDots(); } catch (e) {}
+        if (typeof renderNetPacketPanel === "function") renderNetPacketPanel();
       }
     }
     
@@ -5626,6 +5908,13 @@ if (!net.pkt.nodeFlow) net.pkt.nodeFlow = {};
     }
     
     renderNetPacketPanel = function renderNetPacketPanel() {
+      // PERF: throttle packet panel DOM updates (called from packet tick)
+      try {
+        const nowP = (typeof performance !== "undefined" && performance.now) ? performance.now() : Date.now();
+        if (window.__netPktPanelLast && (nowP - window.__netPktPanelLast) < 220) return;
+        window.__netPktPanelLast = nowP;
+      } catch (e) {}
+
       if (!netpktLog || !netpktStats || !netpktSniffToggle || !netpktFilter || !netpktType || !netpktDst) return;
       ensureNetModel();
       const net = state.net;
@@ -5727,15 +6016,134 @@ if (!net.pkt.nodeFlow) net.pkt.nodeFlow = {};
     }
 
 
-    function renderNetTopology(routeArr) {
+    
+function renderNetTopology(routeArr) {
       if (!netopsTopo) return;
       ensureNetModel();
 
       const net = state.net;
       const nodes = net.nodes;
 
-      // Use selection route for display, but remember last trace for flash
-      const route = Array.isArray(routeArr) && routeArr.length ? routeArr : computeRoute(net.selected || "OPS-TOWER");
+      // --- Build static SVG once (huge perf win vs rebuild every packet tick) ---
+      if (!window.__netTopoCache) window.__netTopoCache = { built:false };
+      const C = window.__netTopoCache;
+
+      const POS = C.POS || (C.POS = {
+        "OPS-TOWER": [70, 60],
+        "CORE-1":    [210, 44],
+        "FLOW-A":    [355, 118],
+        "SHIELD-X":  [230, 205],
+        "DIAG-NET":  [80, 190]
+      });
+
+      const NS = "http://www.w3.org/2000/svg";
+      const mk = (tag) => document.createElementNS(NS, tag);
+
+      function linkKey(a,b){ return [a,b].sort().join("--"); }
+
+      if (!C.built) {
+        // clear svg once
+        while (netopsTopo.firstChild) netopsTopo.removeChild(netopsTopo.firstChild);
+
+        C.linkEls = new Map();
+        C.nodeEls = new Map();
+
+        // background grid
+        const bg = mk("g");
+        bg.setAttribute("opacity", "0.6");
+        for (let x = 20; x <= 400; x += 40) {
+          const l = mk("line"); l.setAttribute("x1", x); l.setAttribute("y1", 10); l.setAttribute("x2", x); l.setAttribute("y2", 230);
+          l.setAttribute("stroke", "rgba(148,163,184,0.10)"); l.setAttribute("stroke-width", "1");
+          bg.appendChild(l);
+        }
+        for (let y = 20; y <= 220; y += 40) {
+          const l = mk("line"); l.setAttribute("x1", 10); l.setAttribute("y1", y); l.setAttribute("x2", 410); l.setAttribute("y2", y);
+          l.setAttribute("stroke", "rgba(148,163,184,0.10)"); l.setAttribute("stroke-width", "1");
+          bg.appendChild(l);
+        }
+        netopsTopo.appendChild(bg);
+
+        // unique links
+        const seen = new Set();
+        const links = [];
+        for (const a of Object.keys(NET_LINKS)) {
+          for (const b of (NET_LINKS[a] || [])) {
+            const key = linkKey(a,b);
+            if (seen.has(key)) continue;
+            seen.add(key);
+            links.push([a,b]);
+          }
+        }
+        C.links = links;
+
+        // links layer
+        const gLinks = mk("g");
+        for (const [a,b] of links) {
+          const pa = POS[a]; const pb = POS[b];
+          if (!pa || !pb) continue;
+
+          const line = mk("line");
+          line.setAttribute("x1", pa[0]); line.setAttribute("y1", pa[1]);
+          line.setAttribute("x2", pb[0]); line.setAttribute("y2", pb[1]);
+          line.setAttribute("class", "topo-link on");
+          gLinks.appendChild(line);
+          C.linkEls.set(linkKey(a,b), line);
+        }
+        netopsTopo.appendChild(gLinks);
+
+        // nodes layer
+        const gNodes = mk("g");
+        for (const name of NET_NODE_NAMES) {
+          const p = POS[name];
+          if (!p) continue;
+
+          const g = mk("g");
+          g.setAttribute("class", "topo-node");
+          g.setAttribute("data-node", name);
+
+          const circle = mk("circle");
+          circle.setAttribute("cx", p[0]);
+          circle.setAttribute("cy", p[1]);
+          circle.setAttribute("r", "15");
+          circle.setAttribute("class", "node-on");
+
+          const label = mk("text");
+          label.setAttribute("x", p[0] + 18);
+          label.setAttribute("y", p[1] + 4);
+          label.textContent = name;
+
+          const sub = mk("text");
+          sub.setAttribute("x", p[0] + 18);
+          sub.setAttribute("y", p[1] + 18);
+          sub.setAttribute("class", "sub");
+          sub.textContent = "";
+
+          g.appendChild(circle);
+          g.appendChild(label);
+          g.appendChild(sub);
+
+          // click handler once
+          g.addEventListener("click", () => {
+            net.selected = name;
+            renderNetOps();
+          });
+
+          gNodes.appendChild(g);
+          C.nodeEls.set(name, { g, circle, label, sub });
+        }
+        netopsTopo.appendChild(gNodes);
+
+        // packets layer (only dynamic group we mutate frequently)
+        const gPk = mk("g");
+        gPk.setAttribute("class", "topo-packets");
+        netopsTopo.appendChild(gPk);
+        C.gPackets = gPk;
+
+        C.built = true;
+      }
+
+      // --- Dynamic updates (fast) ---
+      const route = (Array.isArray(routeArr) && routeArr.length) ? routeArr : computeRoute(net.selected || "OPS-TOWER");
       const routePairs = new Set();
       for (let i = 0; i < route.length - 1; i++) {
         routePairs.add(`${route[i]}->${route[i+1]}`);
@@ -5744,160 +6152,91 @@ if (!net.pkt.nodeFlow) net.pkt.nodeFlow = {};
       const now = Date.now();
       const flash = (net.traceFlashUntil || 0) > now;
 
-      // Node positions (fixed layout)
-      const POS = {
-        "OPS-TOWER": [70, 60],
-        "CORE-1":    [210, 44],
-        "FLOW-A":    [355, 118],
-        "SHIELD-X":  [230, 205],
-        "DIAG-NET":  [80, 190]
-      };
-
-      // clear svg
-      while (netopsTopo.firstChild) netopsTopo.removeChild(netopsTopo.firstChild);
-
-      const NS = "http://www.w3.org/2000/svg";
-      const mk = (tag) => document.createElementNS(NS, tag);
-
-      // background grid (subtle)
-      const bg = mk("g");
-      bg.setAttribute("opacity", "0.6");
-      for (let x = 20; x <= 400; x += 40) {
-        const l = mk("line"); l.setAttribute("x1", x); l.setAttribute("y1", 10); l.setAttribute("x2", x); l.setAttribute("y2", 230);
-        l.setAttribute("stroke", "rgba(148,163,184,0.10)"); l.setAttribute("stroke-width", "1");
-        bg.appendChild(l);
-      }
-      for (let y = 20; y <= 220; y += 40) {
-        const l = mk("line"); l.setAttribute("x1", 10); l.setAttribute("y1", y); l.setAttribute("x2", 410); l.setAttribute("y2", y);
-        l.setAttribute("stroke", "rgba(148,163,184,0.10)"); l.setAttribute("stroke-width", "1");
-        bg.appendChild(l);
-      }
-      netopsTopo.appendChild(bg);
-
-      // derive unique links
-      const seen = new Set();
-      const links = [];
-      for (const a of Object.keys(NET_LINKS)) {
-        for (const b of (NET_LINKS[a] || [])) {
-          const key = [a,b].sort().join("--");
-          if (seen.has(key)) continue;
-          seen.add(key);
-          links.push([a,b]);
-        }
-      }
-
-      // links layer
-      const gLinks = mk("g");
-      for (const [a,b] of links) {
-        const pa = POS[a]; const pb = POS[b];
-        if (!pa || !pb) continue;
+      // Update link states & route highlight without rebuild
+      for (const [a,b] of (C.links || [])) {
+        const line = C.linkEls.get(linkKey(a,b));
+        if (!line) continue;
 
         const na = nodes[a]; const nb = nodes[b];
         const status = (na?.status === "offline" || nb?.status === "offline") ? "off"
           : (na?.status === "degraded" || nb?.status === "degraded") ? "deg" : "on";
 
-        const line = mk("line");
-        line.setAttribute("x1", pa[0]); line.setAttribute("y1", pa[1]);
-        line.setAttribute("x2", pb[0]); line.setAttribute("y2", pb[1]);
         line.setAttribute("class", `topo-link ${status}`);
 
-        // highlight if part of current route
         const ab = `${a}->${b}`;
         const ba = `${b}->${a}`;
         if (routePairs.has(ab) || routePairs.has(ba)) {
           line.classList.add("route");
-          if (flash) line.setAttribute("opacity", "0.95");
+          if (flash) line.setAttribute("opacity", "0.2");
+          else line.removeAttribute("opacity");
+        } else {
+          line.classList.remove("route");
+          line.removeAttribute("opacity");
         }
-
-        gLinks.appendChild(line);
       }
-      netopsTopo.appendChild(gLinks);
 
-// packet dots layer (inflight packets)
-const gPkts = mk("g");
-gPkts.setAttribute("class", "topo-pkts");
-try {
-  const bus = (state.net && state.net.pkt) ? state.net.pkt : null;
-  const inflight = (bus && Array.isArray(bus.inflight)) ? bus.inflight : [];
-  const maxDots = 24;
-  let drawn = 0;
-  for (let i = inflight.length - 1; i >= 0; i--) {
-    const pkt = inflight[i];
-    if (!pkt || pkt.status !== "inflight") continue;
-    const r = pkt.route || [];
-    const hop = Math.max(0, Math.min((r.length || 0) - 2, pkt.hop || 0));
-    const a = r[hop]; const b = r[hop + 1];
-    const pa = POS[a]; const pb = POS[b];
-    if (!pa || !pb) continue;
-
-    // lane offset to reduce overlap
-    const lane = (pkt.id || 0) % 3;
-    const ox = lane === 0 ? -3 : lane === 1 ? 0 : 3;
-    const oy = lane === 0 ? 2 : lane === 1 ? -2 : 1;
-
-    const t = Math.max(0, Math.min(1, pkt.t || 0));
-    const x = pa[0] + (pb[0] - pa[0]) * t + ox;
-    const y = pa[1] + (pb[1] - pa[1]) * t + oy;
-
-    const c = mk("circle");
-    c.setAttribute("cx", x);
-    c.setAttribute("cy", y);
-    c.setAttribute("r", "3.2");
-    c.setAttribute("fill", pktColor(pkt.type));
-    c.setAttribute("class", "topo-pkt");
-    gPkts.appendChild(c);
-
-    drawn++;
-    if (drawn >= maxDots) break;
-  }
-} catch (e) {}
-netopsTopo.appendChild(gPkts);
-
-      // nodes layer
-      const gNodes = mk("g");
+      // Update nodes status/selected
       for (const name of NET_NODE_NAMES) {
-        const p = POS[name];
-        if (!p) continue;
-
+        const ref = C.nodeEls.get(name);
+        if (!ref) continue;
         const n = nodes[name];
-        const g = mk("g");
-        g.setAttribute("class", "topo-node");
-        g.setAttribute("data-node", name);
-
-        const circle = mk("circle");
-        circle.setAttribute("cx", p[0]);
-        circle.setAttribute("cy", p[1]);
-        circle.setAttribute("r", name === net.selected ? "18" : "15");
-
         const cls = (n?.status === "offline") ? "node-off" : (n?.status === "degraded") ? "node-deg" : "node-on";
-        circle.setAttribute("class", cls);
-
-        const label = mk("text");
-        label.setAttribute("x", p[0] + 18);
-        label.setAttribute("y", p[1] + 4);
-        label.textContent = name;
-
-        const sub = mk("text");
-        sub.setAttribute("x", p[0] + 18);
-        sub.setAttribute("y", p[1] + 18);
-        sub.setAttribute("class", "sub");
+        ref.circle.setAttribute("class", cls);
+        ref.circle.setAttribute("r", (name === net.selected) ? "18" : "15");
         const hp = Math.round(n?.health ?? 0);
         const thr = (n?.throttle == null ? "AUTO" : `${Math.round(n.throttle)}%`);
-        sub.textContent = `${(n?.status || "unknown").toUpperCase()} • ${hp}% • ${thr}`;
-
-        g.appendChild(circle);
-        g.appendChild(label);
-        g.appendChild(sub);
-
-        g.addEventListener("click", () => {
-          net.selected = name;
-          renderNetOps();
-        });
-
-        gNodes.appendChild(g);
+        ref.sub.textContent = `${(n?.status || "unknown").toUpperCase()} • ${hp}% • ${thr}`;
       }
-      netopsTopo.appendChild(gNodes);
+
+      // Update packet dots (cheap, bounded)
+      try { renderNetPacketDots(); } catch (e) {}
     }
+
+    function renderNetPacketDots() {
+      if (!netopsTopo) return;
+      const C = window.__netTopoCache;
+      if (!C || !C.built || !C.gPackets) return;
+      ensureNetModel();
+      const net = state.net;
+      const bus = net.pkt;
+      const gPk = C.gPackets;
+      // clear packet layer (small)
+      while (gPk.firstChild) gPk.removeChild(gPk.firstChild);
+
+      if (!bus || !bus.enabled) return;
+      const inflight = bus.inflight || [];
+      if (!inflight.length) return;
+
+      const mk = (tag) => document.createElementNS("http://www.w3.org/2000/svg", tag);
+      const POS = C.POS;
+
+      const lane = (id) => ((id % 3) - 1) * 4; // -4,0,4
+      const lerp = (a,b,t)=> a + (b-a)*t;
+
+      const max = Math.min(48, inflight.length);
+      for (let i=0;i<max;i++){
+        const pkt = inflight[i];
+        if (!pkt || pkt.status !== "inflight") continue;
+        const route = pkt.route || [];
+        const hop = Math.max(0, Math.min(route.length - 2, pkt.hop || 0));
+        const A = POS[pktNormName(route[hop])];
+        const B = POS[pktNormName(route[hop+1])];
+        if (!A || !B) continue;
+        const t = Math.max(0, Math.min(1, pkt.t || 0));
+        const ox = lane(pkt.id||0);
+        const x = lerp(A[0], B[0], t) + ox;
+        const y = lerp(A[1], B[1], t) - ox;
+
+        const c = mk("circle");
+        c.setAttribute("cx", String(x));
+        c.setAttribute("cy", String(y));
+        c.setAttribute("r", "3.4");
+        c.setAttribute("fill", pktColor(pkt.type || "DATA"));
+        c.setAttribute("opacity", "0.95");
+        gPk.appendChild(c);
+      }
+    }
+
 
 
     function setThrottle(nodeName, pctOrNull) {
@@ -7312,7 +7651,7 @@ netRateEl.textContent      = pktRate.toFixed(0) + " pkt/s";
         elBadgeNet.style.color = "#fb7185";
       }
     
-      renderNetOps();
+      if (typeof isNetOpsVisible === "function" && isNetOpsVisible()) renderNetOps();
     }
 
     function renderBadges() {
@@ -8637,7 +8976,7 @@ if (netpktSend) netpktSend.addEventListener("click", () => {
       const lower = cmd.toLowerCase();
 
       if (lower === "help") {
-        termPrint("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, safeguard <n>, operator name <name>, operator level <0-3>, engine status, save-log, unlock 2049, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, net status, net nodes, net scan, net trace <target>, net throttle <node> <0-100|off>, net packets, net sniff on/off [filter], net send <dst> [type] [units], net clear, net ping <host>, net lookup <name>, net stress, net reset, fault list, fault inject <type> [sev] [ttl], fault clear <type|all>, simulate <fault> [sev] [ttl], audio test <id>, decon start, decon abort, decon status");
+        termPrint("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, safeguard <n>, operator name <name>, operator level <0-3>, engine status, save-log, unlock 2049, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, net status, net nodes, net scan, net trace <target>, net throttle <node> <0-100|off>, net packets, net sniff on/off [filter], net send <dst> [type] [units], net clear, net ping <host>, net lookup <name>, net stress, net reset, fault list, fault inject <type> [sev] [ttl], fault clear <type|all>, simulate <fault> [sev] [ttl], audio test <id>, bus help, bus stats, bus pub <topic> <payload>, bus watch <pattern>, decon start, decon abort, decon status");
         return;
       }
 
@@ -10168,6 +10507,1113 @@ if (lower === "decon status") {
   } catch (e) {}
 
 })();
+
+
+
+// ============================================================
+// Message Bus Integration v1 — UI monitor, terminal commands,
+// and hooks into core subsystems (faults / wm / wallpaper / audio)
+// ============================================================
+(function messageBusIntegrationV1(){
+  try {
+    if (window.__chernosMsgBusV1) return;
+    window.__chernosMsgBusV1 = true;
+  } catch (e) {}
+
+  const Bus = window.Bus;
+  if (!Bus) return;
+
+  // --------- UI: Bus Monitor panel ----------
+  
+  // ============================================================
+  // MESSAGE BUS UI (performance-safe)
+  // ============================================================
+  const busCard  = document.getElementById("bus-card");
+  const busLog   = document.getElementById("bus-log");
+  const btnClear = document.getElementById("bus-clear");
+  const btnPause = document.getElementById("bus-pause");
+  const inpFilt  = document.getElementById("bus-filter");
+  const elStats  = document.getElementById("bus-stats");
+
+  let paused = false;
+  let filt = "";
+
+  // Buffer UI updates so a noisy bus (packets, ticks) doesn't freeze the DOM.
+  const _busUiQ = [];
+  let _busUiFlushTimer = 0;
+  let _busLastStatsAt = 0;
+
+  function isCardVisible() {
+    try {
+      // WM mode: only update if Bus window is actually open and not minimized.
+      if (typeof wmEnabled !== "undefined" && wmEnabled && typeof wmWins !== "undefined" && wmWins && typeof wmWins.get === "function") {
+        const w = wmWins.get("bus");
+        if (!w) return false;
+        if (w.state && w.state.min) return false;
+        return true;
+      }
+    } catch (e) {}
+
+    try {
+      // Classic app view
+      if (typeof appView !== "undefined") return String(appView).toLowerCase() === "bus";
+    } catch (e) {}
+
+    // Fallback: check panel-hidden class
+    try {
+      if (!busCard) return false;
+      return !busCard.classList.contains("panel-hidden");
+    } catch (e) {}
+    return false;
+  }
+
+  function trunc(s, n) { s = String(s ?? ""); return (s.length > n) ? (s.slice(0, n) + "…") : s; }
+
+  function fmtPayload(p) {
+    try {
+      if (p === null) return "null";
+      if (p === undefined) return "undefined";
+      if (typeof p === "string") return JSON.stringify(trunc(p, 220));
+      if (typeof p === "number" || typeof p === "boolean") return String(p);
+      const j = JSON.stringify(p);
+      return trunc(j, 260);
+    } catch (e) {
+      return "[unserializable]";
+    }
+  }
+
+  function shouldShow(meta) {
+    if (!filt) return true;
+    const t = String(meta?.topic || "").toLowerCase();
+    return t.includes(filt);
+  }
+
+  function refreshStats(throttleMs = 250) {
+    if (!elStats) return;
+    const now = Date.now();
+    if (now - _busLastStatsAt < throttleMs) return;
+    _busLastStatsAt = now;
+    try {
+      const st = Bus.stats();
+      elStats.textContent = `subs:${st.subs}  hist:${st.history}  retained:${st.retained}`;
+    } catch (e) {
+      elStats.textContent = "";
+    }
+  }
+
+  function rerenderHistory() {
+    if (!busLog) return;
+    busLog.textContent = "";
+    try {
+      const items = Bus.history.slice(-180);
+      const frag = document.createDocumentFragment();
+      for (const it of items) {
+        if (!shouldShow(it.meta)) continue;
+        const div = document.createElement("div");
+        div.className = "term-line dim";
+        const t = new Date(it.meta.ts).toISOString().slice(11, 19);
+        div.textContent = `[${t}] ${it.meta.topic}  ${fmtPayload(it.payload)}`;
+        frag.appendChild(div);
+      }
+      busLog.appendChild(frag);
+      busLog.scrollTop = busLog.scrollHeight;
+    } catch (e) {}
+    refreshStats(0);
+  }
+
+  function _busFlushUi() {
+    _busUiFlushTimer = 0;
+    if (!busLog) { _busUiQ.length = 0; return; }
+    if (!isCardVisible() || paused) { _busUiQ.length = 0; return; }
+
+    if (_busUiQ.length) {
+      const frag = document.createDocumentFragment();
+      for (const line of _busUiQ.splice(0, _busUiQ.length)) {
+        const div = document.createElement("div");
+        div.className = "term-line";
+        div.textContent = line;
+        frag.appendChild(div);
+      }
+      busLog.appendChild(frag);
+      while (busLog.childNodes.length > 220) busLog.removeChild(busLog.firstChild);
+      busLog.scrollTop = busLog.scrollHeight;
+    }
+    refreshStats();
+  }
+
+  function _busScheduleFlush() {
+    if (_busUiFlushTimer) return;
+    _busUiFlushTimer = window.setTimeout(_busFlushUi, 80);
+  }
+
+  if (inpFilt) {
+    inpFilt.addEventListener("input", () => {
+      filt = String(inpFilt.value || "").trim().toLowerCase();
+      rerenderHistory();
+    });
+  }
+
+  if (btnClear) {
+    btnClear.addEventListener("click", () => {
+      try { Bus.clearHistory(); } catch (e) {}
+      if (busLog) busLog.textContent = "";
+      refreshStats(0);
+    });
+  }
+
+  if (btnPause) {
+    btnPause.addEventListener("click", () => {
+      paused = !paused;
+      btnPause.textContent = paused ? "Resume" : "Pause";
+      if (!paused) rerenderHistory();
+    });
+  }
+
+  // Subscribe once; UI updates are buffered and only flush when Bus view/window is actually visible.
+  Bus.subscribe("**", (payload, meta) => {
+    if (!busLog) return;
+    if (paused) return;
+    if (!isCardVisible()) return;
+    if (!shouldShow(meta)) return;
+
+    const t = new Date(meta.ts).toISOString().slice(11, 19);
+    _busUiQ.push(`[${t}] ${meta.topic}  ${fmtPayload(payload)}`);
+    if (_busUiQ.length > 140) _busUiQ.splice(0, _busUiQ.length - 140);
+    _busScheduleFlush();
+  });
+
+  // Show initial stats/history when switching to Bus view (best-effort)
+  try { setTimeout(() => { if (isCardVisible()) rerenderHistory(); }, 80); } catch (e) {}
+// --------- Publish boot marker ----------
+  try { Bus.publish("system.boot", { ts: Date.now() }, { retain: true }); } catch (e) {}
+
+  // --------- Hook: App view changes ----------
+  try {
+    if (typeof setAppView === "function" && !setAppView.__buswrapped) {
+      const _set = setAppView;
+      const wrapped = function(view) {
+        const prev = (typeof appView !== "undefined") ? appView : null;
+        const r = _set.apply(this, arguments);
+        try {
+          const cur = (typeof appView !== "undefined") ? appView : view;
+          if (cur !== prev) Bus.publish("ui.appview", { view: cur, prev }, { retain: true });
+        } catch (e) {}
+        return r;
+      };
+      wrapped.__buswrapped = true;
+      setAppView = wrapped;
+    }
+  } catch (e) {}
+
+  // --------- Hook: Fault events ----------
+  try {
+    if (typeof injectFault === "function" && !injectFault.__buswrapped) {
+      const _f = injectFault;
+      const wrapped = function(type, sev, ttl) {
+        const r = _f.apply(this, arguments);
+        try { Bus.publish("fault.inject", { type: String(type||"").toLowerCase(), sev: Number(sev||0), ttl: Number(ttl||0) }); } catch (e) {}
+        return r;
+      };
+      wrapped.__buswrapped = true;
+      injectFault = wrapped;
+    }
+  } catch (e) {}
+
+  try {
+    if (typeof clearFault === "function" && !clearFault.__buswrapped) {
+      const _f = clearFault;
+      const wrapped = function(type) {
+        const r = _f.apply(this, arguments);
+        try { Bus.publish("fault.clear", { type: String(type||"").toLowerCase() }); } catch (e) {}
+        return r;
+      };
+      wrapped.__buswrapped = true;
+      clearFault = wrapped;
+    }
+  } catch (e) {}
+
+  // --------- Hook: Audio state changes ----------
+  try {
+    let _lastAudio = (typeof state === "object" && state) ? !!state.audioOn : null;
+    if (typeof applyAudioState === "function" && !applyAudioState.__buswrapped) {
+      const _a = applyAudioState;
+      const wrapped = function() {
+        const before = (typeof state === "object" && state) ? !!state.audioOn : null;
+        const r = _a.apply(this, arguments);
+        const after = (typeof state === "object" && state) ? !!state.audioOn : null;
+        if (after !== before && after !== _lastAudio) {
+          _lastAudio = after;
+          try { Bus.publish("audio.state", { on: after }); } catch (e) {}
+        }
+        return r;
+      };
+      wrapped.__buswrapped = true;
+      applyAudioState = wrapped;
+    }
+  } catch (e) {}
+
+  try {
+    let _lastMusic = (typeof state === "object" && state) ? !!state.musicOn : null;
+    if (typeof applyMusicState === "function" && !applyMusicState.__buswrapped) {
+      const _m = applyMusicState;
+      const wrapped = function() {
+        const before = (typeof state === "object" && state) ? !!state.musicOn : null;
+        const r = _m.apply(this, arguments);
+        const after = (typeof state === "object" && state) ? !!state.musicOn : null;
+        if (after !== before && after !== _lastMusic) {
+          _lastMusic = after;
+          try { Bus.publish("music.state", { on: after }); } catch (e) {}
+        }
+        return r;
+      };
+      wrapped.__buswrapped = true;
+      applyMusicState = wrapped;
+    }
+  } catch (e) {}
+
+  // --------- Hook: Window manager lifecycle ----------
+  try {
+    if (typeof wmEnable === "function" && !wmEnable.__buswrapped) {
+      const _fn = wmEnable;
+      const wrapped = function() {
+        const r = _fn.apply(this, arguments);
+        try { Bus.publish("wm.enable", { on: true }); } catch (e) {}
+        return r;
+      };
+      wrapped.__buswrapped = true;
+      wmEnable = wrapped;
+    }
+  } catch (e) {}
+
+  try {
+    if (typeof wmDisable === "function" && !wmDisable.__buswrapped) {
+      const _fn = wmDisable;
+      const wrapped = function() {
+        const r = _fn.apply(this, arguments);
+        try { Bus.publish("wm.enable", { on: false }); } catch (e) {}
+        return r;
+      };
+      wrapped.__buswrapped = true;
+      wmDisable = wrapped;
+    }
+  } catch (e) {}
+
+  try {
+    if (typeof wmOpen === "function" && !wmOpen.__buswrapped) {
+      const _fn = wmOpen;
+      const wrapped = function(appId) {
+        const r = _fn.apply(this, arguments);
+        try { Bus.publish("wm.window.open", { app: String(appId||"") }); } catch (e) {}
+        return r;
+      };
+      wrapped.__buswrapped = true;
+      wmOpen = wrapped;
+    }
+  } catch (e) {}
+
+  try {
+    if (typeof wmClose === "function" && !wmClose.__buswrapped) {
+      const _fn = wmClose;
+      const wrapped = function(winId) {
+        const r = _fn.apply(this, arguments);
+        try { Bus.publish("wm.window.close", { id: String(winId||"") }); } catch (e) {}
+        return r;
+      };
+      wrapped.__buswrapped = true;
+      wmClose = wrapped;
+    }
+  } catch (e) {}
+
+  // --------- Hook: Wallpaper changes ----------
+  function wrapWp(fnName, topic){
+    try{
+      if (typeof window[fnName] === "function" && !window[fnName].__buswrapped) {
+        const _f = window[fnName];
+        const wrapped = function() {
+          const r = _f.apply(this, arguments);
+          try {
+            // attempt to derive current wallpaper info from localStorage
+            const id = (typeof lsGet === "function") ? (lsGet("chernos_wallpaper_id") || "") : "";
+            const url = (typeof lsGet === "function") ? (lsGet("chernos_wallpaper_url") || "") : "";
+            Bus.publish(topic, { id, url }, { retain: true });
+          } catch (e) {}
+          return r;
+        };
+        wrapped.__buswrapped = true;
+        window[fnName] = wrapped;
+      }
+    } catch (e) {}
+  }
+  wrapWp("wmSetWallpaper", "wallpaper.change");
+  wrapWp("wmSetCustomWallpaper", "wallpaper.change");
+  wrapWp("wmSetUrlWallpaper", "wallpaper.change");
+  wrapWp("wmResetWallpaper", "wallpaper.change");
+
+  // --------- Terminal commands: bus ... ----------
+  function busParsePayload(txt) {
+    const s = String(txt || "").trim();
+    if (!s) return null;
+    if ((s.startsWith("{") && s.endsWith("}")) || (s.startsWith("[") && s.endsWith("]"))) {
+      try { return JSON.parse(s); } catch (e) { return s; }
+    }
+    // allow key=value pairs: a=1 b=two
+    if (s.includes("=") && !s.includes("{") && !s.includes("[")) {
+      const obj = {};
+      const parts = s.split(/\s+/).filter(Boolean);
+      for (const p of parts) {
+        const k = p.split("=")[0];
+        const v = p.slice(k.length + 1);
+        if (!k) continue;
+        const num = Number(v);
+        obj[k] = (v !== "" && !Number.isNaN(num) && String(num) === v) ? num : v;
+      }
+      return obj;
+    }
+    return s;
+  }
+
+  const __busWatchers = window.__busWatchers || (window.__busWatchers = new Map());
+
+  function busHelp() {
+    termPrint("bus commands:", "dim");
+    termPrint("  bus stats", "dim");
+    termPrint("  bus history [n] [containsTopic]", "dim");
+    termPrint("  bus pub <topic> <json|text|k=v...>", "dim");
+    termPrint("  bus retain <topic> <json|text|k=v...>", "dim");
+    termPrint("  bus clear", "dim");
+    termPrint("  bus watch <pattern>   (e.g. fault.**, ui.*, wm.window.**)", "dim");
+    termPrint("  bus unwatch [id|all]", "dim");
+  }
+
+  function busHandleTerminal(cmd, lower) {
+    if (!lower.startsWith("bus")) return false;
+    const parts = cmd.split(/\s+/).filter(Boolean);
+    const sub = (parts[1] || "help").toLowerCase();
+
+    if (sub === "help" || sub === "?") { busHelp(); return true; }
+
+    if (sub === "stats") {
+      try { termPrint(JSON.stringify(Bus.stats(), null, 2), "dim"); } catch (e) { termPrint("bus stats failed", "err"); }
+      return true;
+    }
+
+    if (sub === "clear") {
+      try { Bus.clearHistory(); termPrint("bus history cleared", "ok"); } catch (e) { termPrint("bus clear failed", "err"); }
+      return true;
+    }
+
+    if (sub === "history") {
+      const n = Math.max(1, Math.min(500, Number(parts[2] || 50) || 50));
+      const f = String(parts[3] || "").toLowerCase();
+      try {
+        const items = Bus.history.slice(-n);
+        for (const it of items) {
+          if (f && !String(it.meta.topic||"").toLowerCase().includes(f)) continue;
+          const t = new Date(it.meta.ts).toISOString().slice(11, 19);
+          termPrint(`[${t}] ${it.meta.topic}  ${fmtPayload(it.payload)}`, "dim");
+        }
+        termPrint(`shown ${n} (filter="${f||""}")`, "dim");
+      } catch (e) { termPrint("bus history failed", "err"); }
+      return true;
+    }
+
+    if (sub === "pub" || sub === "emit") {
+      const topic = parts[2] || "";
+      const payload = busParsePayload(parts.slice(3).join(" "));
+      if (!topic) { termPrint("usage: bus pub <topic> <payload>", "err"); return true; }
+      Bus.publish(topic, payload, { level: "manual" });
+      termPrint("published: " + topic, "ok");
+      return true;
+    }
+
+    if (sub === "retain") {
+      const topic = parts[2] || "";
+      const payload = busParsePayload(parts.slice(3).join(" "));
+      if (!topic) { termPrint("usage: bus retain <topic> <payload>", "err"); return true; }
+      Bus.publish(topic, payload, { level: "manual", retain: true });
+      termPrint("retained: " + topic, "ok");
+      return true;
+    }
+
+    if (sub === "watch") {
+      const pattern = parts[2] || "**";
+      const id = Math.floor(Math.random()*1e9).toString(36);
+      const off = Bus.subscribe(pattern, (payload, meta) => {
+        const t = new Date(meta.ts).toISOString().slice(11, 19);
+        termPrint(`[${t}] ${meta.topic}  ${fmtPayload(payload)}`, "dim");
+      });
+      __busWatchers.set(id, { id, pattern, off });
+      termPrint(`watching (${id}) ${pattern}`, "ok");
+      return true;
+    }
+
+    if (sub === "unwatch") {
+      const target = (parts[2] || "all").toLowerCase();
+      if (target === "all") {
+        for (const w of __busWatchers.values()) { try { w.off(); } catch (e) {} }
+        __busWatchers.clear();
+        termPrint("unwatch: all", "ok");
+        return true;
+      }
+      const w = __busWatchers.get(parts[2]);
+      if (!w) { termPrint("no watcher id: " + parts[2], "err"); return true; }
+      try { w.off(); } catch (e) {}
+      __busWatchers.delete(parts[2]);
+      termPrint("unwatch: " + parts[2], "ok");
+      return true;
+    }
+
+    termPrint("unknown bus subcommand. try: bus help", "err");
+    return true;
+  }
+
+  try {
+    if (typeof runCommand === "function" && !runCommand.__buswrapped) {
+      const _rc = runCommand;
+      const wrapped = function(raw) {
+        const cmd = String(raw || "").trim();
+        const lower = cmd.toLowerCase();
+        try { if (busHandleTerminal(cmd, lower)) return; } catch (e) {}
+        return _rc.apply(this, arguments);
+      };
+      wrapped.__buswrapped = true;
+      runCommand = wrapped;
+    }
+  } catch (e) {}
+
+})();
+
+
+
+    // ============================================================
+    //   Internal Plugin System (local, JS-based)
+    //   - Install / Enable / Disable plugins
+    //   - Plugins can register terminal commands and subscribe to Bus topics
+    // ============================================================
+    (function(){
+      const PLUG_KEY = "chernos_plugins_v1";
+      const PLUG_SCHEMA = 1;
+      const PLUG_MAX_LOG = 260;
+
+      const RESERVED_CMDS = new Set([
+        "help","status","scram","relief","stress","chaos","reset","power","coolant","safeguard",
+        "operator","engine","save-log","unlock","satlink","ghost","black","macro",
+        "net","fault","simulate","audio","bus","profile","perf","wm","wall","hotkeys","plugins","plugin"
+      ]);
+
+      const runtime = new Map(); // id -> { meta, plugin, api, cleanup:[], err:null, enabled:true }
+      const cmdRegistry = new Map(); // cmd -> { owner, fn, help }
+      const plugLogBuf = [];
+
+      function safeJsonParse(s){
+        try { return JSON.parse(String(s||"")); } catch (e) { return null; }
+      }
+      function nowISO(){
+        try { return new Date().toISOString(); } catch (e) { return ""; }
+      }
+
+      function plugAppendLog(line, level="dim"){
+        const msg = String(line ?? "");
+        const rec = { ts: Date.now(), level, msg };
+        plugLogBuf.push(rec);
+        while (plugLogBuf.length > PLUG_MAX_LOG) plugLogBuf.shift();
+
+        try { if (window.Bus) Bus.publish("plugin.log", rec, { level }); } catch (e) {}
+
+        const el = document.getElementById("plugins-log");
+        if (el) {
+          const div = document.createElement("div");
+          div.className = "term-line" + (level==="err"?" err": level==="ok"?" ok":"");
+          div.textContent = msg;
+          el.appendChild(div);
+          while (el.childNodes.length > PLUG_MAX_LOG) el.removeChild(el.firstChild);
+          el.scrollTop = el.scrollHeight;
+        }
+      }
+
+      function plugToast(msg){
+        try { if (typeof wmToast === "function") return wmToast(msg); } catch(e){}
+        try { console.log("[PLUGIN]", msg); } catch(e){}
+      }
+
+      function loadStore(){
+        const raw = lsGet(PLUG_KEY);
+        const data = safeJsonParse(raw);
+        if (!data || data.schema !== PLUG_SCHEMA || !Array.isArray(data.plugins)) {
+          // seed with one example plugin (disabled)
+          return {
+            schema: PLUG_SCHEMA,
+            plugins: [{
+              id: "example.hello",
+              name: "Example: Hello",
+              version: "1.0.0",
+              enabled: false,
+              createdAt: nowISO(),
+              updatedAt: nowISO(),
+              code:
+`return {
+  id: "example.hello",
+  name: "Example: Hello",
+  version: "1.0.0",
+  init(api){
+    api.toast("Hello from Example plugin");
+    api.command("hello", (args)=> api.term("hello " + (args[0]||"world")), "hello [name] — test plugin command");
+    api.subscribe("fault.**", (p,m)=> api.log("fault event: " + m.topic));
+  },
+  dispose(api){ api.log("Example plugin disposed."); }
+};`
+            }]
+          };
+        }
+        return data;
+      }
+
+      function saveStore(store){
+        try { lsSet(PLUG_KEY, JSON.stringify(store)); } catch(e){}
+      }
+
+      function listStore(){
+        const store = loadStore();
+        store.plugins = store.plugins || [];
+        // normalize ids
+        store.plugins = store.plugins.filter(p => p && p.id).map(p => ({
+          id: String(p.id),
+          name: String(p.name || p.id),
+          version: String(p.version || "0.0.0"),
+          enabled: !!p.enabled,
+          createdAt: p.createdAt || nowISO(),
+          updatedAt: p.updatedAt || nowISO(),
+          code: String(p.code || "")
+        }));
+        // de-dupe by id (last wins)
+        const seen = new Map();
+        for (const p of store.plugins) seen.set(p.id, p);
+        store.plugins = Array.from(seen.values());
+        return store;
+      }
+
+      function setEnabled(id, on){
+        const store = listStore();
+        const p = store.plugins.find(x=>x.id===id);
+        if (!p) return false;
+        p.enabled = !!on;
+        p.updatedAt = nowISO();
+        saveStore(store);
+        return true;
+      }
+
+      function upsertPlugin(meta){
+        const store = listStore();
+        const id = String(meta.id||"").trim();
+        if (!id) return { ok:false, err:"missing id" };
+        let p = store.plugins.find(x=>x.id===id);
+        if (!p) {
+          p = { id, createdAt: nowISO() };
+          store.plugins.push(p);
+        }
+        p.name = String(meta.name||id);
+        p.version = String(meta.version||"0.0.0");
+        p.enabled = !!meta.enabled;
+        p.code = String(meta.code||"");
+        p.updatedAt = nowISO();
+        saveStore(store);
+        return { ok:true };
+      }
+
+      function removePlugin(id){
+        const store = listStore();
+        store.plugins = store.plugins.filter(x=>x.id!==id);
+        saveStore(store);
+      }
+
+      function makeAPI(ownerId, cleanup){
+        function regCleanup(fn){ if (typeof fn === "function") cleanup.push(fn); }
+
+        function command(name, fn, help=""){
+          const cmd = String(name||"").trim().toLowerCase();
+          if (!cmd) throw new Error("command: missing name");
+          if (RESERVED_CMDS.has(cmd)) throw new Error("command reserved: " + cmd);
+          if (typeof fn !== "function") throw new Error("command handler must be a function");
+          cmdRegistry.set(cmd, { owner: ownerId, fn, help: String(help||"") });
+          regCleanup(()=>{ try { cmdRegistry.delete(cmd); } catch(e){} });
+          return cmd;
+        }
+
+        function subscribe(pattern, handler, opts){
+          if (!window.Bus) throw new Error("Bus not available");
+          const off = Bus.subscribe(pattern, handler, opts);
+          regCleanup(()=>{ try { off(); } catch(e){} });
+          return off;
+        }
+
+        function interval(fn, ms){
+          const id = setInterval(fn, ms);
+          regCleanup(()=>{ try { clearInterval(id); } catch(e){} });
+          return id;
+        }
+
+        function storageGet(k, fallback=null){
+          const key = `chernos_plugin_${ownerId}_${String(k||"")}`;
+          const v = lsGet(key);
+          if (v==null) return fallback;
+          try { return JSON.parse(v); } catch(e) { return v; }
+        }
+        function storageSet(k, val){
+          const key = `chernos_plugin_${ownerId}_${String(k||"")}`;
+          try { lsSet(key, JSON.stringify(val)); } catch(e) { lsSet(key, String(val)); }
+        }
+
+        return {
+          id: ownerId,
+          version: "2.0.0",
+          state,
+          Bus,
+          publish: (t,p,o)=>Bus.publish(t,p,o),
+          subscribe,
+          once: (pat, fn)=> subscribe(pat, fn, { once:true }),
+          request: (t,p,ms)=>Bus.request(t,p,ms),
+          reply: (t,p)=>Bus.reply(t,p),
+
+          term: (m,l)=> termPrint(String(m??""), l||"info"),
+          log: (m)=> log(String(m??"")),
+          toast: (m)=> plugToast(m),
+
+          command,
+          interval,
+
+          open: (view)=> { try { setAppView(String(view||"reactor")); } catch(e){} },
+          wmOpen: (view)=> { try { if (typeof wmOpenApp === "function") wmOpenApp(String(view||"reactor")); } catch(e){} },
+
+          storage: { get: storageGet, set: storageSet },
+
+          onDispose: regCleanup
+        };
+      }
+
+      function evalPlugin(code, api, ctx){
+        let registered = null;
+        const apiReg = Object.assign({}, api, {
+          register: (p)=>{ registered = p; }
+        });
+        let ret;
+        const src = `"use strict";\n${String(code||"")}\n`;
+        const fn = new Function("api","ctx", src);
+        ret = fn(apiReg, ctx);
+        return ret || registered;
+      }
+
+      function disableRuntime(id){
+        const rt = runtime.get(id);
+        if (!rt) return;
+        try { if (rt.plugin && typeof rt.plugin.dispose === "function") rt.plugin.dispose(rt.api, rt.ctx); } catch(e){}
+        try {
+          for (const f of (rt.cleanup||[])) { try { f(); } catch(e){} }
+        } catch(e){}
+        // remove commands owned by this plugin
+        for (const [k,v] of Array.from(cmdRegistry.entries())) {
+          if (v && v.owner === id) cmdRegistry.delete(k);
+        }
+        runtime.delete(id);
+        try { if (window.Bus) Bus.publish("plugin.disabled", { id }, { level:"info" }); } catch(e){}
+      }
+
+      function enableRuntime(meta){
+        const id = meta.id;
+        disableRuntime(id); // reset any prior instance
+        const cleanup = [];
+        const ctx = {
+          state,
+          kiosk: (typeof kioskMode !== "undefined") ? !!kioskMode : false,
+          desktop: (typeof hasDesktopBridge !== "undefined") ? !!hasDesktopBridge : false,
+          ts: Date.now()
+        };
+        const api = makeAPI(id, cleanup);
+        let plugin = null;
+        try {
+          plugin = evalPlugin(meta.code, api, ctx);
+          if (!plugin || typeof plugin !== "object") throw new Error("plugin did not return/register an object");
+          // allow meta to fill missing fields
+          plugin.id = String(plugin.id || id);
+          plugin.name = String(plugin.name || meta.name || id);
+          plugin.version = String(plugin.version || meta.version || "0.0.0");
+          if (plugin.id !== id) {
+            // enforce store id for stability
+            plugin.id = id;
+          }
+          if (typeof plugin.init === "function") {
+            const ret = plugin.init(api, ctx);
+            if (typeof ret === "function") cleanup.push(ret);
+          }
+          runtime.set(id, { meta, plugin, api, ctx, cleanup, err:null, enabled:true });
+          plugAppendLog(`[ok] enabled ${id} (${plugin.version})`, "ok");
+          try { if (window.Bus) Bus.publish("plugin.enabled", { id, name: plugin.name, version: plugin.version }, { level:"ok" }); } catch(e){}
+          return { ok:true };
+        } catch (e) {
+          const err = String(e && e.message ? e.message : e);
+          runtime.set(id, { meta, plugin:null, api, ctx, cleanup, err, enabled:true });
+          plugAppendLog(`[err] enable failed ${id}: ${err}`, "err");
+          try { if (window.Bus) Bus.publish("plugin.error", { id, err }, { level:"err" }); } catch(e){}
+          return { ok:false, err };
+        }
+      }
+
+      function boot(){
+        // extend labels for WM titles
+        try { if (typeof APP_LABELS === "object") { APP_LABELS.plugins = "Plugins"; } } catch(e){}
+
+        const store = listStore();
+        saveStore(store); // normalize
+        for (const p of store.plugins) {
+          if (p.enabled) enableRuntime(p);
+        }
+        renderUI();
+        // tick loop (aligned with main sim step rate)
+        setInterval(()=> tick(0.85), 850);
+        try { if (window.Bus) Bus.publish("plugin.boot", { count: store.plugins.length }, { level:"info", retain:true }); } catch(e){}
+      }
+
+      function tick(dt){
+        for (const [id, rt] of runtime.entries()) {
+          if (!rt || !rt.enabled || !rt.plugin) continue;
+          if (typeof rt.plugin.tick === "function") {
+            try { rt.plugin.tick(rt.api, dt, rt.ctx); } catch(e){
+              const msg = String(e && e.message ? e.message : e);
+              rt.err = msg;
+              plugAppendLog(`[err] tick ${id}: ${msg}`, "err");
+            }
+          }
+        }
+        // update stats readout
+        const statEl = document.getElementById("plugins-stat");
+        if (statEl) {
+          const total = listStore().plugins.length;
+          const active = Array.from(runtime.values()).filter(r=>r && r.plugin).length;
+          statEl.textContent = `${active}/${total} active`;
+        }
+      }
+
+      // ---------- UI ----------
+      function qs(id){ return document.getElementById(id); }
+
+      function fillEditor(meta){
+        const pid=qs("plugin-id"), pn=qs("plugin-name"), pv=qs("plugin-version"), pc=qs("plugin-code");
+        if (!pid||!pn||!pv||!pc) return;
+        pid.value = meta?.id || "";
+        pn.value  = meta?.name || "";
+        pv.value  = meta?.version || "";
+        pc.value  = meta?.code || "";
+      }
+
+      function renderUI(){
+        const listEl = qs("plugins-list");
+        if (!listEl) return;
+        const store = listStore();
+        listEl.innerHTML = "";
+        for (const p of store.plugins) {
+          const row = document.createElement("div");
+          row.className = "flex gap-2 items-center border border-slate-800 rounded-xl px-3 py-2 bg-slate-950/40";
+          const left = document.createElement("div");
+          left.className = "flex-1 min-w-0";
+          const t = document.createElement("div");
+          t.className = "text-sm text-slate-100 truncate";
+          t.textContent = `${p.name}  `;
+          const sub = document.createElement("div");
+          sub.className = "text-[10px] text-slate-400 truncate";
+          sub.textContent = `${p.id} • v${p.version}`;
+          left.appendChild(t);
+          left.appendChild(sub);
+
+          const toggle = document.createElement("button");
+          toggle.className = "btn";
+          toggle.textContent = p.enabled ? "ON" : "OFF";
+          toggle.title = "Enable/Disable";
+          toggle.addEventListener("click", ()=>{
+            const on = !p.enabled;
+            setEnabled(p.id, on);
+            if (on) enableRuntime(p);
+            else disableRuntime(p.id);
+            renderUI();
+          });
+
+          const edit = document.createElement("button");
+          edit.className = "btn";
+          edit.textContent = "Edit";
+          edit.addEventListener("click", ()=>{
+            fillEditor(p);
+            plugToast("Plugin loaded into editor: " + p.id);
+          });
+
+          const del = document.createElement("button");
+          del.className = "btn";
+          del.textContent = "Del";
+          del.addEventListener("click", ()=>{
+            disableRuntime(p.id);
+            removePlugin(p.id);
+            plugAppendLog(`removed ${p.id}`, "dim");
+            renderUI();
+          });
+
+          // runtime error indicator
+          const rt = runtime.get(p.id);
+          if (rt && rt.err) {
+            const badge = document.createElement("span");
+            badge.className = "pill text-[10px] border border-red-500/30 bg-red-500/10 text-red-200";
+            badge.textContent = "ERR";
+            badge.title = rt.err;
+            row.appendChild(badge);
+          }
+
+          row.appendChild(left);
+          row.appendChild(toggle);
+          row.appendChild(edit);
+          row.appendChild(del);
+          listEl.appendChild(row);
+        }
+
+        // wire buttons once
+        const btnExport = qs("plugins-export");
+        const btnImport = qs("plugins-import");
+        const btnReset  = qs("plugins-reset");
+        const io        = qs("plugins-io");
+        const status    = qs("plugin-status");
+
+        if (btnExport && !btnExport.__wired) {
+          btnExport.__wired = true;
+          btnExport.addEventListener("click", ()=>{
+            const store = listStore();
+            if (io) io.value = JSON.stringify(store, null, 2);
+            plugToast("Exported plugin store to text box.");
+          });
+        }
+        if (btnImport && !btnImport.__wired) {
+          btnImport.__wired = true;
+          btnImport.addEventListener("click", ()=>{
+            if (!io) return;
+            const data = safeJsonParse(io.value);
+            if (!data || data.schema !== PLUG_SCHEMA || !Array.isArray(data.plugins)) {
+              plugToast("Import failed: invalid JSON/schema.");
+              return;
+            }
+            // disable all current
+            for (const p of listStore().plugins) disableRuntime(p.id);
+            saveStore(data);
+            // enable enabled ones
+            const store = listStore();
+            for (const p of store.plugins) if (p.enabled) enableRuntime(p);
+            renderUI();
+            plugToast("Imported plugin store.");
+          });
+        }
+        if (btnReset && !btnReset.__wired) {
+          btnReset.__wired = true;
+          btnReset.addEventListener("click", ()=>{
+            // disable all
+            for (const p of listStore().plugins) disableRuntime(p.id);
+            lsSet(PLUG_KEY, "");
+            plugToast("Plugin store reset (reloaded default example).");
+            const store = listStore();
+            saveStore(store);
+            renderUI();
+          });
+        }
+
+        const btnVal = qs("plugin-validate");
+        const btnIns = qs("plugin-install");
+        const btnRun = qs("plugin-runonce");
+        const btnClr = qs("plugin-clear");
+        const pid=qs("plugin-id"), pn=qs("plugin-name"), pv=qs("plugin-version"), pc=qs("plugin-code");
+
+        function setStatus(msg, ok=false){
+          if (!status) return;
+          status.textContent = msg;
+          status.style.color = ok ? "rgba(134,239,172,0.9)" : "rgba(148,163,184,0.9)";
+        }
+
+        if (btnVal && !btnVal.__wired) {
+          btnVal.__wired = true;
+          btnVal.addEventListener("click", ()=>{
+            const meta = { id: pid?.value, name: pn?.value, version: pv?.value, code: pc?.value, enabled:false };
+            try {
+              const tmpApi = makeAPI("__validate__", []);
+              const ctx = { state, ts: Date.now() };
+              const plug = evalPlugin(meta.code, tmpApi, ctx);
+              if (!plug || typeof plug !== "object") throw new Error("no plugin object returned");
+              setStatus("OK: " + String(plug.name||meta.name||meta.id), true);
+            } catch (e) {
+              setStatus("ERR: " + String(e && e.message ? e.message : e), false);
+            }
+          });
+        }
+
+        if (btnIns && !btnIns.__wired) {
+          btnIns.__wired = true;
+          btnIns.addEventListener("click", ()=>{
+            const meta = { id: pid?.value, name: pn?.value, version: pv?.value, code: pc?.value, enabled:true };
+            const id = String(meta.id||"").trim();
+            if (!id) return setStatus("ERR: missing id", false);
+            // validate first
+            try {
+              const tmpApi = makeAPI("__validate__", []);
+              const ctx = { state, ts: Date.now() };
+              const plug = evalPlugin(meta.code, tmpApi, ctx);
+              if (!plug || typeof plug !== "object") throw new Error("no plugin object returned");
+            } catch (e) {
+              return setStatus("ERR: " + String(e && e.message ? e.message : e), false);
+            }
+            const res = upsertPlugin(meta);
+            if (!res.ok) return setStatus("ERR: " + res.err, false);
+            // enable now
+            enableRuntime({ id, name: meta.name, version: meta.version, enabled:true, code: meta.code });
+            setStatus("Installed + enabled: " + id, true);
+            renderUI();
+          });
+        }
+
+        if (btnRun && !btnRun.__wired) {
+          btnRun.__wired = true;
+          btnRun.addEventListener("click", ()=>{
+            const meta = { id: pid?.value || "__runonce__", name: pn?.value, version: pv?.value, code: pc?.value, enabled:false };
+            try {
+              const cleanup=[];
+              const api = makeAPI(meta.id, cleanup);
+              const ctx = { state, ts: Date.now(), runonce:true };
+              const plug = evalPlugin(meta.code, api, ctx);
+              if (!plug || typeof plug !== "object") throw new Error("no plugin object returned");
+              if (typeof plug.init === "function") plug.init(api, ctx);
+              setStatus("Ran once OK.", true);
+              // dispose immediately
+              try { if (typeof plug.dispose === "function") plug.dispose(api, ctx); } catch(e){}
+              for (const f of cleanup) { try { f(); } catch(e){} }
+            } catch (e) {
+              setStatus("ERR: " + String(e && e.message ? e.message : e), false);
+            }
+          });
+        }
+
+        if (btnClr && !btnClr.__wired) {
+          btnClr.__wired = true;
+          btnClr.addEventListener("click", ()=>{
+            fillEditor({ id:"", name:"", version:"", code:"" });
+            setStatus("");
+          });
+        }
+      }
+
+      // ---------- Terminal integration ----------
+      function pluginHelp(){
+        termPrint("plugin cmds: plugin list | plugin enable <id> | plugin disable <id> | plugin remove <id> | plugin export | plugin import <json> | plugin open", "dim");
+        termPrint("plugin cmds: plugin cmd <name> ... (plugin-registered commands)", "dim");
+      }
+
+      function pluginHandleTerminal(cmd, lower){
+        const parts = cmd.split(/\s+/);
+        const head = (parts[0]||"").toLowerCase();
+        if (head === "plugin" || head === "plugins") {
+          const sub = (parts[1]||"help").toLowerCase();
+          if (sub === "help") { pluginHelp(); return true; }
+          if (sub === "open") { try { setAppView("plugins"); } catch(e){} return true; }
+          if (sub === "list") {
+            const store = listStore();
+            for (const p of store.plugins) {
+              const rt = runtime.get(p.id);
+              const status = rt && rt.plugin ? "active" : (p.enabled ? "enabled (failed)" : "off");
+              termPrint(`${p.id}  ${p.name}  v${p.version}  [${status}]`, p.enabled ? "ok" : "dim");
+            }
+            return true;
+          }
+          if (sub === "enable") {
+            const id = parts[2] || "";
+            const store = listStore();
+            const p = store.plugins.find(x=>x.id===id);
+            if (!p) { termPrint("no plugin id: "+id, "err"); return true; }
+            setEnabled(id, true);
+            enableRuntime(p);
+            termPrint("enabled: "+id, "ok");
+            renderUI();
+            return true;
+          }
+          if (sub === "disable") {
+            const id = parts[2] || "";
+            setEnabled(id, false);
+            disableRuntime(id);
+            termPrint("disabled: "+id, "ok");
+            renderUI();
+            return true;
+          }
+          if (sub === "remove") {
+            const id = parts[2] || "";
+            disableRuntime(id);
+            removePlugin(id);
+            termPrint("removed: "+id, "ok");
+            renderUI();
+            return true;
+          }
+          if (sub === "export") {
+            termPrint(JSON.stringify(listStore(), null, 2), "dim");
+            return true;
+          }
+          if (sub === "import") {
+            const js = cmd.slice(cmd.toLowerCase().indexOf("import")+6).trim();
+            const data = safeJsonParse(js);
+            if (!data || data.schema !== PLUG_SCHEMA || !Array.isArray(data.plugins)) {
+              termPrint("import failed: invalid JSON/schema", "err"); return true;
+            }
+            for (const p of listStore().plugins) disableRuntime(p.id);
+            saveStore(data);
+            const store = listStore();
+            for (const p of store.plugins) if (p.enabled) enableRuntime(p);
+            termPrint("imported plugin store.", "ok");
+            renderUI();
+            return true;
+          }
+          termPrint("unknown plugin subcommand. try: plugin help", "err");
+          return true;
+        }
+
+        // plugin-registered commands
+        const cmdName = head;
+        if (cmdRegistry.has(cmdName)) {
+          const entry = cmdRegistry.get(cmdName);
+          try {
+            const args = parts.slice(1);
+            entry.fn(args, cmd);
+          } catch(e) {
+            termPrint("plugin cmd error: " + String(e && e.message ? e.message : e), "err");
+          }
+          return true;
+        }
+        return false;
+      }
+
+      try {
+        if (typeof runCommand === "function" && !runCommand.__plugwrapped) {
+          const _rc = runCommand;
+          const wrapped = function(raw) {
+            const cmd = String(raw || "").trim();
+            const lower = cmd.toLowerCase();
+            try { if (pluginHandleTerminal(cmd, lower)) return; } catch (e) {}
+            return _rc.apply(this, arguments);
+          };
+          wrapped.__plugwrapped = true;
+          runCommand = wrapped;
+        }
+      } catch (e) {}
+
+      // boot on load
+      try { boot(); } catch(e){ plugAppendLog("plugin system boot error: " + String(e && e.message ? e.message : e), "err"); }
+
+      // expose for debugging
+      window.Plugins = {
+        list: ()=> listStore().plugins.slice(),
+        runtime: ()=> Array.from(runtime.entries()).map(([id,r])=>({id, enabled:!!(r&&r.plugin), err:r?.err||null})),
+        enable: (id)=> { const store = listStore(); const p=store.plugins.find(x=>x.id===id); if (p){ setEnabled(id,true); enableRuntime(p); renderUI(); } },
+        disable: (id)=> { setEnabled(id,false); disableRuntime(id); renderUI(); },
+        install: (meta)=> upsertPlugin(meta),
+        remove: (id)=> { disableRuntime(id); removePlugin(id); renderUI(); },
+        commands: ()=> Array.from(cmdRegistry.keys()),
+        log: plugAppendLog
+      };
+    })();
 
 </script>
 </body>
