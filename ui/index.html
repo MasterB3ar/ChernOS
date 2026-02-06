@@ -964,7 +964,8 @@
 
     /* ===== Internal Window Manager (ISO/Kiosk multi-app windows) ===== */
     .wm-mode [data-panel] { display: none !important; }
-    .wm-mode #diag-card, .wm-mode #soundscape-card { display: none !important; }
+    /* In WM mode we hide the legacy overlay panels *unless* they are hosted inside a window. */
+    .wm-mode #diag-card:not(.wm-hosted), .wm-mode #soundscape-card:not(.wm-hosted) { display: none !important; }
     .wm-wallpaper {
       position: fixed;
       inset: 0;
@@ -3381,7 +3382,23 @@ persistEnabled: false,
         hint.style.fontSize = "12px";
         hint.style.letterSpacing = "0.2px";
         hint.style.backdropFilter = "blur(6px)";
+        hint.style.opacity = "1";
+        hint.style.transform = "translateY(0px)";
+        hint.style.transition = "opacity 900ms ease, transform 900ms ease";
         document.body.appendChild(hint);
+
+        // Auto-fade so it never blocks UI text. Override with ?installHint=sticky or set duration via ?installHintMs=12000
+        const sticky = (params.get("installHint") === "sticky");
+        if (!sticky) {
+          const msRaw = parseInt(params.get("installHintMs") || "", 10);
+          const visibleFor = (Number.isFinite(msRaw) && msRaw > 0) ? msRaw : 8000;
+          setTimeout(() => {
+            try { hint.style.opacity = "0"; hint.style.transform = "translateY(10px)"; } catch (e) {}
+          }, visibleFor);
+          setTimeout(() => {
+            try { hint.remove(); } catch (e) {}
+          }, visibleFor + 1100);
+        }
       }
     } catch (e) {}
 
