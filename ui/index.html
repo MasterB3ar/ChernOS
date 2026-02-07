@@ -10369,10 +10369,140 @@ if (netpktSend) netpktSend.addEventListener("click", () => {
       "net status","net nodes","net scan","net trace","net throttle","net packets","net sniff","net send","net clear","net ping","net lookup","net stress","net reset",
       "hotkeys","hotkeys help","hotkeys list","hotkeys actions","hotkeys conflicts","hotkeys export","hotkeys export overrides","hotkeys import","hotkeys set","hotkeys add","hotkeys remove","hotkeys unbind","hotkeys restore","hotkeys reset",
       "simulate","simulate sensor","simulate pump","simulate pressure","simulate ghostrad",
-      "audio test 0","audio test 1","audio test 2","audio test 3","audio test 4","audio test 5"
+      "audio test 0","audio test 1","audio test 2","audio test 3","audio test 4","audio test 5",
+      "chernobyl 1986"
 
     ];
 
+
+// ----- Easter Egg: Chernobyl 1986 playback (sim) -----
+function startChernobylPlayback() {
+  try {
+    if (!state._chernobylPlayback) state._chernobylPlayback = { running: false, timers: [] };
+    if (state._chernobylPlayback.running) {
+      termPrint("playback: already running.", "err");
+      return;
+    }
+
+    const pb = state._chernobylPlayback;
+    pb.running = true;
+    pb.timers = [];
+
+    const later = (ms, fn) => {
+      const id = setTimeout(() => {
+        if (!pb.running) return;
+        try { fn(); } catch (e) { /* swallow */ }
+      }, ms);
+      pb.timers.push(id);
+      return id;
+    };
+
+    const every = (ms, fn) => {
+      const id = setInterval(() => {
+        if (!pb.running) { clearInterval(id); return; }
+        try { fn(); } catch (e) { /* swallow */ }
+      }, ms);
+      pb.timers.push(id);
+      return id;
+    };
+
+    const stop = (msg) => {
+      pb.running = false;
+      (pb.timers || []).forEach(id => { try { clearTimeout(id); clearInterval(id); } catch (e) {} });
+      pb.timers = [];
+      if (msg) termPrint(msg, "dim");
+    };
+
+    // Soft-reset into a controllable baseline (without wiping UI prefs)
+    try {
+      if (state.aftermath && state.aftermath.active) state.aftermath.active = false;
+      state.lockdown = false;
+      state.overdrive = false;
+      state.diagnostics = true;
+      state.audioOn = true;
+      state.musicOn = true;
+      state.blackChamber = false;
+      state.ghostLink = false;
+      state.satLink = false;
+
+      state.containment.alpha = false;
+      state.containment.betaLatched = false;
+      state.containment.gamma = false;
+
+      // Disable auto-safeguards to ensure the scenario can progress
+      state.safeguards = 0;
+      if (state.sgRecharge) { state.sgRecharge.progress = 0; state.sgRecharge.cooldown = 60; }
+
+      // Force "poor cooling / high relief" routing to mimic cascading failures
+      state.coolantRouting = { core: 10, exchanger: 10, relief: 80, _lastChanged: "core" };
+      try { syncRoutingUI(); } catch (e) {}
+
+      // Push levers into a dangerous regime
+      if (leverCore) leverCore.value = 100;
+      if (leverCool) leverCool.value = 12;
+      try { updateLeverReadouts(); } catch (e) {}
+
+      // Set a dramatic theme
+      try { setThemeOverride("redline"); } catch (e) {}
+
+      // Clear faults + force a fresh incident
+      clearFault("all");
+      state.meltdownStage = 0;
+      state.implosionPlayed = false;
+      state._m5ticks = 0;
+
+      // Start near unstable but not yet in meltdown
+      state.temp = Math.max(state.temp, 980);
+      state.pressure = Math.max(state.pressure, 4.2);
+      state.rad = Math.max(state.rad, 0.75);
+
+      updateCrisisEngine();
+      updateAlarmEngine();
+      renderAll();
+    } catch (e) {}
+
+    termPrint("PLAYBACK: CHERNOBYL 1986 (SIM) — initiating reactor timeline…", "ok");
+    log("EASTER EGG: playback sequence initiated (CHERNOBYL 1986).");
+
+    // Narrative + staged injections (purely fictionalized sim choreography)
+    later(1200, () => { termPrint("01:23:40 — power transient, instrumentation drift.", "dim"); injectFault("sensor", 1, 240); });
+    later(2800, () => { termPrint("01:23:44 — coolant flow instability detected.", "dim"); injectFault("pump", 2, 260); });
+    later(4200, () => { termPrint("01:23:47 — pressure spike in primary loop.", "dim"); injectFault("pressure", 2, 220); });
+    later(5800, () => { termPrint("01:23:49 — radiation excursion (local).", "dim"); injectFault("ghostrad", 2, 220); });
+
+    // Fast-forward the sim by calling the internal tick (independent of the normal 850ms loop)
+    let ticks = 0;
+    every(260, () => {
+      state.lockdown = false;
+      state.containment.gamma = false; // allow breach depiction
+      state.safeguards = 0;
+
+      // Hard beats to guarantee stage thresholds (keeps it reliable)
+      if (ticks === 8)  { state.temp = 1325; state.pressure = 5.4; }
+      if (ticks === 14) { state.temp = 1460; }
+      if (ticks === 20) { state.rad = 2.10; }
+      if (ticks === 26) { state.rad = 3.75; }
+      if (ticks === 32) { state.rad = 4.45; state.pressure = Math.max(state.pressure, 1.4); }
+
+      stepSim();
+      ticks++;
+
+      if ((state.aftermath && state.aftermath.active) || ticks > 80) {
+        if (state.aftermath && state.aftermath.active) {
+          termPrint("PLAYBACK: aftermath engaged. Run `decon start` to begin recovery.", "ok");
+          log("PLAYBACK: aftermath state reached (sim).");
+        } else {
+          termPrint("PLAYBACK: completed (sim).", "dim");
+        }
+        stop();
+      }
+    });
+
+    later(30000, () => stop("playback: auto-stop (timeout)."));
+  } catch (e) {
+    termPrint("playback: failed to start.", "err");
+  }
+}
     function runCommand(raw) {
       const cmd = String(raw || "").trim();
       if (!cmd) return;
@@ -10386,6 +10516,11 @@ if (netpktSend) netpktSend.addEventListener("click", () => {
       termIndex = -1;
 
       const lower = cmd.toLowerCase();
+
+      if (lower === "chernobyl 1986") {
+        startChernobylPlayback();
+        return;
+      }
 
       if (lower === "help") {
         termPrint("commands: help, status, scram, relief, stress, chaos, reset, power <n>, coolant <n>, safeguard <n>, operator name <name>, operator level <0-3>, engine status, save-log, unlock 2049, satlink on/off, ghost on/off, black on/off, macro rec/stop/play, net status, net nodes, net scan, net trace <target>, net throttle <node> <0-100|off>, net packets, net sniff on/off [filter], net send <dst> [type] [units], net clear, net ping <host>, net lookup <name>, net stress, net reset, fault list, fault inject <type> [sev] [ttl], fault clear <type|all>, simulate <fault> [sev] [ttl], audio test <id>, bus help, bus stats, bus pub <topic> <payload>, bus watch <pattern>, decon start, decon abort, decon status");
