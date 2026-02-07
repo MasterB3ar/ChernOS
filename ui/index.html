@@ -1911,9 +1911,163 @@ body.blackchamber .wm-hk-card{
       box-shadow: inset 0 0 0 1px rgba(0,0,0,0.35);
     }
 
+
+/* =======================================================================
+   SOVIET 1986 CONTROL ROOM THEME (Chernobyl/RBMK vibe)
+   - Preserves the system signal palette: GREEN / AMBER / REDLINE
+   - Does NOT remove existing WM / Topology / Containment styles
+   Toggle: add/remove `soviet86-ui` on <body>.
+   ======================================================================= */
+
+body.soviet86-ui{
+  --sig-green: #22c55e;
+  --sig-amber: #facc6b;
+  --sig-redline: #fb7185;
+
+  /* concrete + paint wash */
+  background:
+    radial-gradient(1200px 760px at 18% 8%, rgba(32, 120, 112, 0.14), transparent 60%),
+    radial-gradient(980px 640px at 86% 18%, rgba(20, 86, 80, 0.10), transparent 62%),
+    radial-gradient(1000px 720px at 50% 110%, rgba(0,0,0,0.86), transparent 62%),
+    linear-gradient(to right, rgba(255,255,255,0.040) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.032) 1px, transparent 1px),
+    linear-gradient(180deg, #0b0f10 0%, #111718 55%, #07090a 100%);
+  background-size: auto, auto, auto, 72px 72px, 72px 72px, auto;
+  background-position: center, center, center, 0 0, 0 0, center;
+
+  font-family: "Arial Narrow", "Roboto Condensed", "Segoe UI", Arial, system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  text-rendering: geometricPrecision;
+}
+
+/* light CRT scanlines + dust (pointer-safe) */
+body.soviet86-ui::after{
+  content:"";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.18;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.018) 0px,
+      rgba(255,255,255,0.018) 1px,
+      rgba(0,0,0,0.00) 2px,
+      rgba(0,0,0,0.00) 6px
+    ),
+    radial-gradient(circle at 16% 34%, rgba(255,255,255,0.040), transparent 42%),
+    radial-gradient(circle at 78% 62%, rgba(255,255,255,0.030), transparent 48%);
+  mix-blend-mode: overlay;
+}
+
+/* station plate */
+body.soviet86-ui::before{
+  content:"ЧАЭС • ПУЛЬТ УПРАВЛЕНИЯ • 1986 • РБМК-1000";
+  position: fixed;
+  top: 12px;
+  left: 14px;
+  z-index: 120;
+  pointer-events: none;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(185,198,206,0.22);
+  background: linear-gradient(180deg, rgba(22,26,27,0.92), rgba(10,12,13,0.92));
+  box-shadow: 0 12px 30px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,0,0,0.55) inset;
+  color: rgba(233,238,242,0.84);
+}
+
+/* keep the 3-signal palette visible at all times */
+body.soviet86-ui .wrap::after{
+  content:"СИГНАЛЫ:  НОРМА   ВНИМАНИЕ   REDLINE";
+  position: fixed;
+  right: 14px;
+  bottom: 14px;
+  z-index: 120;
+  pointer-events: none;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 10px 12px 10px 46px;
+  border-radius: 10px;
+  border: 1px solid rgba(185,198,206,0.18);
+  background:
+    radial-gradient(circle at 18px 16px, var(--sig-green) 0 5px, rgba(0,0,0,0) 6px),
+    radial-gradient(circle at 18px 34px, var(--sig-amber) 0 5px, rgba(0,0,0,0) 6px),
+    radial-gradient(circle at 18px 52px, var(--sig-redline) 0 5px, rgba(0,0,0,0) 6px),
+    radial-gradient(circle at 18px 16px, rgba(0,0,0,0.55) 7px, rgba(0,0,0,0) 10px),
+    radial-gradient(circle at 18px 34px, rgba(0,0,0,0.55) 7px, rgba(0,0,0,0) 10px),
+    radial-gradient(circle at 18px 52px, rgba(0,0,0,0.55) 7px, rgba(0,0,0,0) 10px),
+    linear-gradient(180deg, rgba(18,20,21,0.80), rgba(8,10,10,0.84));
+  box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+  color: rgba(233,238,242,0.72);
+}
+
+/* cards & buttons: painted metal look, but keep existing accent logic */
+body.soviet86-ui .card{
+  border-color: rgba(185,198,206,0.22);
+  background:
+    radial-gradient(900px 220px at 50% 0%, rgba(255,255,255,0.05), transparent 72%),
+    linear-gradient(180deg, rgba(20,24,25,0.90), rgba(9,11,12,0.92));
+  box-shadow: 0 18px 60px rgba(0,0,0,0.62), 0 0 0 1px rgba(0,0,0,0.55) inset;
+}
+
+body.soviet86-ui .btn{
+  border-color: rgba(185,198,206,0.22);
+  background: linear-gradient(180deg, rgba(28,30,32,0.82), rgba(10,12,13,0.86));
+}
+body.soviet86-ui .btn:hover{
+  border-color: rgba(250,204,107,0.38);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.40) inset, 0 0 0 2px rgba(250,204,107,0.10) inset, 0 10px 26px rgba(0,0,0,0.35);
+}
+
+/* topology legend readability */
+body.soviet86-ui .topo-title,
+body.soviet86-ui .topo-legend{
+  color: rgba(233,238,242,0.72);
+}
+body.soviet86-ui .topo-wrap{
+  border-color: rgba(185,198,206,0.22);
+  background: rgba(0,0,0,0.30);
+}
+
+/* containment viz: slightly more "industrial", but keep geometry intact */
+body.soviet86-ui .contain-viz{
+  border-color: rgba(185,198,206,0.26);
+  background:
+    radial-gradient(900px 380px at 50% 10%, rgba(32, 120, 112, 0.18), rgba(0,0,0,0.0) 60%),
+    linear-gradient(180deg, rgba(2,6,23,0.84), rgba(0,0,0,0.70));
+}
+
+/* window manager: keep core layout, just recolor chrome */
+body.soviet86-ui .wm-window{
+  border-color: rgba(185,198,206,0.26);
+  background: rgba(8,10,10,0.88);
+  backdrop-filter: none;
+}
+body.soviet86-ui .wm-window.focused{
+  border-color: rgba(34,197,94,0.70);
+  box-shadow: 0 22px 90px rgba(34,197,94,0.10), 0 18px 70px rgba(0,0,0,0.60);
+}
+body.soviet86-ui .wm-titlebar{
+  background: rgba(0,0,0,0.28);
+  border-bottom-color: rgba(185,198,206,0.18);
+}
+body.soviet86-ui .wm-act{
+  border-color: rgba(185,198,206,0.22);
+  background: rgba(10,12,13,0.74);
+}
+body.soviet86-ui .wm-act.close{
+  border-color: rgba(251,113,133,0.55);
+  background: rgba(127,29,29,0.28);
+}
+
 </style>
 </head>
-<body class="theme-green">
+<body class="theme-green soviet86-ui">
   <div class="reactor-glow"></div>
   <div id="gamma-overlay" class="gamma-overlay"></div>
   <div id="black-overlay" class="black-overlay"></div>
