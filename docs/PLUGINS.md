@@ -1,401 +1,153 @@
-# ChernOS — Plugin Developer Guide
+# Plugins
 
-Version: 2.0.0
+ChernOS includes an internal plugin system (“local scripts”) that can:
 
----
+- register terminal commands
+- subscribe to Bus topics
+- run intervals/timers safely (auto-cleaned)
+- store plugin-local data in localStorage
 
-## 1. Introduction
+## Storage format
 
-The ChernOS plugin system allows developers to extend the platform without modifying the core source code. Plugins can add new UI panels, terminal commands, automation logic, and event listeners.
+Plugins are stored in localStorage:
 
-This guide explains how to design, implement, package, and maintain ChernOS plugins.
-
----
-
-## 2. Plugin Capabilities
-
-Plugins may:
-
-* Add new terminal commands
-* Subscribe to internal bus events
-* Inject UI components
-* Automate simulation responses
-* Provide diagnostics or analysis tools
-* Extend persistence profiles
-
-Plugins may NOT:
-
-* Modify core system files
-* Bypass security restrictions
-* Access host OS resources directly
-* Override core safety logic
-
----
-
-## 3. Architecture Overview
-
-Plugins interact with ChernOS through three main interfaces:
-
-```
-Plugin Loader
-      ↓
-Registration API
-      ↓
-Message Bus / State API / UI Hooks
-```
-
-Each plugin runs in a restricted JavaScript sandbox.
-
----
-
-## 4. Plugin Directory Structure
-
-Plugins are stored in:
-
-```
-/ui/plugins/
-```
-
-Recommended layout:
-
-```
-my-plugin/
- ├─ plugin.json
- ├─ main.js
- ├─ ui.js           (optional)
- ├─ commands.js     (optional)
- └─ assets/         (optional)
-```
-
----
-
-## 5. Plugin Manifest (plugin.json)
-
-Every plugin must include a manifest file.
-
-Example:
+- key: `chernos_plugins_v1`
+- schema: `1`
+- value:
 
 ```json
 {
-  "id": "reactor-watchdog",
-  "name": "Reactor Watchdog",
-  "version": "1.0.0",
-  "author": "ChernOS Labs",
-  "description": "Automatic reactor protection system",
-  "entry": "main.js",
-  "permissions": [
-    "bus",
-    "state",
-    "ui",
-    "commands"
+  "schema": 1,
+  "plugins": [
+    {
+      "id": "example.hello",
+      "name": "Example: Hello",
+      "version": "1.0.0",
+      "enabled": false,
+      "createdAt": "...ISO...",
+      "updatedAt": "...ISO...",
+      "code": "return { ... }"
+    }
   ]
 }
 ```
 
-### Required Fields
+If the store is missing/invalid, ChernOS seeds an **example plugin** (disabled).
 
-| Field   | Description              |
-| ------- | ------------------------ |
-| id      | Unique plugin identifier |
-| name    | Display name             |
-| version | Semantic version         |
-| entry   | Main script              |
+## Plugin object contract
 
----
-
-## 6. Plugin Lifecycle
-
-### 6.1 Load Sequence
-
-```
-discover → validate → sandbox → load → register → activate
-```
-
-1. Plugin Loader scans directories
-2. Manifest is validated
-3. Sandbox environment is created
-4. Entry script is loaded
-5. Plugin registers features
-6. Plugin becomes active
-
-### 6.2 Unload Sequence
-
-```
-deactivate → unregister → cleanup → unload
-```
-
----
-
-## 7. Main Entry File
-
-Each plugin must export a `register()` function.
-
-Example `main.js`:
+Your plugin code must **RETURN** a plugin object, e.g.:
 
 ```js
-export function register(api) {
-  api.log("Reactor Watchdog loaded");
-
-  api.bus.subscribe("reactor.overheat", onOverheat);
-  api.commands.register("watchdog", cmdWatchdog);
-}
-
-function onOverheat(event) {
-  console.warn("Overheat detected", event);
-}
-
-function cmdWatchdog(args) {
-  return "Watchdog active";
-}
+return {
+  id: "ops.hello",
+  name: "Hello",
+  version: "1.0.0",
+  init(api, ctx) {
+    api.toast("Hello");
+    api.command("hello", (args)=> api.term("hello " + (args[0]||"world")));
+    api.subscribe("fault.**", (payload, meta)=> api.log("fault event: " + meta.topic));
+  },
+  tick(api, dt) { /* optional */ },
+  dispose(api, ctx) { /* optional */ }
+};
 ```
 
----
-
-## 8. Plugin API Reference
-
-When loaded, each plugin receives an `api` object.
-
-### 8.1 Logging
-
-```js
-api.log(msg);
-api.warn(msg);
-api.error(msg);
-```
-
-### 8.2 Message Bus
-
-```js
-api.bus.subscribe(type, handler);
-api.bus.publish(type, payload);
-```
-
-Example:
-
-```js
-api.bus.subscribe("fault.*", e => {
-  api.log("Fault event", e);
-});
-```
-
----
-
-### 8.3 State Access
-
-```js
-api.state.get(path);
-api.state.set(path, value);
-api.state.watch(path, callback);
-```
-
-Example:
-
-```js
-const temp = api.state.get("reactor.temp");
-```
-
----
-
-### 8.4 UI Hooks
-
-```js
-api.ui.addPanel(opts);
-api.ui.removePanel(id);
-api.ui.notify(msg, level);
-```
-
-Example:
-
-```js
-api.ui.addPanel({
-  id: "watchdog-panel",
-  title: "Watchdog",
-  html: "<div>Status: OK</div>"
-});
-```
-
----
-
-### 8.5 Command Registration
-
-```js
-api.commands.register(name, handler);
-api.commands.unregister(name);
-```
-
-Example:
-
-```js
-api.commands.register("wd-status", () => "OK");
-```
-
----
-
-## 9. Persistence Integration
-
-Plugins may store data in Persistence v3.
-
-```js
-api.persist.save("watchdog.enabled", true);
-api.persist.load("watchdog.enabled");
-```
-
-Data is namespaced per plugin.
-
----
-
-## 10. Security & Permissions
-
-Permissions declared in `plugin.json` restrict API access.
-
-| Permission | Enables                     |
-| ---------- | --------------------------- |
-| bus        | Subscribe/publish events    |
-| state      | Read/write simulation state |
-| ui         | Create UI components        |
-| commands   | Register terminal commands  |
-| persist    | Store profile data          |
-
-Example:
-
-```json
-"permissions": ["bus","state","ui"]
-```
-
-APIs outside declared permissions are unavailable.
-
----
-
-## 11. Packaging & Distribution
-
-### 11.1 Manual Installation
-
-Copy plugin folder into:
-
-```
-/ui/plugins/
-```
-
-Restart ChernOS or reload plugins.
-
-### 11.2 Plugin Bundles
-
-Plugins may be distributed as `.zip` archives:
-
-```
-reactor-watchdog.zip
- └─ reactor-watchdog/
-```
-
-Installed via UI or terminal.
-
----
-
-## 12. Debugging Plugins
-
-### 12.1 Console Logs
-
-* Open developer console (if enabled)
-* Use `api.log()`
-
-### 12.2 Safe Mode
-
-Boot with plugins disabled:
-
-```
-?safeMode=1
-```
-
-### 12.3 Plugin Inspector
-
-Workstation → Plugins → Inspector
-
-Shows:
-
-* Loaded plugins
-* Permissions
-* Errors
-* Event subscriptions
-
----
-
-## 13. Versioning & Compatibility
-
-* Use semantic versioning
-* Declare supported ChernOS version in manifest
-* Avoid internal APIs
-
-Recommended:
-
-```json
-"compat": ">=2.0.0 <3.0.0"
-```
-
----
-
-## 14. Best Practices
-
-* Keep plugins small and focused
-* Avoid heavy polling
-* Prefer bus events over timers
-* Validate all inputs
-* Clean up on unload
-* Respect safety systems
-
----
-
-## 15. Example Plugin: Auto Scrubber
-
-### Purpose
-
-Automatically activates containment scrubbers on radiation spikes.
-
-`plugin.json`:
-
-```json
-{
-  "id": "auto-scrubber",
-  "name": "Auto Scrubber",
-  "version": "1.0.0",
-  "entry": "main.js",
-  "permissions": ["bus","state"]
-}
-```
-
-`main.js`:
-
-```js
-export function register(api) {
-  api.bus.subscribe("containment.radiation.high", e => {
-    api.state.set("containment.scrubber", true);
-    api.log("Scrubber engaged");
-  });
-}
-```
-
----
-
-## 16. Future Plugin System Plans
-
-* Signed plugins
-* Dependency resolution
-* Marketplace integration
-* Hot-reload support
-* WASM plugin sandbox
-
----
-
-## Appendix A — API Summary
-
-### Core
-
-* api.log / warn / error
-* api.bus.*
-* api.state.*
-* api.ui.*
-* api.commands.*
-* api.persist.*
-
----
-
-End of Document
+### Returning vs `api.register()`
+
+The plugin evaluator supports both patterns:
+
+- return the plugin object
+- or call `api.register(pluginObject)` and return nothing
+
+## Reserved command names
+
+Plugins cannot register commands that collide with reserved prefixes/commands:
+
+- - `help`
+- - `status`
+- - `scram`
+- - `relief`
+- - `stress`
+- - `chaos`
+- - `reset`
+- - `power`
+- - `coolant`
+- - `safeguard`
+- - `operator`
+- - `engine`
+- - `save-log`
+- - `unlock`
+- - `satlink`
+- - `ghost`
+- - `black`
+- - `macro`
+- - `net`
+- - `fault`
+- - `simulate`
+- - `audio`
+- - `bus`
+- - `profile`
+- - `perf`
+- - `wm`
+- - `wall`
+- - `hotkeys`
+- - `plugins`
+- - `plugin`
+
+(Also avoid names that shadow existing single-word commands.)
+
+## Plugin API surface
+
+Inside `init(api, ctx)`, the `api` object provides:
+
+- `api.id` — plugin id
+- `api.version` — ChernOS version string (currently `2.0.0`)
+- `api.state` — live global state object
+- `api.Bus` — bus reference
+- `api.publish(topic, payload, opts)`
+- `api.subscribe(pattern, handler, opts)` → unsubscribe fn (auto-cleaned on dispose)
+- `api.once(pattern, handler)`
+- `api.request(topic, payload, timeoutMs)` / `api.reply(replyTopic, payload)`
+- `api.term(msg, level)` — print to terminal output panel
+- `api.log(msg)` — append to main log
+- `api.toast(msg)` — transient UI toast + plugin log
+- `api.command(name, fn, help)` — register terminal command
+- `api.interval(fn, ms)` — register an interval (auto-cleared on dispose)
+- `api.open(view)` — open a view (classic routing)
+- `api.wmOpen(view)` — open view in WM mode (if WM APIs available)
+- `api.storage.get(key, fallback)` / `api.storage.set(key, value)` — plugin-scoped storage:
+  - keys are namespaced as `chernos_plugin_<pluginId>_<key>`
+- `api.onDispose(fn)` — register cleanup callbacks
+
+## UI workflow
+
+Open the **Plugins** panel:
+
+- in UI routing (`app=plugins`), or
+- via terminal: `plugin open`
+
+From the panel you can:
+- install/update a plugin (id/name/version/code)
+- validate plugin code (syntax)
+- run once (init + immediate dispose)
+- enable/disable installed plugins
+- export/import the full plugin store JSON
+
+## Terminal commands
+
+- `plugin help`
+- `plugin open`
+- `plugin list`
+- `plugin enable <id>`
+- `plugin disable <id>`
+- `plugin remove <id>`
+- `plugin export`
+- `plugin import <json>`
+
+## Failure behavior
+
+Plugin errors are caught; the OS attempts to:
+- log the error to the plugin log
+- publish `plugin.error` on the bus
+- keep the rest of ChernOS running
