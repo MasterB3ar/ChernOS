@@ -65,7 +65,3 @@ mount | grep /persist
 Use:
 
 - `perf on` (or `perf off`) to toggle the “perf mode” CSS class used by the UI to reduce expensive effects.
-
-## AArch64 / Apple Silicon builds
-
-This flake is primarily configured for an **x86_64 ISO** output (`.#iso`). If you attempt to build for `aarch64-linux`, you’ll need to adjust the flake outputs and ensure all dependencies and bootloader settings support that target.
